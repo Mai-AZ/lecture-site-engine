@@ -4,10 +4,11 @@
   "description": "Parser, renderer, build pipeline, and prompts for faculty study-guide sites",
   "type": "module",
   "scripts": {
-    "test": "node renderer/smoke-test.mjs",
+    "test": "node renderer/smoke-test.mjs && node build/lib/scaffold-subject.test.mjs",
     "validate": "node build/validate.mjs",
     "build": "node build/cli.mjs",
     "build:index": "node build/generate-dist-index.mjs",
+    "scaffold": "node build/scaffold-subjects.mjs --all",
     "ci:validate-changed": "node build/detect-changed-subjects.mjs | node build/validate-changed.mjs",
     "ci:deploy-build": "node build/deploy-build.mjs"
   },

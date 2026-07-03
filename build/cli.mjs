@@ -12,6 +12,7 @@ import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { createParser } from '../parser/index.js';
 import { runSchemaChecks, hasErrors } from './lib/schema-checks.mjs';
+import { ensureSubjectScaffold } from './lib/scaffold-subject.mjs';
 
 const ENGINE_ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 
@@ -87,6 +88,7 @@ async function main() {
 
   const subjectDir = resolveSubjectDir(args.subject);
   const subjectRel = path.relative(path.join(ENGINE_ROOT, 'subjects'), subjectDir);
+  await ensureSubjectScaffold(subjectRel);
   const outDir = args.output
     ? path.resolve(process.cwd(), args.output)
     : path.join(ENGINE_ROOT, 'dist', subjectRel);

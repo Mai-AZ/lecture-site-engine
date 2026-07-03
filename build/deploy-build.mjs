@@ -17,6 +17,7 @@ import {
   subjectHasBuildableLectures,
 } from './lib/subject-paths.mjs';
 import { readSubjectsFromStdin } from './lib/read-subjects-stdin.mjs';
+import { scaffoldSubjects } from './lib/scaffold-subject.mjs';
 
 const ENGINE_ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 
@@ -35,6 +36,7 @@ function needsBuild(subject) {
 }
 
 async function main() {
+  await scaffoldSubjects();
   const allFlag = process.argv.includes('--all');
   let toBuild = new Set();
 

@@ -8,7 +8,7 @@ Contributors should **only** edit files under:
 subjects/year-{1-5}/{subject-id}/lectures/*.md
 ```
 
-Optionally update `lectures/manifest.json` when adding a new `parN.md` file.
+Do **not** edit `lectures/manifest.json` `files` by hand — CI and `npm run validate` auto-sync entries from `par*.md` (icons, badges for `parN-secN.md`).
 
 Do **not** modify `parser/`, `renderer/`, `site-shell/`, or `build/` unless you are a maintainer.
 
@@ -17,8 +17,7 @@ Do **not** modify `parser/`, `renderer/`, `site-shell/`, or `build/` unless you 
 1. Copy `subjects/_template/` to `subjects/year-N/your-subject/` (maintainer may do this once).
 2. Generate `custom_prompt.md` from `meta-prompt.md` + `subject-brief.yaml`.
 3. Use AI to produce `lectures/parN.md` following `SCHEMA.md`.
-4. Add an entry in `lectures/manifest.json` if it is a new file.
-5. Open a Pull Request to `main`.
+4. Open a Pull Request to `main` — **Validate lectures** auto-syncs `manifest.json` from your new files.
 
 ## CI on Pull Request
 
@@ -46,7 +45,27 @@ npm run build -- --subject year-3/my-subject
 cd dist/year-3/my-subject && python3 -m http.server 8080
 ```
 
-## manifest.json settings
+## manifest.json
+
+Keep `settings`, `title`, `subtitle`, and optional `lectureIcons` / `lectureMatIcons` in `lectures/manifest.json`. The `files` array is **auto-generated** when you run validate, build, or open a PR:
+
+| Filename | Auto entry |
+| --- | --- |
+| `par1.md` | `num: 1`, icon from `lectureIcons[0]` |
+| `par1-sec1.md`, `par1-sec2.md` | same `num: 1`, badge `المحاضرة ١ — جزء ١` etc., distinct icons per file |
+
+Example after sync for split lectures:
+
+```json
+"files": [
+  { "path": "par1-sec1.md", "num": 1, "icon": "🔒", "matIcon": "lock", "badge": "المحاضرة ١ — جزء ١" },
+  { "path": "par1-sec2.md", "num": 1, "icon": "⚙️", "matIcon": "settings", "badge": "المحاضرة ١ — جزء ٢" }
+]
+```
+
+Icons cycle through `lectureIcons` / `lectureMatIcons` in file order. Override badges or icons by editing `manifest.json` after the first sync if needed.
+
+### settings
 
 Each subject must have `lectures/manifest.json` with:
 

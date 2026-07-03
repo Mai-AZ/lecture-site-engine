@@ -62,11 +62,18 @@ function renderHomeGrid() {
   if (!grid) return;
   grid.innerHTML = appState.items.map((item, i) => {
     const title = shortLectureTitle(item.lec.title);
+    const num = item.fileMeta?.num ?? String(i + 1);
+    const badge = item.fileMeta?.badge || item.lec.tag || '';
     return `
-      <button type="button" class="lecture-card group text-right" data-idx="${i}">
-        <span class="lecture-card__icon" aria-hidden="true">${esc(item.icon)}</span>
-        <span class="lecture-card__title">${esc(title)}</span>
-        <span class="lecture-card__badge">${esc(item.lec.tag || '')}</span>
+      <button type="button" class="group text-right bg-surface-container-lowest border border-outline-variant rounded-xl p-lg w-full hover:border-primary/40 transition-colors" data-idx="${i}">
+        <div class="flex items-start justify-between mb-md">
+          <span class="text-3xl" aria-hidden="true">${esc(item.icon)}</span>
+          <div class="flex flex-col items-end gap-xs">
+            <span class="px-sm py-xs bg-secondary-container text-on-secondary-container rounded-lg text-sm">#${esc(num)}</span>
+            ${badge ? `<span class="px-sm py-xs bg-tertiary-fixed text-on-tertiary-fixed-variant rounded-lg text-sm">${esc(badge)}</span>` : ''}
+          </div>
+        </div>
+        <h3 class="font-headline-sm text-on-surface group-hover:text-primary transition-colors">${esc(title)}</h3>
       </button>`;
   }).join('');
 
@@ -176,6 +183,7 @@ async function init() {
       lec.id = lec.id || `lec${appState.items.length + 1}`;
       appState.items.push({
         lec,
+        fileMeta: file,
         icon: file.icon || defaultIcons[i] || '📌',
         matIcon: file.matIcon || defaultMatIcons[i] || 'school',
         sectionIndex: doc.sectionIndex || {},

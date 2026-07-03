@@ -12,6 +12,7 @@ import { fileURLToPath } from 'node:url';
 import path from 'node:path';
 import { readSubjectsFromStdin } from './lib/read-subjects-stdin.mjs';
 import { subjectHasBuildableLectures } from './lib/subject-paths.mjs';
+import { ensureSubjectScaffold } from './lib/scaffold-subject.mjs';
 const ENGINE_ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 
 async function main() {
@@ -20,6 +21,7 @@ async function main() {
 
   const subjects = [];
   for (const s of raw) {
+    await ensureSubjectScaffold(s);
     if (await subjectHasBuildableLectures(s)) subjects.push(s);
     else console.log(`Skipping ${s} — no par*.md lectures yet`);
   }

@@ -1,4 +1,4 @@
-no#!/usr/bin/env node
+#!/usr/bin/env node
 /**
  * Validate lecture markdown against SCHEMA + parser.
  *
@@ -13,6 +13,7 @@ import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { createParser } from '../parser/index.js';
 import { runSchemaChecks, formatIssues, hasErrors } from './lib/schema-checks.mjs';
+import { ensureSubjectScaffold } from './lib/scaffold-subject.mjs';
 
 const ENGINE_ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 
@@ -72,7 +73,16 @@ async function main() {
   let files = args.files.map(f => path.resolve(process.cwd(), f));
 
   if (args.subject) {
-    const subjectDir = path.resolve(process.cwd(), args.subject);
+    const subjectRel = args.subject.replace(/^subjects\//, '');
+    const scaffoldActions = await ensureSubjectScaffold(subjectRel);
+    for (const action of scaffoldActions) {
+      if (action.includes('manifest')) console.log(`↳ ${action}`);
+    }
+    const subjectDir = path.join(ENGINE_ROOT, 'subjects', subjectRel);
+    if (!existsSync(subjectDir)) {
+      console.error(`Subject not found: ${args.subject}`);
+      process.exit(1);
+    }
     const guide = await loadGuideConfig(subjectDir);
     files = await collectLectureFiles(subjectDir);
     if (!files.length) {

@@ -15,15 +15,19 @@ subjects/
 ## Add a new subject
 
 ```bash
-cp -r subjects/_template subjects/year-3/my-subject
-# Edit guide-config.js, subject-brief.yaml, manifest.json settings
-# Add lectures/par1.md, par2.md, …
-npm run validate -- --subject year-3/my-subject
-npm run build -- --subject year-3/my-subject
+mkdir -p subjects/year-4/my-subject
+# Add subject-brief.yaml + custom_prompt.md (optional)
+npm run scaffold          # creates lectures/, manifest.json, guide-config.js
+# Add lectures/par1.md …
+npm run validate -- --subject year-4/my-subject
+npm run build -- --subject year-4/my-subject
 ```
+
+`npm run scaffold` also runs automatically before validate, build, and deploy.
 
 ## Contributor rules
 
-- Only add/edit `lectures/parN.md`
+- Only add/edit `lectures/parN.md` (or `parN-secN.md` for split lectures)
 - Filename must match `parN.md` (e.g. `par1.md`, `par5-sec1.md`)
+- Do not hand-edit `manifest.json` `files` — auto-synced on validate/build/CI
 - Do not modify `parser/`, `renderer/`, or `site-shell/`
