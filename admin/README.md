@@ -1,85 +1,68 @@
-# Decap CMS — رفع المحاضرات
+# لوحة الإدارة — GitHub Device Flow
 
-واجهة ويب لرفع وتعديل ملفات `parN.md` مباشرة على GitHub بدون تعديل `manifest.json` يدوياً.
+واجهة ويب لتعديل ملفات `parN.md` و `manifest.json` مباشرة على GitHub — **بدون Decap CMS وبدون OAuth proxy**.
 
 ## الوصول
 
 | البيئة | الرابط |
 | --- | --- |
 | GitHub Pages | `https://shahd-abbara.github.io/lecture-site-engine/admin/` |
-| محلي | `http://localhost:8080/admin/` (بعد `npm run build` + `python3 -m http.server` من `dist/`) |
-
-## ما يمكن رفعه
-
-- **محاضرات** — `subjects/year-N/subject/lectures/parN.md` أو `parN-secN.md`
-- **إعدادات الموقع** — اسم المادة، الثيم، الأيقونات في `manifest.json` (بدون `files` — تُولَّد تلقائياً)
-- **وسائط** — صور في `subjects/media/uploads/`
+| محلي | `npm run ci:deploy-build -- --all` ثم `cd dist && python3 -m http.server 8080` → `/admin/` |
 
 ## إعداد GitHub OAuth (مرة واحدة)
 
-Decap CMS يحتاج **OAuth proxy** لأن الموقع على GitHub Pages وليس Netlify.
-
 ### 1. أنشئ GitHub OAuth App
 
-GitHub → Settings → Developer settings → OAuth Apps → New:
+GitHub → **Settings** → **Developer settings** → **OAuth Apps** → **New OAuth App**:
 
 | الحقل | القيمة |
 | --- | --- |
-| Application name | `lecture-site-engine-cms` |
-| Homepage URL | `https://shahd-abbara.github.io/lecture-site-engine` |
-| Authorization callback URL | `https://<oauth-proxy>/callback` |
+| Application name | `lecture-site-engine-admin` |
+| Homepage URL | `https://shahd-abbara.github.io/lecture-site-engine/admin/` |
+| Authorization callback URL | نفس Homepage URL (لا يُستخدم في Device Flow) |
 
-احفظ **Client ID** و **Client Secret**.
+احفظ **Client ID** فقط — لا تحتاج Client Secret للواجهة.
 
-### 2. انشر OAuth proxy
+### 2. أضف Client ID في المستودع
 
-خيارات مجانية:
-
-- [decap-proxy](https://github.com/sterlingwes/decap-proxy) — Cloudflare Worker
-- [netlify-cms-oauth-provider-node](https://github.com/bericp1/netlify-cms-oauth-provider-node) — Vercel/Netlify
-
-### 3. أضف متغيرات CI
-
-في GitHub repo → Settings → Secrets → Actions:
+GitHub repo → **Settings** → **Secrets and variables** → **Actions** → **New repository secret**:
 
 ```
-DECAP_OAUTH_BASE_URL = https://your-oauth-proxy.example.com
+GITHUB_OAUTH_CLIENT_ID = <Client ID من الخطوة 1>
 ```
 
-### 4. أعد توليد الإعداد
+أعد نشر الموقع (push إلى `main` أو Run workflow **Deploy GitHub Pages**).
+
+### 3. صلاحيات المستخدم
+
+يجب أن يكون لديك **صلاحية كتابة** على المستودع (collaborator أو owner). عند تسجيل الدخول يطلب GitHub الموافقة على scope `repo`.
+
+## الاستخدام
+
+1. افتح `/admin/`
+2. اضغط **تسجيل الدخول بـ GitHub**
+3. افتح الرابط المعروض وأدخل الرمز على جهازك
+4. اختر السنة → المادة → الملف
+5. عدّل المحتوى واضغط **حفظ على GitHub**
+6. CI يتحقق وينشر الموقع تلقائياً بعد الـ commit
+
+## تسمية الملفات
+
+- `parN.md` — محاضرة كاملة
+- `parN-secM.md` — جزء من محاضرة
+- `manifest.json` — إعدادات المادة (من القائمة)
+
+`manifest.json` → `files` يُزامَن تلقائياً عند validate/build.
+
+## التطوير المحلي
 
 ```bash
-DECAP_OAUTH_BASE_URL=https://your-oauth-proxy.example.com npm run cms:config
-```
-
-أو اضبط السر في workflow deploy — يُولَّد `config.yml` تلقائياً عند النشر.
-
-## التطوير المحلي (بدون OAuth)
-
-```bash
-# Terminal 1 — git backend proxy (مطلوب مع local_backend)
-npx decap-server
-
-# Terminal 2
-npm run cms:local          # يفعّل local_backend في config.yml
-npm run build -- --subject year-4/os-2-theory
+GITHUB_OAUTH_CLIENT_ID=<your-client-id> npm run admin:generate
+# أو
+GITHUB_OAUTH_CLIENT_ID=<your-client-id> npm run ci:deploy-build -- --all
 cd dist && python3 -m http.server 8080
 ```
 
-افتح `http://localhost:8080/admin/` — `local_backend` **للتطوير المحلي فقط**.
+## Decap CMS (قديم — اختياري)
 
-> ⚠️ لا تستخدم `local_backend: true` على GitHub Pages — يحاول الاتصال بـ `localhost:8081` ويفشل.
-
-## توليد config.yml
-
-```bash
-npm run cms:config
-```
-
-يُنشئ `admin/config.yml` من مجلدات `subjects/year-*/` تلقائياً.
-
-## ملاحظات
-
-- المحتوى يُحفظ بصيغة frontmatter (`body: |`) — البناء يزيلها قبل التحليل
-- `manifest.json` → `files` يُزامَن تلقائياً عند validate/build
-- بعد الحفظ من CMS → يُنشأ commit على GitHub → CI يتحقق وينشر
+`npm run cms:config` و `admin/config.yml` ما زالا متاحين للتطوير المحلي مع `npx decap-server` فقط. الإنتاج يستخدم Device Flow أعلاه.
