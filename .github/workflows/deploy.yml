@@ -3,6 +3,7 @@ name: Deploy GitHub Pages
 on:
   push:
     branches: [main]
+  workflow_dispatch:
 
 permissions:
   contents: read
@@ -31,9 +32,9 @@ jobs:
         uses: actions/cache/restore@v4
         with:
           path: dist
-          key: dist-site-v2
+          key: dist-site-v3
           restore-keys: |
-            dist-site-v2
+            dist-site-v3
 
       - name: Smoke test
         run: npm test
@@ -46,20 +47,31 @@ jobs:
           DECAP_OAUTH_BASE_URL: ${{ secrets.DECAP_OAUTH_BASE_URL }}
           LOCAL_BACKEND: 'false'
         run: |
-          BEFORE="${{ github.event.before }}"
-          SHA="${{ github.sha }}"
-          if [ "$BEFORE" = "0000000000000000000000000000000000000000" ] || [ -z "$BEFORE" ]; then
-            echo "First push or unknown before — build all subjects with lectures."
+          if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
+            echo "Manual deploy — build all subjects with lectures."
             node build/deploy-build.mjs --all
           else
-            node build/detect-changed-subjects.mjs --range "${BEFORE}..${SHA}" | node build/deploy-build.mjs
+            BEFORE="${{ github.event.before }}"
+            SHA="${{ github.sha }}"
+            if [ "$BEFORE" = "0000000000000000000000000000000000000000" ] || [ -z "$BEFORE" ]; then
+              echo "First push or unknown before — build all subjects with lectures."
+              node build/deploy-build.mjs --all
+            else
+              node build/detect-changed-subjects.mjs --range "${BEFORE}..${SHA}" | node build/deploy-build.mjs
+            fi
           fi
+
+      - name: Verify dist before upload
+        run: |
+          test -f dist/index.html || { echo "::error::dist/index.html missing — refusing to deploy."; exit 1; }
+          echo "dist/ contents:"
+          find dist -maxdepth 3 -type f | head -40
 
       - name: Save dist cache
         uses: actions/cache/save@v4
         with:
           path: dist
-          key: dist-site-v2
+          key: dist-site-v3
 
       - name: Upload Pages artifact
         uses: actions/upload-pages-artifact@v3
