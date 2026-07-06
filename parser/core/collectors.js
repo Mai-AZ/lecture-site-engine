@@ -86,12 +86,24 @@ export function collectParagraph(lines, start) {
   return { text: parts.join(' '), nextIndex: i || start + 1 };
 }
 
+/**
+ * Splits a Markdown table row on unescaped `|` characters.
+ * A `\|` inside a cell (e.g. `\`|x|\`` for absolute value, `\`max\|Δx\|\``)
+ * is treated as a literal pipe rather than a column separator.
+ */
+function splitTableRow(line) {
+  return line
+    .split(/(?<!\\)\|/)
+    .slice(1, -1)
+    .map(c => c.trim().replace(/\\\|/g, '|'));
+}
+
 export function parseTable(lines, start) {
-  const header = lines[start].split('|').slice(1, -1).map(c => c.trim());
+  const header = splitTableRow(lines[start]);
   let i = start + 2;
   const rows = [];
   while (i < lines.length && /^\|.+\|$/.test(lines[i].trim())) {
-    rows.push(lines[i].split('|').slice(1, -1).map(c => c.trim()));
+    rows.push(splitTableRow(lines[i]));
     i++;
   }
   return { header, rows, nextIndex: i };

@@ -388,7 +388,7 @@ If (action [s, a]== reduce k) then
 | هياكل البيانات | `Stack`، `Input Buffer`، `ACTION Table`، `GOTO Table` |
 | مفاهيم القواعد | `Handle`، `Production`، `LHS`، `RHS`، `NonTerminal`، `Terminal` |
 | أنواع المُحلِّلات | `LR(0)`، `SLR(1)`، `LALR(1)`، `CLR(1)` |
-| الترميزات | `Sn` = Shift حالة n | `Rk` = Reduce قاعدة k | `Acc` | `$` = نهاية الدخل |
+| الترميزات | `Sn` = Shift حالة n، `Rk` = Reduce قاعدة k، `Acc`، `$` = نهاية الدخل |
 
 ---
 
@@ -1346,7 +1346,7 @@ Id * Id $
 | --- | --- |
 | اتجاه البناء | من الأوراق للجذر — اشتقاق أيمن معكوس |
 | المكدّس | يحمل أزواج (رمز، حالة) — دائماً! |
-| قاعدة السحب | `2 × |RHS|` عند `Reduce` |
+| قاعدة السحب | `2 × \|RHS\|` عند `Reduce` |
 | `Shift` vs `Reduce` | `Shift` يُقدِّم في الدخل؛ `Reduce` لا يُقدِّم |
 | `Accept` | `ACTION[1, $] = Acc` في هذا الجدول |
 | `GOTO` للـ | رموز غير طرفية فقط (E، T، F) |

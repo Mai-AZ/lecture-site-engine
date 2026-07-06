@@ -217,6 +217,8 @@ edges:
 
 Standard GFM pipe table with header separator `| --- |`.
 
+> ⚠️ **Escape every literal `|` inside a cell** (absolute value `|x|`, norms `‖A‖` are fine as-is but `|A|`, conditional-probability notation `P(X|c)`, set-builder `{aⁿ | n≥0}`, regex alternation `(a|b)*`, cardinality `|D|`, `max(|a|,|b|)`, etc.) by writing `\|` instead of `|`. The parser splits table rows on unescaped `|` only — an un-escaped pipe inside a cell silently shifts every following column and breaks the row (this bug affected several existing lectures and was fixed retroactively; do not reintroduce it). Prefer `‖·‖` for norms and rewrite formulas to avoid `|` when a clean alternative exists, but when `|` is unavoidable inside a table cell, always escape it as `\|`.
+
 ### Q&A cards (inline in detail part)
 
 ```markdown

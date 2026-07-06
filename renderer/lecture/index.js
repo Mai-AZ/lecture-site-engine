@@ -1,5 +1,6 @@
 import { esc } from '../core/escape.js';
 import { ms, PART_MAT_ICONS } from '../core/icons.js';
+import { isChecklistPart } from '../core/part-filters.js';
 import { renderBlocks } from '../blocks/index.js';
 import { renderPart } from '../parts/index.js';
 
@@ -62,6 +63,7 @@ export function renderReview(review, icon, deps) {
     <div class="lecture-body">`;
 
   review.parts.forEach((part, pi) => {
+    if (isChecklistPart(part)) return;
     const partId = `${review.id}-p${pi + 1}`;
     const pIcon = PART_MAT_ICONS[part.type] || 'article';
     const isCheat = part.type === 'cheat';
@@ -168,6 +170,7 @@ export function renderLecture(lecture, accent, icon, refs, deps) {
   html += `<div class="lecture-body">`;
 
   lecture.parts.forEach((part, pi) => {
+    if (isChecklistPart(part)) return;
     html += renderPartSection(part, pi, lecture.id, deps);
   });
 
@@ -244,12 +247,15 @@ export function buildTocData(lectures) {
     id: lec.id,
     title: lec.title,
     tag: lec.tag,
-    parts: lec.parts.map((p, i) => ({
-      id: `${lec.id}-p${i + 1}`,
-      title: p.title,
-      type: p.type,
-      icon: PART_MAT_ICONS[p.type] || 'article',
-      subsections: buildPartSubsections(p),
+    parts: lec.parts
+      .map((p, i) => ({ part: p, index: i }))
+      .filter(({ part }) => !isChecklistPart(part))
+      .map(({ part, index }) => ({
+      id: `${lec.id}-p${index + 1}`,
+      title: part.title,
+      type: part.type,
+      icon: PART_MAT_ICONS[part.type] || 'article',
+      subsections: buildPartSubsections(part),
     })),
   }));
 }

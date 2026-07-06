@@ -1,15 +1,104 @@
 {
   "settings": {
-    "subjectName": "اكتشاف المعرفة في قواعد البيانات",
-    "subjectNameEn": "Knowledge Discovery in Databases",
+    "subjectName": "قواعد معرفية",
+    "subjectNameEn": "Knowledge Discovery in Databases (KDD)",
     "year": "2025-2026",
     "academicYear": 5,
     "theme": "amber-default",
-    "department": "القسم العملي"
+    "department": "تصميم"
   },
-  "title": "اكتشاف المعرفة في قواعد البيانات — Knowledge Discovery in Databases",
+  "title": "قواعد معرفية — Knowledge Discovery in Databases (KDD)",
   "subtitle": "تنقيب + تصنيف + تجميع + تنبؤ",
-  "files": [],
+  "files": [
+    {
+      "path": "par1.md",
+      "num": 1,
+      "icon": "📌",
+      "matIcon": "school"
+    },
+    {
+      "path": "par2.md",
+      "num": 2,
+      "icon": "📖",
+      "matIcon": "menu_book"
+    },
+    {
+      "path": "par3.md",
+      "num": 3,
+      "icon": "💻",
+      "matIcon": "code"
+    },
+    {
+      "path": "par5-sec1.md",
+      "num": 5,
+      "icon": "🎯",
+      "matIcon": "quiz",
+      "badge": "المحاضرة ٥ — جزء ١"
+    },
+    {
+      "path": "par5-sec2.md",
+      "num": 5,
+      "icon": "📝",
+      "matIcon": "description",
+      "badge": "المحاضرة ٥ — جزء ٢"
+    },
+    {
+      "path": "par5-sec3.md",
+      "num": 5,
+      "icon": "📌",
+      "matIcon": "school",
+      "badge": "المحاضرة ٥ — جزء ٣"
+    },
+    {
+      "path": "par6-sec1.md",
+      "num": 6,
+      "icon": "📖",
+      "matIcon": "menu_book",
+      "badge": "المحاضرة ٦ — جزء ١"
+    },
+    {
+      "path": "par6-sec2.md",
+      "num": 6,
+      "icon": "💻",
+      "matIcon": "code",
+      "badge": "المحاضرة ٦ — جزء ٢"
+    },
+    {
+      "path": "par7-sec1.md",
+      "num": 7,
+      "icon": "🎯",
+      "matIcon": "quiz",
+      "badge": "المحاضرة ٧ — جزء ١"
+    },
+    {
+      "path": "par7-sec2.md",
+      "num": 7,
+      "icon": "📝",
+      "matIcon": "description",
+      "badge": "المحاضرة ٧ — جزء ٢"
+    },
+    {
+      "path": "par7-sec3.md",
+      "num": 7,
+      "icon": "📌",
+      "matIcon": "school",
+      "badge": "المحاضرة ٧ — جزء ٣"
+    },
+    {
+      "path": "par8-sec1.md",
+      "num": 8,
+      "icon": "📖",
+      "matIcon": "menu_book",
+      "badge": "المحاضرة ٨ — جزء ١"
+    },
+    {
+      "path": "par8-sec2.md",
+      "num": 8,
+      "icon": "💻",
+      "matIcon": "code",
+      "badge": "المحاضرة ٨ — جزء ٢"
+    }
+  ],
   "lectureIcons": [
     "📌",
     "📖",

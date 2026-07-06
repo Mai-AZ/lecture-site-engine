@@ -9,7 +9,20 @@
   },
   "title": "التحليل العددي 1 — Numerical Analysis 1",
   "subtitle": "أخطاء + فروق + استيفاء + معادلات",
-  "files": [],
+  "files": [
+    {
+      "path": "par1.md",
+      "num": 1,
+      "icon": "📌",
+      "matIcon": "school"
+    },
+    {
+      "path": "par2.md",
+      "num": 2,
+      "icon": "📖",
+      "matIcon": "menu_book"
+    }
+  ],
   "lectureIcons": [
     "📌",
     "📖",

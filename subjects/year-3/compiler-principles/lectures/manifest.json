@@ -9,7 +9,50 @@
   },
   "title": "مبادئ المترجمات — Compiler Principles",
   "subtitle": "تحليل · توليد · تحسين · تشغيل",
-  "files": [],
+  "files": [
+    {
+      "path": "par1.md",
+      "num": 1,
+      "icon": "📌",
+      "matIcon": "school"
+    },
+    {
+      "path": "par2.md",
+      "num": 2,
+      "icon": "📖",
+      "matIcon": "menu_book"
+    },
+    {
+      "path": "par3.md",
+      "num": 3,
+      "icon": "💻",
+      "matIcon": "code"
+    },
+    {
+      "path": "par4.md",
+      "num": 4,
+      "icon": "🎯",
+      "matIcon": "quiz"
+    },
+    {
+      "path": "par5.md",
+      "num": 5,
+      "icon": "📝",
+      "matIcon": "description"
+    },
+    {
+      "path": "par6.md",
+      "num": 6,
+      "icon": "📌",
+      "matIcon": "school"
+    },
+    {
+      "path": "par7.md",
+      "num": 7,
+      "icon": "📖",
+      "matIcon": "menu_book"
+    }
+  ],
   "lectureIcons": [
     "📌",
     "📖",

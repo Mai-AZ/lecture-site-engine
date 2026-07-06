@@ -2,10 +2,10 @@ schema_version: "1.0"
 
 subject:
   id: distributed-systems-theory
-  name_ar: "نظم موزعة (نظري)"
-  name_en: "Distributed Systems (Theory)"
+  name_ar: "نظم موزعة"
+  name_en: "Distributed Systems"
   tagline: "مفاهيم وتصميم الأنظمة الموزعة"
-  section_label: "نظري"
+  section_label: "تصميم"
 
 locale:
   language: ar
@@ -69,7 +69,6 @@ parts:
     forbid_easy_literal: false
     distribution:
       comparisons: 25
-      code_scenario: 0
       application: 30
       algorithm_trace: 45
 
@@ -270,8 +269,8 @@ automation_question_types:
     difficulty: hard
     count_min: 3
     questions_per_scenario: 4
-    parts: [mcq, debug, theory]
-    blocks: [code, trace, diagrams, tables, compare, equations]
+    parts: [mcq, theory]
+    blocks: [trace, diagrams, tables, compare, equations]
     format: |
       ### السيناريو {N}: {عنوان}
       > [وصف الحالة: كود، جدول، مخطط، أو مسألة رياضية كاملة — 5–10 أسطر]
@@ -293,8 +292,8 @@ automation_question_types:
     label_ar: "تطبيق عملي (أكمل / صحّح / نفّذ)"
     difficulty: medium
     count_min: 5
-    parts: [exercise, analysis_exercise, debug]
-    blocks: [fill_gaps, code_fix, algorithm, expected_output, tables]
+    parts: [exercise, analysis_exercise]
+    blocks: [fill_gaps, code_fix, algorithm, tables]
     types:
       - fill_gaps
       - code_fix
@@ -342,8 +341,8 @@ automation_question_types:
     label_ar: "اكتشف الخطأ (كود / منطق / حساب)"
     difficulty: hard
     count_min: 4
-    parts: [debug, exercise]
-    blocks: [code_fix, compare, troubleshooting]
+    parts: [exercise]
+    blocks: [code_fix, compare]
     bug_types: [logic, misconception, off_by_one, wrong_formula, race_condition, infinite_loop]
     format: |
       **الكود/الحساب (يحتوي خطأ):** …

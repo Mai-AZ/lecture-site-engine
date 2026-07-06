@@ -12,6 +12,7 @@
     "validate": "node build/validate.mjs",
     "build": "node build/cli.mjs",
     "build:index": "node build/generate-dist-index.mjs",
+    "dev": "node build/watch.mjs",
     "scaffold": "node build/scaffold-subjects.mjs --all",
     "ci:validate-changed": "node build/detect-changed-subjects.mjs | node build/validate-changed.mjs",
     "ci:deploy-build": "node build/deploy-build.mjs"

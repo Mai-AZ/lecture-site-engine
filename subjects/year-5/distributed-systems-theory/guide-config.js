@@ -3,7 +3,7 @@
  */
 export const GUIDE_CONFIG = {
   storagePrefix: 'distributed-systems-theory',
-  defaultTitle: 'نظم موزعة (نظري)',
+  defaultTitle: 'نظم موزعة',
   homeHeaderBrand: 'فريق TTM الأكاديمي',
   defaultSubtitle: 'مفاهيم وتصميم الأنظمة الموزعة',
 
