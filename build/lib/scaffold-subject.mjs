@@ -68,7 +68,7 @@ export function toArabicDigits(n) {
 export function defaultSectionBadge(num, sec) {
   if (sec) return `المحاضرة ${toArabicDigits(num)} — جزء ${toArabicDigits(sec)}`;
   return `المحاضرة ${toArabicDigits(num)}`;
-  return null;      
+  return null;    
 }
 
 /**
@@ -83,7 +83,16 @@ export function syncManifestFiles(manifest, mdFiles) {
 
   for (let i = 0; i < mdFiles.length; i++) {
     const name = mdFiles[i];
-    if (byPath.has(name)) continue;
+    if (byPath.has(name)) {
+      const entry = byPath.get(name);
+  
+      if (!entry.badge) {
+          const parsed = parseParFilename(name);
+          entry.badge = defaultSectionBadge(parsed.num, parsed.sec);
+      }
+  
+      continue;
+  }
     const parsed = parseParFilename(name);
     if (!parsed) continue;
     const entry = {

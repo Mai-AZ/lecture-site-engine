@@ -42,7 +42,8 @@
       "path": "par2.md",
       "num": 2,
       "icon": "📝",
-      "matIcon": "description"
+      "matIcon": "description",
+      "badge": "المحاضرة ٢"
     },
     {
       "path": "par3-sec1.md",
@@ -62,7 +63,8 @@
       "path": "par4.md",
       "num": 4,
       "icon": "💻",
-      "matIcon": "code"
+      "matIcon": "code",
+      "badge": "المحاضرة ٤"
     }
   ],
   "lectureIcons": [

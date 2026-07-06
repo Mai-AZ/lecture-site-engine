@@ -1,0 +1,27 @@
+{
+  "settings": {
+    "subjectName": "1-os-2-theory",
+    "subjectNameEn": "1-os-2-theory",
+    "year": "2025-2026",
+    "academicYear": 4,
+    "theme": "parallel-teal",
+    "department": "القسم"
+  },
+  "title": "1-os-2-theory — 1-os-2-theory",
+  "subtitle": "دليل دراسي تفاعلي",
+  "files": [],
+  "lectureIcons": [
+    "📌",
+    "📖",
+    "💻",
+    "🎯",
+    "📝"
+  ],
+  "lectureMatIcons": [
+    "school",
+    "menu_book",
+    "code",
+    "quiz",
+    "description"
+  ]
+}

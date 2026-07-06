@@ -15,25 +15,29 @@
       "path": "par1.md",
       "num": 1,
       "icon": "📌",
-      "matIcon": "school"
+      "matIcon": "school",
+      "badge": "المحاضرة ١"
     },
     {
       "path": "par2.md",
       "num": 2,
       "icon": "📖",
-      "matIcon": "menu_book"
+      "matIcon": "menu_book",
+      "badge": "المحاضرة ٢"
     },
     {
       "path": "par3.md",
       "num": 3,
       "icon": "💻",
-      "matIcon": "code"
+      "matIcon": "code",
+      "badge": "المحاضرة ٣"
     },
     {
       "path": "par4.md",
       "num": 4,
       "icon": "🎯",
-      "matIcon": "quiz"
+      "matIcon": "quiz",
+      "badge": "المحاضرة ٤"
     },
     {
       "path": "par5-sec1.md",
@@ -60,42 +64,43 @@
       "path": "par6.md",
       "num": 6,
       "icon": "💻",
-      "matIcon": "code"
+      "matIcon": "code",
+      "badge": "المحاضرة ٦"
     },
     {
       "path": "par7-sec1.md",
       "num": 7,
       "icon": "🎯",
       "matIcon": "quiz",
-      "badge": "المحاضرة ٧ — جزء ١"
+      "badge": " الملحق — جزء ١"
     },
     {
       "path": "par7-sec2.md",
       "num": 7,
       "icon": "📝",
       "matIcon": "description",
-      "badge": "المحاضرة ٧ — جزء ٢"
+      "badge": " الملحق — جزء ٢"
     },
     {
       "path": "par7-sec5.md",
       "num": 7,
       "icon": "📖",
       "matIcon": "menu_book",
-      "badge": "المحاضرة ٧ — جزء ٥"
+      "badge": " الملحق — جزء ٥"
     },
     {
       "path": "par7-sec6.md",
       "num": 7,
       "icon": "💻",
       "matIcon": "code",
-      "badge": "المحاضرة ٧ — جزء ٦"
+      "badge": " الملحق — جزء ٦"
     },
     {
       "path": "par7-sec7.md",
       "num": 7,
       "icon": "🎯",
       "matIcon": "quiz",
-      "badge": "المحاضرة ٧ — جزء ٧"
+      "badge": " الملحق — جزء ٧"
     }
   ],
   "lectureIcons": [

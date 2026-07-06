@@ -15,19 +15,22 @@
       "path": "par1.md",
       "num": 1,
       "icon": "📌",
-      "matIcon": "school"
+      "matIcon": "school",
+      "badge": "المحاضرة ١"
     },
     {
       "path": "par2.md",
       "num": 2,
       "icon": "📖",
-      "matIcon": "menu_book"
+      "matIcon": "menu_book",
+      "badge": "المحاضرة ٢"
     },
     {
       "path": "par3.md",
       "num": 3,
       "icon": "💻",
-      "matIcon": "code"
+      "matIcon": "code",
+      "badge": "المحاضرة ٣"
     },
     {
       "path": "par5-sec1.md",
