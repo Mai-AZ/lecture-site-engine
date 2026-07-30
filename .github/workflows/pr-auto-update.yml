@@ -1,7 +1,9 @@
 name: PR sync check (up to date with main)
 
+# pull_request_target (not pull_request) so fork PRs get a write token.
+# This workflow only calls the GitHub API — it never checks out PR code.
 on:
-  pull_request:
+  pull_request_target:
     types: [opened, reopened, synchronize]
     branches: [main]
   push:
@@ -15,7 +17,6 @@ on:
 permissions:
   contents: write
   pull-requests: write
-  statuses: write
 
 jobs:
   sync-check:
@@ -26,14 +27,13 @@ jobs:
         with:
           script: |
             const { owner, repo } = context.repo;
-            const STATUS_CONTEXT = 'pr-sync/up-to-date-with-main';
             const prNumberInput = context.payload.inputs?.pr_number;
 
             let prs;
             if (prNumberInput) {
               const { data: pr } = await github.rest.pulls.get({ owner, repo, pull_number: Number(prNumberInput) });
               prs = [pr];
-            } else if (context.eventName === 'pull_request') {
+            } else if (context.eventName === 'pull_request_target') {
               prs = [context.payload.pull_request];
             } else {
               // main just moved — every open PR may now be behind, re-check all of them.
@@ -41,20 +41,17 @@ jobs:
               prs = res.data;
             }
 
-            let conflicted = [];
+            // Job conclusion is the required check (not a commit-status API context).
+            // That avoids forever-"Expected — Waiting" when statuses cannot be posted.
+            const failed = [];
+            const isSinglePr =
+              Boolean(prNumberInput) || context.eventName === 'pull_request_target';
 
             for (const pr of prs) {
               if (pr.base.ref !== 'main' || pr.draft) continue;
 
               const headSha = pr.head.sha;
-
-              // Post pending immediately so the PR merge box moves from
-              // "Expected — Waiting" to a visible status right away.
-              await github.rest.repos.createCommitStatus({
-                owner, repo, sha: headSha, state: 'pending',
-                context: STATUS_CONTEXT,
-                description: 'جارٍ التحقق من التزامن مع main…',
-              });
+              console.log(`PR #${pr.number} (${headSha.slice(0, 7)})…`);
 
               try {
                 const { data: compare } = await github.rest.repos.compareCommits({
@@ -62,51 +59,32 @@ jobs:
                 });
 
                 if (compare.ahead_by === 0) {
-                  await github.rest.repos.createCommitStatus({
-                    owner, repo, sha: headSha, state: 'success',
-                    context: STATUS_CONTEXT,
-                    description: 'متزامن مع main ✅',
-                  });
                   console.log(`PR #${pr.number}: up to date.`);
-                } else {
-                  console.log(`PR #${pr.number} is ${compare.ahead_by} commit(s) behind main — attempting auto-update.`);
-                  try {
-                    await github.rest.pulls.updateBranch({ owner, repo, pull_number: pr.number });
-                    // updateBranch pushes a merge commit which fires a fresh "synchronize"
-                    // event — that re-run will report success on the new head SHA.
-                    // Mark the current SHA as success too so the merge box clears now.
-                    await github.rest.repos.createCommitStatus({
-                      owner, repo, sha: headSha, state: 'success',
-                      context: STATUS_CONTEXT,
-                      description: 'تم التحديث من main تلقائياً ✅',
-                    });
-                    console.log(`PR #${pr.number}: auto-updated from main.`);
-                  } catch (err) {
-                    // 422 = real merge conflict; anything else = permission/transient issue.
-                    const isConflict = err.status === 422;
-                    await github.rest.repos.createCommitStatus({
-                      owner, repo, sha: headSha, state: 'failure',
-                      context: STATUS_CONTEXT,
-                      description: isConflict
-                        ? 'تعارضات مع main — يجب حلّها يدوياً ⚠️'
-                        : `متأخر ${compare.ahead_by} commit عن main — اضغط "Update branch" ❌`,
-                    });
-                    console.error(`PR #${pr.number}: could not auto-update (${err.status}: ${err.message}).`);
-                  }
+                  continue;
+                }
+
+                console.log(`PR #${pr.number} is ${compare.ahead_by} commit(s) behind main — attempting auto-update.`);
+                try {
+                  await github.rest.pulls.updateBranch({ owner, repo, pull_number: pr.number });
+                  // updateBranch pushes a merge commit which fires a fresh "synchronize"
+                  // event — that re-run reports success on the new head SHA.
+                  console.log(`PR #${pr.number}: auto-updated from main.`);
+                } catch (err) {
+                  const isConflict = err.status === 422;
+                  const msg = isConflict
+                    ? `PR #${pr.number}: merge conflicts with main — resolve manually.`
+                    : `PR #${pr.number}: could not auto-update (${err.status}: ${err.message}); still ${compare.ahead_by} commit(s) behind.`;
+                  console.error(msg);
+                  failed.push(msg);
                 }
               } catch (err) {
-                // Unexpected error (e.g. API failure) — surface it as a visible failure
-                // rather than leaving the status as "Expected".
-                await github.rest.repos.createCommitStatus({
-                  owner, repo, sha: headSha, state: 'failure',
-                  context: STATUS_CONTEXT,
-                  description: `خطأ أثناء التحقق: ${err.message}`,
-                });
-                console.error(`PR #${pr.number}: unexpected error: ${err.message}`);
+                const msg = `PR #${pr.number}: unexpected error: ${err.message}`;
+                console.error(msg);
+                failed.push(msg);
               }
 
-              // Only relevant when a single PR was targeted via workflow_dispatch:
-              // confirm GitHub sees no conflicts after the update has landed.
+              // Only when a single PR was targeted: confirm GitHub sees no conflicts
+              // after the update has landed.
               if (prNumberInput) {
                 let mergeable = null;
                 for (let i = 0; i < 5 && mergeable === null; i++) {
@@ -115,11 +93,15 @@ jobs:
                   mergeable = fresh.mergeable;
                 }
                 if (mergeable === false) {
-                  conflicted.push(pr.number);
+                  failed.push(`PR #${pr.number}: still reports merge conflicts after update.`);
                 }
               }
             }
 
-            if (conflicted.length > 0) {
-              core.setFailed(`PR(s) have merge conflicts with main and cannot be merged: ${conflicted.join(', ')}`);
+            // On push-to-main fan-out, don't fail the whole run if one PR conflicts —
+            // other PRs may have updated fine. For a single-PR event, fail loudly.
+            if (failed.length > 0 && isSinglePr) {
+              core.setFailed(failed.join('\n'));
+            } else if (failed.length > 0) {
+              core.warning(`Some PRs could not be synced:\n${failed.join('\n')}`);
             }

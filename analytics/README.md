@@ -122,6 +122,12 @@ npm run analytics:export -- --days 7 --format csv
 Writes under `analytics/exports/` (gitignored). Optional weekly CI:
 `.github/workflows/analytics-export.yml` uploads an artifact.
 
+## Manual reports (Clarity / site stats)
+
+Drop Clarity CSV dumps and written summaries (e.g. `site-statistics.md`,
+`per-subject-report.md`) under `analytics/reports/` — that folder is gitignored.
+Keep queries, setup/export scripts, and guides tracked in `analytics/`.
+
 ## Ad-hoc HogQL
 
 Saved queries live in `analytics/queries/`. Paste into PostHog → SQL editor, or

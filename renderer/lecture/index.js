@@ -129,9 +129,10 @@ export function renderLecture(lecture, accent, icon, refs, deps) {
     : { codeRef: refs };
   const { codeRef, companionRef, companionOf, badge } = linkRefs;
 
-  // End-of-lecture summary only — keep intro summaries (e.g. «ملخص سريع قبل البدء») in place (see app.js isQuickSummary)
+  // End-of-lecture summary only — keep intro summaries in place
+  // (e.g. «ملخص سريع قبل البدء», «ملخص منظم (اقرأ قبل المحاضرة!)» — see app.js isQuickSummary)
   const summaryPartIdx = lecture.parts.findIndex(p =>
-    p.type === 'summary' && !/checklist|قائمة فحص|قائمة المراجعة|سريع|قبل البدء/i.test(p.title || ''),
+    p.type === 'summary' && !/checklist|قائمة فحص|قائمة المراجعة|سريع|قبل البدء|قبل المحاضرة|اقرأ قبل/i.test(p.title || ''),
   );
   const summaryPart = summaryPartIdx >= 0 ? lecture.parts[summaryPartIdx] : null;
 

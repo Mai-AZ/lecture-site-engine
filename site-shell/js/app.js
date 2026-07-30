@@ -1611,7 +1611,7 @@ function jumpToSummary() {
   }
   if (!item) return;
 
-  const isQuickSummary = (title) => /سريع|قبل البدء|checklist|قائمة فحص|قائمة المراجعة/i.test(title || '');
+  const isQuickSummary = (title) => /سريع|قبل البدء|قبل المحاضرة|اقرأ قبل|checklist|قائمة فحص|قائمة المراجعة/i.test(title || '');
   const isComprehensive = (title) => /شامل|Alternative Complete|قراءة بديلة/i.test(title || '');
 
   const tocParts = item.toc?.parts || [];
