@@ -936,6 +936,7 @@ function showView(name) {
   document.getElementById('lectureWidthControl')?.classList.toggle('hidden', name !== 'lecture');
   document.getElementById('expandOriginalBtn')?.classList.toggle('hidden', name !== 'lecture');
   document.getElementById('lectureNotesBtn')?.classList.toggle('hidden', !LECTURE_NOTES_ENABLED || name !== 'lecture');
+  document.getElementById('laserPointerToggle')?.classList.toggle('hidden', name !== 'lecture');
   document.getElementById('mobileStudyBar')?.classList.toggle('hidden', name !== 'lecture');
   document.documentElement.classList.toggle('is-lecture-view', name === 'lecture');
   const brandBtn = document.getElementById('brandBtn');
