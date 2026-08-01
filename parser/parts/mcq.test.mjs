@@ -105,4 +105,23 @@ Which are true?
   assert(qs[0].correct === 'e', `expected correct='e', got '${qs[0].correct}'`);
 }
 
+// Past-exam PDFs often write the 5th letter with a tatweel: هـ) / هـ
+{
+  const qs = parseMCQ(`
+### السؤال 1 (صعب)
+أي العبارات خاطئة؟
+أ) one
+ب) two
+ج) three
+د) four
+هـ) a + c + d
+**الإجابة الصحيحة: هـ**
+**التعليل:** fifth option
+`, { arabicKey });
+
+  assert(qs.length === 1, `tatweel: expected 1 question, got ${qs.length}`);
+  assert(qs[0].options.length === 5 && qs[0].options[4].key === 'e', `tatweel 5th key=${qs[0].options[4]?.key}`);
+  assert(qs[0].correct === 'e', `tatweel expected correct='e', got '${qs[0].correct}'`);
+}
+
 console.log('parser/parts/mcq.test.mjs: ok');
