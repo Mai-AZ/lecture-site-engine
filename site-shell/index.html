@@ -637,6 +637,35 @@
     >
       <span class="material-symbols-outlined">keyboard_arrow_up</span>
     </button>
+  </nav>
+
+  <footer class="bg-surface-container w-full py-lg border-t border-outline-variant">
+    <div class="flex flex-col md:flex-row justify-between items-center px-lg gap-md max-w-container-max mx-auto">
+      <span class="font-label-md text-on-surface-variant">© <span id="siteYear">2025-2026</span> — <span
+          id="siteSubject">المادة</span> — المكتب الأكاديمي</span>
+    </div>
+  </footer>
+
+  <button type="button" id="scrollTopFab"
+    class="fixed bottom-lg left-lg w-14 h-14 bg-primary text-on-primary rounded-full shadow-lg flex items-center justify-center hover:scale-110 transition-transform z-40 opacity-0 pointer-events-none"
+    aria-label="العودة للأعلى">
+    <span class="material-symbols-outlined">keyboard_arrow_up</span>
+  </button>
+
+  <canvas id="laserPointerCanvas" class="laser-pointer-canvas" aria-hidden="true"></canvas>
+
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/languages/kotlin.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/languages/xml.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/languages/bash.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/languages/python.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/languages/csharp.min.js"></script>
+  <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.js" crossorigin="anonymous"></script>
+  <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/contrib/auto-render.min.js"
+    crossorigin="anonymous"></script>
+  <script defer src="https://cdn.jsdelivr.net/npm/mermaid@11/dist/mermaid.min.js"></script>
+  <script type="module" src="js/app.js"></script>
+  <script src="js/chat-widget.js"></script>
 
     <canvas
       id="laserPointerCanvas"
@@ -644,27 +673,4 @@
       aria-hidden="true"
     ></canvas>
 
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/languages/kotlin.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/languages/xml.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/languages/bash.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/languages/python.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/languages/csharp.min.js"></script>
-    <script
-      defer
-      src="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.js"
-      crossorigin="anonymous"
-    ></script>
-    <script
-      defer
-      src="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/contrib/auto-render.min.js"
-      crossorigin="anonymous"
-    ></script>
-    <script
-      defer
-      src="https://cdn.jsdelivr.net/npm/mermaid@11/dist/mermaid.min.js"
-    ></script>
-    <script type="module" src="js/app.js"></script>
-    <script src="chat-widget.js"></script>
-  </body>
 </html>

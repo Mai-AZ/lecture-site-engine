@@ -1053,38 +1053,18 @@ function handleBrandClick() {
 
 function showView(name) {
   currentView = name;
-  document
-    .getElementById("homeView")
-    ?.classList.toggle("hidden", name !== "home");
-  document
-    .getElementById("lectureView")
-    ?.classList.toggle("hidden", name !== "lecture");
-  document
-    .getElementById("examView")
-    ?.classList.toggle("hidden", name !== "exam");
-  document
-    .getElementById("backToHomeBtn")
-    ?.classList.toggle("hidden", name === "home");
-  document
-    .getElementById("backToHubBtn")
-    ?.classList.toggle("hidden", name !== "home");
-  document
-    .getElementById("lectureWidthControl")
-    ?.classList.toggle("hidden", name !== "lecture");
-  document
-    .getElementById("expandOriginalBtn")
-    ?.classList.toggle("hidden", name !== "lecture");
-  document
-    .getElementById("lectureNotesBtn")
-    ?.classList.toggle("hidden", !LECTURE_NOTES_ENABLED || name !== "lecture");
-  document
-    .getElementById("mobileStudyBar")
-    ?.classList.toggle("hidden", name !== "lecture");
-  document.documentElement.classList.toggle(
-    "is-lecture-view",
-    name === "lecture",
-  );
-  const brandBtn = document.getElementById("brandBtn");
+  document.getElementById('homeView')?.classList.toggle('hidden', name !== 'home');
+  document.getElementById('lectureView')?.classList.toggle('hidden', name !== 'lecture');
+  document.getElementById('examView')?.classList.toggle('hidden', name !== 'exam');
+  document.getElementById('backToHomeBtn')?.classList.toggle('hidden', name === 'home');
+  document.getElementById('backToHubBtn')?.classList.toggle('hidden', name !== 'home');
+  document.getElementById('lectureWidthControl')?.classList.toggle('hidden', name !== 'lecture');
+  document.getElementById('expandOriginalBtn')?.classList.toggle('hidden', name !== 'lecture');
+  document.getElementById('lectureNotesBtn')?.classList.toggle('hidden', !LECTURE_NOTES_ENABLED || name !== 'lecture');
+  document.getElementById('laserPointerToggle')?.classList.toggle('hidden', name !== 'lecture');
+  document.getElementById('mobileStudyBar')?.classList.toggle('hidden', name !== 'lecture');
+  document.documentElement.classList.toggle('is-lecture-view', name === 'lecture');
+  const brandBtn = document.getElementById('brandBtn');
   if (brandBtn) {
     brandBtn.title =
       name !== "home" ? "العودة لقائمة المحاضرات" : "العودة للسنوات الدراسية";

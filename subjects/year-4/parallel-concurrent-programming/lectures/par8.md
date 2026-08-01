@@ -3,7 +3,7 @@
 
 ---
 
-# الجزء الأول: ملخص منظم (اقرأ قبل المحاضرة!)
+## الجزء الأول: ملخص منظم (اقرأ قبل المحاضرة!)
 
 ### 1. lecture_overview
 هذه المحاضرة بتقدّم `Actor Model` كطريقة بديلة للتعامل مع البيانات المشتركة بين الخيوط، بحيث بدل ما نحط `isolated` بكل مكان بيدنا (وننسى مكان وتصير مشكلة)، منخلي العزل *افتراضي* من خلال تغليف الحالة جوا كائن (actor) ما حدا غيره بلمسها إلا عن طريق رسائل.
@@ -45,9 +45,9 @@
 
 ---
 
-# الجزء الثاني: الشرح التفصيلي
+## الجزء الثاني: الشرح التفصيلي
 
-## 1. لماذا نحتاج نموذج الـ Actor؟
+### 1. لماذا نحتاج نموذج الـ Actor؟
 
 #### 📍 أين نحن الآن؟
 هذه المجموعة (1.1 → 1.2) بتشرح المشكلة الأساسية اللي دفعت لظهور `Actor Model`: العزل اليدوي بواسطة `Isolated` مش كافي لأنه بيعتمد على انضباط المبرمج.
@@ -55,7 +55,7 @@
 #### ⬅️ الربط مع السابق
 بالمحاضرات السابقة تعلمنا `Isolated Construct` كطريقة لحماية `Critical Section`. بس هون رح نكتشف ثغرة بهاد الأسلوب: شو اللي بيمنع مبرمج تاني إنه ينسى يحط `isolated` ويلمس نفس البيانات مباشرة؟
 
-### 1.1. مشكلة العزل اليدوي (The Problem with Manual Isolation)
+#### 1.1. مشكلة العزل اليدوي (The Problem with Manual Isolation)
 <!-- @render: {type: "code-first", visualization: "none", coverage: "100%"} -->
 <!-- @connectivity: {prerequisite: "lecture_7_isolated_construct", group: "1.1-1.2"} -->
 
@@ -117,7 +117,7 @@ class AtomicCounter {
 
 ---
 
-### 1.2. فكرة الحل: العزل الافتراضي عبر الرسائل (Isolation by Default via Messages)
+#### 1.2. فكرة الحل: العزل الافتراضي عبر الرسائل (Isolation by Default via Messages)
 <!-- @render: {type: "code-first", visualization: "none", coverage: "100%"} -->
 <!-- @connectivity: {prerequisite: "section_1.1", group: "1.1-1.2"} -->
 
@@ -166,7 +166,7 @@ class CounterActor extends Actor<Message> {
 
 ---
 
-## 2. تعريف الـ Actor وعناصره
+### 2. تعريف الـ Actor وعناصره
 
 #### 📍 أين نحن الآن؟
 هذه المجموعة (2.1 → 2.2) بتعرّف رسمياً شو هو الـ `Actor` وشو بيقدر يعمل — العناصر البنيوية وبعدها السلوكيات المسموحة.
@@ -174,7 +174,7 @@ class CounterActor extends Actor<Message> {
 #### ⬅️ الربط مع السابق
 بعد ما فهمنا بالقسم 1 *ليش* بدنا Actor (لحل مشكلة العزل اليدوي)، هلق منعرف بالضبط *شو* هو من حيث البنية.
 
-### 2.1. عناصر الـ Actor (Actor Anatomy)
+#### 2.1. عناصر الـ Actor (Actor Anatomy)
 <!-- @render: {type: "diagram-first", visualization: "flowchart", coverage: "100%"} -->
 <!-- @connectivity: {prerequisite: "section_1.2", group: "2.1-2.2"} -->
 
@@ -235,7 +235,7 @@ class CounterActor extends Actor<Message> {
 
 ---
 
-### 2.2. سلوكيات الـ Actor (What an Actor May Do)
+#### 2.2. سلوكيات الـ Actor (What an Actor May Do)
 <!-- @render: {type: "diagram-first", visualization: "flowchart", coverage: "100%"} -->
 <!-- @connectivity: {prerequisite: "section_2.1", group: "2.1-2.2"} -->
 
@@ -287,7 +287,7 @@ class CounterActor extends Actor<Message> {
 
 ---
 
-## 3. نموذج Actor الرسمي (The Actor Model)
+### 3. نموذج Actor الرسمي (The Actor Model)
 
 #### 📍 أين نحن الآن؟
 هذه المجموعة فقرة وحدة (3.1) بتحط الـ Actor بسياقه التاريخي والنظري كنموذج تزامن كامل، مش بس فكرة تصميم.
@@ -295,7 +295,7 @@ class CounterActor extends Actor<Message> {
 #### ⬅️ الربط مع السابق
 بعد ما عرفنا شكل الـ Actor وسلوكياته (قسم 2)، هلق منشوف ليش هو "نموذج" (Model) كامل للتزامن، وشو مبادئه الأساسية.
 
-### 3.1. Actor Model: التعريف الرسمي والمبادئ
+#### 3.1. Actor Model: التعريف الرسمي والمبادئ
 <!-- @render: {type: "code-first", visualization: "none", coverage: "100%"} -->
 <!-- @connectivity: {prerequisite: "section_2.2", group: "3.1"} -->
 
@@ -356,7 +356,7 @@ a.send(new SomeMessage()); // async, non-blocking
 
 ---
 
-## 4. دورة حياة الـ Actor (Actor Life Cycle)
+### 4. دورة حياة الـ Actor (Actor Life Cycle)
 
 #### 📍 أين نحن الآن؟
 فقرة وحدة (4.1) بتشرح المراحل الثلاث اللي بيمر فيها أي Actor من لحظة إنشائه لحد إنهائه.
@@ -364,7 +364,7 @@ a.send(new SomeMessage()); // async, non-blocking
 #### ⬅️ الربط مع السابق
 بعد ما فهمنا نظرياً شو هو الـ Actor (قسم 2-3)، هلق لازم نفهم "توقيته الزمني" — امتى بيقدر يشتغل وامتى بيوقف، عشان لما نكتب كود حقيقي (قسم 5) نعرف نتحكم فيه صح.
 
-### 4.1. المراحل الثلاث: New → Started → Terminated
+#### 4.1. المراحل الثلاث: New → Started → Terminated
 <!-- @render: {type: "diagram-first", visualization: "flowchart", coverage: "100%"} -->
 <!-- @connectivity: {prerequisite: "section_3.1", group: "4.1"} -->
 
@@ -428,7 +428,7 @@ a.send(new SomeMessage()); // async, non-blocking
 
 ---
 
-## 5. استخدام Actors بمكتبة HJlib
+### 5. استخدام Actors بمكتبة HJlib
 
 #### 📍 أين نحن الآن؟
 هذه المجموعة (5.1 → 5.3) بتاخدنا من النظرية للتطبيق العملي: كيف نكتب Actor حقيقي بلغة Java باستخدام مكتبة `HJlib`، شو الـ API المتوفر، ومثال Hello World كامل.
@@ -436,7 +436,7 @@ a.send(new SomeMessage()); // async, non-blocking
 #### ⬅️ الربط مع السابق
 بعد ما فهمنا دورة حياة الـ Actor نظرياً بالقسم 4، هلق منشوف كيف كل مرحلة (`New`, `Started`, `Terminated`) بتترجم لأسطر كود فعلية.
 
-### 5.1. إنشاء Actor بـ HJlib (Creating and Using an Actor)
+#### 5.1. إنشاء Actor بـ HJlib (Creating and Using an Actor)
 <!-- @render: {type: "code-first", visualization: "none", coverage: "100%"} -->
 <!-- @connectivity: {prerequisite: "section_4.1", group: "5.1-5.3"} -->
 
@@ -490,7 +490,7 @@ anActor.send("hello"); // aMessage can be any object in general
 
 ---
 
-### 5.2. ملخص واجهة HJlib Actor API
+#### 5.2. ملخص واجهة HJlib Actor API
 <!-- @render: {type: "code-first", visualization: "none", coverage: "100%"} -->
 <!-- @connectivity: {prerequisite: "section_5.1", group: "5.1-5.3"} -->
 
@@ -549,7 +549,7 @@ class LifecycleActor extends Actor<Message> {
 
 ---
 
-### 5.3. مثال متكامل: Hello World بالـ Actors
+#### 5.3. مثال متكامل: Hello World بالـ Actors
 <!-- @render: {type: "code-first", visualization: "none", coverage: "100%"} -->
 <!-- @connectivity: {prerequisite: "section_5.2", group: "5.1-5.3"} -->
 <!-- @type: example-for-topics-5.1-to-5.2 -->
@@ -636,7 +636,7 @@ public class HelloWorld {
 
 ---
 
-## 6. مثال: عداد صحيح (Integer Counter) — بدون وبمع Actors
+### 6. مثال: عداد صحيح (Integer Counter) — بدون وبمع Actors
 
 #### 📍 أين نحن الآن؟
 فقرة وحدة (6.1) بتقارن مباشرة بين حل مشكلة العداد المشترك بالطريقة القديمة (Threads + isolated) والطريقة الجديدة (Actor)، عشان تشوف الفرق البرمجي الفعلي بعينك.
@@ -644,7 +644,7 @@ public class HelloWorld {
 #### ⬅️ الربط مع السابق
 هاي أفضل فقرة توضّح عملياً كل اللي حكينا عنه بالقسم 1 (مشكلة العزل اليدوي) — هلق منشوف كيف نفس المشكلة تُحل بأسلوبين مختلفين تماماً.
 
-### 6.1. Integer Counter: مقارنة الحلين
+#### 6.1. Integer Counter: مقارنة الحلين
 <!-- @render: {type: "code-first", visualization: "none", coverage: "100%"} -->
 <!-- @connectivity: {prerequisite: "section_5.3", group: "6.1"} -->
 
@@ -723,7 +723,7 @@ public void bar() {
 
 ---
 
-## 7. Pipelining مع Actors
+### 7. Pipelining مع Actors
 
 #### 📍 أين نحن الآن؟
 هذه المجموعة (7.1 → 7.2) بتوسّع فكرة الـ `Pipelining` (من محاضرات سابقة بالجزء الأول من المادة) لتُبنى فوق الـ Actors، وبتشرح مشكلة الـ bottleneck وحلها.
@@ -731,7 +731,7 @@ public void bar() {
 #### ⬅️ الربط مع السابق
 بعد ما تعلمنا كيف نبني Actor مفرد (أقسام 5-6)، هلق منشوف كيف نربط أكتر من Actor سوا بشكل تسلسلي (pipeline) لحل مسائل معالجة بيانات متعددة المراحل.
 
-### 7.1. بنية الـ Pipeline بالـ Actors وal Bottleneck
+#### 7.1. بنية الـ Pipeline بالـ Actors وal Bottleneck
 <!-- @render: {type: "diagram-first", visualization: "flowchart", coverage: "100%"} -->
 <!-- @connectivity: {prerequisite: "section_6.1", group: "7.1-7.2"} -->
 
@@ -782,7 +782,7 @@ public void bar() {
 
 ---
 
-### 7.2. حل الـ Bottleneck: توازي إضافي داخل المرحلة (Motivation for Parallelizing Actors)
+#### 7.2. حل الـ Bottleneck: توازي إضافي داخل المرحلة (Motivation for Parallelizing Actors)
 <!-- @render: {type: "diagram-first", visualization: "flowchart", coverage: "100%"} -->
 <!-- @connectivity: {prerequisite: "section_7.1", group: "7.1-7.2"} -->
 
@@ -828,7 +828,7 @@ public void bar() {
 
 ---
 
-## 8. توازي داخل دالة process()
+### 8. توازي داخل دالة process()
 
 #### 📍 أين نحن الآن؟
 فقرة وحدة (8.1) بتوضّح عملياً — بالكود — كيف نطبّق فكرة "توازي داخل المرحلة" اللي شرحناها نظرياً بالقسم 7.2.
@@ -836,7 +836,7 @@ public void bar() {
 #### ⬅️ الربط مع السابق
 بعد ما فهمنا نظرياً ليش بدنا توازي جوا المرحلة (7.2)، هلق منشوف صياغته الفعلية بـ Java باستخدام `finish`/`async` (أدوات تعرفنا عليها بالجزء الأول من المادة، `Task Parallelism`).
 
-### 8.1. استخدام finish/async جوا process()
+#### 8.1. استخدام finish/async جوا process()
 <!-- @render: {type: "code-first", visualization: "none", coverage: "100%"} -->
 <!-- @connectivity: {prerequisite: "section_7.2", group: "8.1"} -->
 
@@ -894,7 +894,7 @@ class ParallelActor extends Actor<Message> {
 
 ---
 
-## 9. تطبيقات كلاسيكية باستخدام Actors
+### 9. تطبيقات كلاسيكية باستخدام Actors
 
 #### 📍 أين نحن الآن؟
 هذه المجموعة (9.1 → 9.3) بتجمع ثلاث مسائل كلاسيكية بالتزامن — `Sieve of Eratosthenes`, `Producer-Consumer`, `Bounded Buffer` — وبتوضّح كيف تصميم Actors بيحلهم بشكل أنيق بدل الأقفال اليدوية.
@@ -902,7 +902,7 @@ class ParallelActor extends Actor<Message> {
 #### ⬅️ الربط مع السابق
 بعد ما جمعنا كل أدوات الـ Actor (بنية، دورة حياة، API، pipelining، توازي داخلي)، هلق منشوف كيف تُستخدم سوا لحل مسائل حقيقية معروفة بالتزامن.
 
-### 9.1. غربال إراتوستينس (Sieve of Eratosthenes) بالـ Actors
+#### 9.1. غربال إراتوستينس (Sieve of Eratosthenes) بالـ Actors
 <!-- @render: {type: "diagram-first", visualization: "flowchart", coverage: "100%"} -->
 <!-- @connectivity: {prerequisite: "section_8.1", group: "9.1-9.3"} -->
 
@@ -955,7 +955,7 @@ class ParallelActor extends Actor<Message> {
 
 ---
 
-### 9.2. مسألة المنتج والمستهلك (Producer-Consumer) بالـ Actors
+#### 9.2. مسألة المنتج والمستهلك (Producer-Consumer) بالـ Actors
 <!-- @render: {type: "code-first", visualization: "none", coverage: "100%"} -->
 <!-- @connectivity: {prerequisite: "section_9.1", group: "9.1-9.3"} -->
 
@@ -1010,7 +1010,7 @@ class ConsumerActor extends Actor<Object> {
 
 ---
 
-### 9.3. مسألة الـ Buffer المحدود (Bounded Buffer) بالـ Actors
+#### 9.3. مسألة الـ Buffer المحدود (Bounded Buffer) بالـ Actors
 <!-- @render: {type: "diagram-first", visualization: "flowchart", coverage: "100%"} -->
 <!-- @connectivity: {prerequisite: "section_9.2", group: "9.1-9.3"} -->
 
@@ -1072,7 +1072,7 @@ class ConsumerActor extends Actor<Object> {
 
 ---
 
-# ملخص شامل — Actor Concurrency Model
+## ملخص شامل — Actor Concurrency Model
 
 خلّينا نرجع لنقطة البداية: ليش أصلاً احتجنا Actor مع إنه عندنا أصلاً `Isolated` و `Object-based Isolation` من المحاضرات السابقة؟ الجواب البسيط: لأنه `Isolated` أداة **اختيارية** — لازم تتذكر تحطها بكل مكان بتلمس فيه البيانات المشتركة، وأي نسيان واحد بيفتح ثغرة. تخيل عندك متغير `CUR` بتحمي تعديله جوا method اسمها `GETandADD` بـ `isolated`، بس عندك method تانية اسمها `FOO` بتعدّل نفس المتغير مباشرة بدون أي حماية — النتيجة: تضارب محتمل رغم كل جهدك بالمكان التاني. هون بالضبط بيجي الحل: **خلّي العزل افتراضياً، مش خياراً**.
 
@@ -1110,7 +1110,7 @@ class ConsumerActor extends Actor<Object> {
 
 ---
 
-# الجزء الثالث: أسئلة اختيار من متعدد (MCQ)
+## الجزء الثالث: أسئلة اختيار من متعدد (MCQ)
 
 ### السؤال 1 (medium)
 **السؤال:** ليش استخدام `Isolated` بشكل يدوي وحده مش كافي لضمان أمان التزامن الكامل على بيانات مشتركة؟
@@ -1489,7 +1489,7 @@ System.out.println("EchoActor terminated.");
 
 ---
 
-# الجزء الرابع: أسئلة تصحيح الكود
+## الجزء الرابع: أسئلة تصحيح الكود
 
 ### سؤال تصحيح 1 (logic)
 ```java
@@ -1624,7 +1624,7 @@ void process(Message msg) {
 
 ---
 
-# الجزء الرابع (تكملة): ورقة المراجعة السريعة (Cheat Sheet)
+## الجزء الرابع (تكملة): ورقة المراجعة السريعة (Cheat Sheet)
 
 ### القواعد الذهبية
 | # | القاعدة |
@@ -1655,7 +1655,7 @@ void process(Message msg) {
 
 ---
 
-# الجزء الثالث (تكملة): بطاقات سؤال وجواب (Q&A Cards)
+## الجزء الثالث (تكملة): بطاقات سؤال وجواب (Q&A Cards)
 
 ### البطاقة 1
 **Q1:** ليش `Isolated` اليدوي غير كافٍ لضمان الأمان الكامل؟

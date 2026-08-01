@@ -5,12 +5,12 @@
 
 ---
 
-# الجزء الأول: ملخص منظم (اقرأ قبل المحاضرة!)
+## الجزء الأول: ملخص منظم (اقرأ قبل المحاضرة!)
 
-## 1. نظرة عامة على المحاضرة (Lecture Overview)
+### 1. نظرة عامة على المحاضرة (Lecture Overview)
 هاي المحاضرة بتشرح إزاي نوسّع فكرة الأقفال (`Locks`) من الشكل البسيط المهيكل (`structured locking` زي `synchronized`) إلى شكل غير مهيكل (`Unstructured Locking`) باستخدام `Condition` objects، يلي بيعطونا القدرة نعمل أكتر من "قائمة انتظار" (`waiting-set`) على نفس القفل. بعدين بتاخدنا لمثال عملي كامل — `List-Based Set` — لنشوف عملياً أربع استراتيجيات مختلفة لجعل الكائن متزامن وآمن: `Coarse-Grained`, `Read/Write`, `Fine-Grained`, و`Hand-over-Hand Locking`. بالنهاية بتحدد المحاضرة معايير نحكم فيها هل البرنامج المتزامن "صحيح" أصلاً، عن طريق مفهومي `Safety` و`Liveness`.
 
-## 2. أهداف التعلّم (Learning Objectives)
+### 2. أهداف التعلّم (Learning Objectives)
 بعد هاي المحاضرة رح تقدر:
 - تشرح ليش الأقفال المهيكلة (`synchronized`) مش كافية لما بدك أكتر من `waiting-set`، وتستخدم `Condition` objects كبديل.
 - تكتب `Bounded Buffer` كامل باستخدام `ReentrantLock` و`Condition` (`put`/`take`).
@@ -18,13 +18,13 @@
 - تقارن بين أربع استراتيجيات لتزامن الكائنات: `Coarse-Grained Mutual Exclusion`, `Read/Write Locking`, `Fine-Grained Locking`, `Hand-over-Hand Locking` — وتعرف امتى تستخدم كل وحدة.
 - تفرّق بشكل قاطع بين `Safety` و`Liveness`، وتعرّف `Deadlock-Freedom`, `Livelock-Freedom`, `Starvation-Freedom`, و`Bounded Wait`.
 
-## 3. المتطلبات السابقة (Prerequisites)
+### 3. المتطلبات السابقة (Prerequisites)
 - أساسيات `Thread` و`Runnable` بجافا.
 - مفهوم `synchronized` كقفل مهيكل (block-structured locking) — لازم تعرف `wait()`/`notify()`/`notifyAll()` كمقدمة لفهم `Condition.await()`/`signal()`/`signalAll()`.
 - أساسيات `Linked List` كبنية بيانات (pointer-based data structure).
 - مفهوم `Race Condition` من محاضرة سابقة عن التزامن.
 
-## 4. أهم المفاهيم (Main Concepts)
+### 4. أهم المفاهيم (Main Concepts)
 | المفهوم | بسطرين |
 | --- | --- |
 | `Condition Object` | كائن مرتبط بـ `Lock` بيسمح نعمل أكتر من `waiting-set` واحد على نفس القفل، بدل الـ `waiting-set` الوحيد اللي بيعطيه `synchronized`. |
@@ -36,10 +36,10 @@
 | `Safety vs Liveness` | `Safety` = الكود ما بينتج نتيجة غلط أبداً. `Liveness` = الكود بيضمن يوصل لنتيجة بوقت معقول (ما بيعلق للأبد). |
 | `Deadlock / Livelock / Starvation / Bounded Wait` | أربع مستويات متدرجة من ضمانات الـ `Liveness`، من الأضعف (تجنب التوقف الكامل) للأقوى (كل واحد بيوصل دوره بعدد محدد من "القفزات"). |
 
-## 5. الربط مع المحاضرات المجاورة (Connections)
+### 5. الربط مع المحاضرات المجاورة (Connections)
 هاي المحاضرة بتبني مباشرة على محاضرة سابقة عرّفتنا فيها على الأقفال المهيكلة (`synchronized`) ومشكلة الـ `Race Condition`. من غير فهم `synchronized` و`wait/notify` صعب تستوعب ليش احتجنا `Condition` objects أصلاً. المحاضرة الجاية غالباً رح تبني على `List-Based Set` وتاخدنا لتقنيات أذكى زي `Optimistic Locking` و`Lazy Synchronization` و`Lock-Free` structures — يعني هاي المحاضرة هي "الأساس اليدوي" قبل ما نشوف حلول أفضل بأداء أعلى.
 
-## 6. أشهر الأخطاء الشائعة (Common Mistakes)
+### 6. أشهر الأخطاء الشائعة (Common Mistakes)
 - الاعتقاد إنو `Fine-Grained Locking` دايماً أسرع من `Coarse-Grained` — بالحقيقة لو التزاحم (`contention`) قليل، القفل الواحد البسيط ممكن يكون أفضل (كما تقول الشريحة: "Don't underrate simplicity").
 - نسيان إنو `Hand-over-Hand Locking` مش `Two-Phase Locking` (يعني مش "خذ كل الأقفال أول، بعدين فك كلها آخر") — هون بتمسك قفلين بحد أقصى وبتفلت القديم أول ما تاخد الجديد.
 - الخلط بين `Deadlock` و`Livelock`: كلاهما "البرنامج ما بيتقدم"، لكن بـ `Deadlock` الخيوط متجمدة تماماً، وبـ `Livelock` الخيوط شغالة وبتكرر نفس الحركة بدون ما توصل لنتيجة.
@@ -48,11 +48,11 @@
 
 ---
 
-# الجزء الثاني: الشرح التفصيلي
+## الجزء الثاني: الشرح التفصيلي
 
-## 1. من الأقفال المهيكلة إلى غير المهيكلة (From Structured to Unstructured Locks)
+### 1. من الأقفال المهيكلة إلى غير المهيكلة (From Structured to Unstructured Locks)
 
-### 1.1. `Condition` Objects
+#### 1.1. `Condition` Objects
 <!-- @render: {type: "code-first", visualization: "none", coverage: "100%"} -->
 <!-- @connectivity: {prerequisite: "lecture_5_synchronized_wait_notify", group: "1.1"} -->
 
@@ -130,7 +130,7 @@ Condition empty = lock.newCondition();  // waiting-set خاص بحالة "الف
 
 ---
 
-### 1.2. تطبيق `Bounded Buffer` باستخدام `Condition` (`put` / `take`)
+#### 1.2. تطبيق `Bounded Buffer` باستخدام `Condition` (`put` / `take`)
 <!-- @render: {type: "code-first", visualization: "none", coverage: "100%"} -->
 <!-- @connectivity: {prerequisite: "1.1", group: "1.1"} -->
 
@@ -242,9 +242,9 @@ public Object take() throws InterruptedException {
 
 ---
 
-## 2. تقنيات الكائنات عالية التزامن (Techniques for Highly Concurrent Objects)
+### 2. تقنيات الكائنات عالية التزامن (Techniques for Highly Concurrent Objects)
 
-### 2.1. مثال: `List-Based Sets` (خوارزمية تسلسلية)
+#### 2.1. مثال: `List-Based Sets` (خوارزمية تسلسلية)
 <!-- @render: {type: "code-first", visualization: "diagram", coverage: "100%"} -->
 <!-- @connectivity: {prerequisite: "1.2", group: "2.1-2.6"} -->
 
@@ -363,7 +363,7 @@ S.contains(x)
 
 ---
 
-### 2.2. السماح بالوصول المتزامن — أين تنكسر الخوارزمية؟
+#### 2.2. السماح بالوصول المتزامن — أين تنكسر الخوارزمية؟
 <!-- @render: {type: "diagram-first", visualization: "flowchart", coverage: "100%"} -->
 <!-- @connectivity: {prerequisite: "2.1", group: "2.1-2.6"} -->
 
@@ -423,7 +423,7 @@ S.contains(x)
 
 ---
 
-### 2.3. `Coarse-Grained Mutual Exclusion`
+#### 2.3. `Coarse-Grained Mutual Exclusion`
 
 #### 💡 الفكرة الأساسية
 **أبسط حل: قفل واحد يغطي الكائن بالكامل — كل عملية (`add`, `remove`, `contains`) لازم تاخد نفس القفل قبل ما تلمس القائمة، وتفلته بعد ما تخلص.**
@@ -505,7 +505,7 @@ S.add(x)
 
 ---
 
-### 2.4. `Read/Write Locking`
+#### 2.4. `Read/Write Locking`
 
 #### 💡 الفكرة الأساسية
 **بدل قفل واحد بيمنع الكل، نستخدم نوعين من الأقفال: `read lock` يسمح لأكتر من قارئ بنفس الوقت، و`write lock` حصري بالكامل — مفيد لما القراءة (`contains`) أكتر بكتير من الكتابة (`add`/`remove`).**
@@ -575,7 +575,7 @@ update(i, x) {
 
 ---
 
-### 2.5. `Fine-Grained Locking`
+#### 2.5. `Fine-Grained Locking`
 
 #### 💡 الفكرة الأساسية
 **بدل قفل واحد على الكائن كله، نربط قفل بكل قطعة صغيرة من البيانات (كل عقدة Node مثلاً) — هيك عمليات على أجزاء منفصلة من القائمة بتقدر تشتغل بنفس الوقت فعلياً.**
@@ -624,7 +624,7 @@ update(i, x) {
 
 ---
 
-### 2.6. `Hand-over-Hand Locking`
+#### 2.6. `Hand-over-Hand Locking`
 
 #### 💡 الفكرة الأساسية
 **`Fine-Grained Locking` بس بدون Two-Phase: تمسك قفل العقدة الجاية (successor) قبل ما تفلت قفل العقدة الحالية (predecessor) — بحد أقصى قفلين بيدك بنفس اللحظة.**
@@ -699,7 +699,7 @@ update(i, x) {
 
 ---
 
-### 2.7. مثال متكامل: مقارنة الاستراتيجيات الأربع على نفس السيناريو
+#### 2.7. مثال متكامل: مقارنة الاستراتيجيات الأربع على نفس السيناريو
 <!-- @type: example-for-topics-2.3-to-2.6 -->
 
 #### 📌 السيناريو
@@ -716,9 +716,9 @@ update(i, x) {
 
 ---
 
-## 3. الأمان مقابل الحيوية (Safety vs Liveness)
+### 3. الأمان مقابل الحيوية (Safety vs Liveness)
 
-### 3.1. تعريف `Safety` و`Liveness`
+#### 3.1. تعريف `Safety` و`Liveness`
 <!-- @render: {type: "code-first", visualization: "none", coverage: "100%"} -->
 <!-- @connectivity: {prerequisite: "2.7", group: "3.1-3.4"} -->
 
@@ -763,7 +763,7 @@ update(i, x) {
 
 ---
 
-### 3.2. `Liveness` — المستويات المتدرجة
+#### 3.2. `Liveness` — المستويات المتدرجة
 
 #### 💡 الفكرة الأساسية
 **`Liveness` = قدرة البرنامج يتقدم بوقت معقول — وفيها أربع مستويات متدرجة من الضمانات: `Deadlock Freedom`, `Livelock Freedom`, `Starvation Freedom`, و`Bounded Wait`.**
@@ -805,7 +805,7 @@ update(i, x) {
 
 ---
 
-### 3.3. `Deadlock-Free Parallel Program Executions`
+#### 3.3. `Deadlock-Free Parallel Program Executions`
 
 #### 💡 الفكرة الأساسية
 **تنفيذ متوازي `deadlock-free` معناه ما فيه مهمة (task) بتضل عالقة للأبد وهي مستنية شرط معين ما رح يصير أبداً.**
@@ -867,7 +867,7 @@ public void leftHand() {
 
 ---
 
-### 3.4. `Livelock-Free Parallel Program`
+#### 3.4. `Livelock-Free Parallel Program`
 
 #### 💡 الفكرة الأساسية
 **`Livelock` بيصير لما اثنين أو أكتر من المهام بيكررو نفس التفاعل مع بعض بدون ما يتقدمو أبداً — حالة خاصة من عدم الإنهاء (nontermination)، بس الخيوط شغالة (مش متجمدة زي Deadlock).**
@@ -930,7 +930,7 @@ decrToNegTwo(AtomicInteger ai) {
 
 ---
 
-### 3.5. `Starvation-Free Parallel Program Executions` و`Bounded Wait`
+#### 3.5. `Starvation-Free Parallel Program Executions` و`Bounded Wait`
 
 #### 💡 الفكرة الأساسية
 **`Starvation Freedom` تضمن إنو مافي مهمة "محرومة" من التقدم للأبد، و`Bounded Wait` هي الشرط الأقوى: كل مهمة بتستنى عدد محدود بس من المهام التانية تاخد دورها قبلها.**
@@ -970,7 +970,7 @@ decrToNegTwo(AtomicInteger ai) {
 
 ---
 
-# الجزء الثاني (تكملة): الملخص الشامل — قراءة بديلة كاملة
+## الجزء الثاني (تكملة): الملخص الشامل — قراءة بديلة كاملة
 
 خلّينا نرجع لنقطة البداية ونحكيها بأسلوب تاني تماماً، من غير ما نتقيّد بترتيب العناوين — بس كل الأفكار الأساسية هون، بس مربوطة ببعض بخيط قصة واحد.
 
@@ -1000,7 +1000,7 @@ decrToNegTwo(AtomicInteger ai) {
 
 ---
 
-# الجزء الثالث: أسئلة اختيار من متعدد (MCQ)
+## الجزء الثالث: أسئلة اختيار من متعدد (MCQ)
 
 ### السؤال 1 (medium)
 **السؤال:** ما الفرق الأساسي بين `synchronized` و`Condition` من ناحية عدد قوائم الانتظار (`waiting-sets`)؟
@@ -1370,7 +1370,7 @@ counter++;                     counter++;
 
 ---
 
-# الجزء الرابع: أسئلة تصحيح الكود
+## الجزء الرابع: أسئلة تصحيح الكود
 
 ### سؤال تصحيح 1 (logic)
 ```java
@@ -1514,7 +1514,7 @@ synchronized (obj1) {
 
 ---
 
-# الجزء الثالث (تكملة): بطاقات سؤال وجواب (Q&A Cards)
+## الجزء الثالث (تكملة): بطاقات سؤال وجواب (Q&A Cards)
 
 ### البطاقة 1
 **Q1:** شو الفرق بين `wait/notify` بـ `synchronized` و`await/signal` بـ `Condition`؟
@@ -1570,9 +1570,9 @@ synchronized (obj1) {
 
 ---
 
-# الجزء الرابع (تكملة): ورقة المراجعة السريعة (Cheat Sheet)
+## الجزء الرابع (تكملة): ورقة المراجعة السريعة (Cheat Sheet)
 
-## القواعد الذهبية
+### القواعد الذهبية
 | # | القاعدة |
 | --- | --- |
 | 1 | كل استدعاء `lock.lock()` يجب أن يقابله `lock.unlock()` جوا `finally` block. |
@@ -1584,7 +1584,7 @@ synchronized (obj1) {
 | 7 | `Safety` = صحة النتيجة. `Liveness` = ضمان التقدم. الاثنين مطلوبين مع بعض، أي وحدة لوحدها مش كافية. |
 | 8 | ترتيب قوة ضمانات الـ `Liveness`: `Deadlock < Livelock < Starvation < Bounded Wait` (من الأضعف للأقوى). |
 
-## مرجع سريع للمصطلحات والصيغ
+### مرجع سريع للمصطلحات والصيغ
 | المصطلح | التعريف بسطر |
 | --- | --- |
 | `Condition` | غرفة انتظار مستقلة مرتبطة بقفل، بتدعم `await()`/`signal()`/`signalAll()`. |

@@ -4,7 +4,7 @@
 
 ---
 
-# الجزء الأول: ملخص منظم (اقرأ قبل المحاضرة!)
+## الجزء الأول: ملخص منظم (اقرأ قبل المحاضرة!)
 
 ### 1. lecture_overview — عن ماذا هذه المحاضرة؟
 
@@ -52,9 +52,9 @@
 
 ---
 
-# الجزء الثاني: الشرح التفصيلي
+## الجزء الثاني: الشرح التفصيلي
 
-## 1. المقدمة: التوازي مقابل التزامن (Parallel vs Concurrent)
+### 1. المقدمة: التوازي مقابل التزامن (Parallel vs Concurrent)
 <!-- @render: {type: "code-first", visualization: "none", coverage: "100%"} -->
 <!-- @connectivity: {prerequisite: "lecture_5", group: "1.1-1.3"} -->
 
@@ -64,7 +64,7 @@
 #### ⬅️ الربط مع السابق
 بالجزء الأول اتعلمنا `Parallelism`: كيف نقسّم شغل على أكتر من معالج عشان يخلص أسرع (`Task`, `Functional`, `Loop Parallelism`). هلق رح نشوف مفهوم مختلف تماماً بالهدف، بس متشابه بالأدوات: `Concurrency`.
 
-### 1.1. Parallel vs Concurrent
+#### 1.1. Parallel vs Concurrent
 <!-- @render: {type: "code-first", visualization: "none", coverage: "100%"} -->
 <!-- @connectivity: {prerequisite: "lecture_5", group: "1.1-1.3"} -->
 
@@ -109,7 +109,7 @@
 
 ---
 
-### 1.2. ليش نحتاج Concurrency؟ (فوائدها)
+#### 1.2. ليش نحتاج Concurrency؟ (فوائدها)
 <!-- @render: {type: "code-first", visualization: "none", coverage: "100%"} -->
 <!-- @connectivity: {prerequisite: "section_1.1", group: "1.1-1.3"} -->
 
@@ -149,7 +149,7 @@
 
 ---
 
-### 1.3. الـ Process
+#### 1.3. الـ Process
 <!-- @render: {type: "code-first", visualization: "none", coverage: "100%"} -->
 <!-- @connectivity: {prerequisite: "section_1.2", group: "1.1-1.3"} -->
 
@@ -187,7 +187,7 @@
 
 ---
 
-## 2. الخيوط والتعددية (Threads and Multithreading)
+### 2. الخيوط والتعددية (Threads and Multithreading)
 <!-- @render: {type: "code-first", visualization: "none", coverage: "100%"} -->
 <!-- @connectivity: {prerequisite: "section_1.3", group: "2.1-2.2"} -->
 
@@ -197,7 +197,7 @@
 #### ⬅️ الربط مع السابق
 بعد ما اتفقنا إنو الـ Process معزول تماماً، هلق منشوف إنو جوا نفس الـ Process ممكن يكون فيه أكتر من "نشاط" شغّال بنفس الوقت وبيتشاركو نفس الذاكرة — هاد هو الـ `Thread`.
 
-### 2.1. الخيط (Thread)
+#### 2.1. الخيط (Thread)
 <!-- @render: {type: "code-first", visualization: "none", coverage: "100%"} -->
 <!-- @connectivity: {prerequisite: "section_1.3", group: "2.1-2.2"} -->
 
@@ -238,7 +238,7 @@
 
 ---
 
-### 2.2. التعددية (Multithreading)
+#### 2.2. التعددية (Multithreading)
 <!-- @render: {type: "code-first", visualization: "none", coverage: "100%"} -->
 <!-- @connectivity: {prerequisite: "section_2.1", group: "2.1-2.2"} -->
 
@@ -277,7 +277,7 @@
 
 ---
 
-## 3. خيوط Java (Java Threads)
+### 3. خيوط Java (Java Threads)
 <!-- @render: {type: "code-first", visualization: "none", coverage: "100%"} -->
 <!-- @connectivity: {prerequisite: "section_2.2", group: "3.1-3.4"} -->
 
@@ -287,7 +287,7 @@
 #### ⬅️ الربط مع السابق
 بعد ما فهمنا نظرياً شو هو الـ Thread وكيف بيتوزع على الأنوية، هلق رح نشوف الـ API الفعلي بلغة Java اللي بيسمحلنا نصنع وندير هالخيوط.
 
-### 3.1. إنشاء Thread بلغة Java
+#### 3.1. إنشاء Thread بلغة Java
 <!-- @render: {type: "code-first", visualization: "none", coverage: "100%"} -->
 <!-- @connectivity: {prerequisite: "section_2.2", group: "3.1-3.4"} -->
 
@@ -347,7 +347,7 @@ public class Thread extends Object implements Runnable {
 
 ---
 
-### 3.2. الفرق بين run() و start()
+#### 3.2. الفرق بين run() و start()
 <!-- @render: {type: "code-first", visualization: "none", coverage: "100%"} -->
 <!-- @connectivity: {prerequisite: "section_3.1", group: "3.1-3.4"} -->
 
@@ -421,7 +421,7 @@ a.start();   // ✅ صحيح: يطلق خيط تنفيذ جديد فعلياً
 
 ---
 
-### 3.3. دورة حياة الخيط والإدارة (Lifecycle, start, join)
+#### 3.3. دورة حياة الخيط والإدارة (Lifecycle, start, join)
 <!-- @render: {type: "diagram-first", visualization: "flowchart", coverage: "100%"} -->
 <!-- @connectivity: {prerequisite: "section_3.2", group: "3.1-3.4"} -->
 
@@ -490,7 +490,7 @@ a.start();   // ✅ صحيح: يطلق خيط تنفيذ جديد فعلياً
 
 ---
 
-### 3.4. مثال متكامل: جمع مصفوفة بالتوازي (Two-way Parallel Array Sum)
+#### 3.4. مثال متكامل: جمع مصفوفة بالتوازي (Two-way Parallel Array Sum)
 <!-- @render: {type: "code-first", visualization: "none", coverage: "100%"} -->
 <!-- @connectivity: {prerequisite: "section_3.3", group: "3.1-3.4"} -->
 <!-- @type: example-for-topics-3.1-to-3.3 -->
@@ -560,7 +560,7 @@ return sum1 + sum2;
 
 ---
 
-## 4. Threads و HJ-lib، والـ Thread Pool
+### 4. Threads و HJ-lib، والـ Thread Pool
 <!-- @render: {type: "code-first", visualization: "none", coverage: "100%"} -->
 <!-- @connectivity: {prerequisite: "section_3.4", group: "4.1-4.2"} -->
 
@@ -570,7 +570,7 @@ return sum1 + sum2;
 #### ⬅️ الربط مع السابق
 بعد ما شفنا حل الجمع بالخيوط الخام، رح نشوف نفس المسألة تماماً لكن بأسلوب المكتبة اللي اتعلمناها بالجزء الأول من المادة.
 
-### 4.1. مقارنة: Threads الخام مقابل finish/async
+#### 4.1. مقارنة: Threads الخام مقابل finish/async
 <!-- @render: {type: "code-first", visualization: "none", coverage: "100%"} -->
 <!-- @connectivity: {prerequisite: "section_3.4", group: "4.1-4.2"} -->
 
@@ -633,7 +633,7 @@ return sum1 + sum2;
 
 ---
 
-### 4.2. HJlib Runtime وخيوط العمّال (Worker Threads)
+#### 4.2. HJlib Runtime وخيوط العمّال (Worker Threads)
 <!-- @render: {type: "diagram-first", visualization: "flowchart", coverage: "100%"} -->
 <!-- @connectivity: {prerequisite: "section_4.1", group: "4.1-4.2"} -->
 
@@ -686,7 +686,7 @@ return sum1 + sum2;
 
 ---
 
-## 5. أقفال Java (Java Locks)
+### 5. أقفال Java (Java Locks)
 <!-- @render: {type: "code-first", visualization: "none", coverage: "100%"} -->
 <!-- @connectivity: {prerequisite: "section_4.2", group: "5.1-5.5"} -->
 
@@ -696,7 +696,7 @@ return sum1 + sum2;
 #### ⬅️ الربط مع السابق
 بعد ما اتعلمنا كيف نصنع وندير خيوط (`start`, `join`)، هلق المشكلة الجديدة هي: إذا أكتر من خيط بدهم يوصلو لنفس البيانات المشتركة (زي `static fields` اللي شفناها بمثال HJlib)، كيف نمنع التضارب؟ الجواب: الأقفال.
 
-### 5.1. أنواع الأقفال: Structured و Unstructured
+#### 5.1. أنواع الأقفال: Structured و Unstructured
 <!-- @render: {type: "code-first", visualization: "none", coverage: "100%"} -->
 <!-- @connectivity: {prerequisite: "section_4.2", group: "5.1-5.5"} -->
 
@@ -739,7 +739,7 @@ return sum1 + sum2;
 
 ---
 
-### 5.2. Structured Locks بالتفصيل — monitorenter/monitorexit وEntry Set
+#### 5.2. Structured Locks بالتفصيل — monitorenter/monitorexit وEntry Set
 <!-- @render: {type: "diagram-first", visualization: "flowchart", coverage: "100%"} -->
 <!-- @connectivity: {prerequisite: "section_5.1", group: "5.1-5.5"} -->
 
@@ -791,7 +791,7 @@ return sum1 + sum2;
 
 ---
 
-### 5.3. مثال أولي: مسألة Bounded Buffer (بدون تنسيق انتظار بعد)
+#### 5.3. مثال أولي: مسألة Bounded Buffer (بدون تنسيق انتظار بعد)
 <!-- @render: {type: "code-first", visualization: "none", coverage: "100%"} -->
 <!-- @connectivity: {prerequisite: "section_5.2", group: "5.1-5.5"} -->
 
@@ -857,7 +857,7 @@ public synchronized Object remove() { // consumer
 
 ---
 
-### 5.4. wait(), notify(), notifyAll()
+#### 5.4. wait(), notify(), notifyAll()
 <!-- @render: {type: "diagram-first", visualization: "flowchart", coverage: "100%"} -->
 <!-- @connectivity: {prerequisite: "section_5.3", group: "5.1-5.5"} -->
 
@@ -930,7 +930,7 @@ public synchronized Object remove() { // consumer
 
 ---
 
-### 5.5. مثال متكامل: حل Bounded Buffer الكامل بـ wait() و notify()
+#### 5.5. مثال متكامل: حل Bounded Buffer الكامل بـ wait() و notify()
 <!-- @render: {type: "code-first", visualization: "none", coverage: "100%"} -->
 <!-- @connectivity: {prerequisite: "section_5.4", group: "5.1-5.5"} -->
 <!-- @type: example-for-topics-5.1-to-5.4 -->
@@ -997,7 +997,7 @@ public synchronized Object remove() { // consumer
 
 ---
 
-# ملخص شامل — Threads and Locks
+## ملخص شامل — Threads and Locks
 <!-- قراءة بديلة كاملة ومتساوية، 45-70 دقيقة، مسار امتحاني مستقل بذاته -->
 
 خلّينا نرجع لنقطة البداية: ليش أصلاً فتحنا موضوع جديد اسمه `Concurrent Programming` بعد ما خلّصنا `Parallel Programming`؟ الجواب البسيط: لأنو الاثنين بيسألو سؤالين مختلفين تماماً. `Parallel` بيسأل "كيف نخلص أسرع باستخدام كذا معالج؟" — متل خوارزمية `sort` بتوزع المصفوفة على خيوط، كل وحد ياخد جزء ويشتغل عليه لحاله. أما `Concurrent` بيسأل سؤال تاني كلياً: "لو أكتر من خيط بدهم يوصلو لنفس المورد بنفس اللحظة، كيف نضمن ما يصير فوضى؟" وهاد بالضبط سؤال المحاضرة كلها.
@@ -1032,7 +1032,7 @@ public synchronized Object remove() { // consumer
 
 ---
 
-# الجزء الثالث: أسئلة اختيار من متعدد (MCQ)
+## الجزء الثالث: أسئلة اختيار من متعدد (MCQ)
 
 ### السؤال 1 (medium)
 **السؤال:** ما الفرق الجوهري بين `Parallel` و `Concurrent`؟
@@ -1346,7 +1346,7 @@ counter++;                     counter++;
 
 ---
 
-# الجزء الرابع: أسئلة تصحيح الكود
+## الجزء الرابع: أسئلة تصحيح الكود
 
 ### سؤال تصحيح 1 (logic)
 ```java
@@ -1422,9 +1422,9 @@ b.join();
 
 ---
 
-# الجزء الرابع: ورقة المراجعة السريعة (Cheat Sheet)
+## الجزء الرابع: ورقة المراجعة السريعة (Cheat Sheet)
 
-## القواعد الذهبية
+### القواعد الذهبية
 
 | # | القاعدة |
 | --- | --- |
@@ -1437,7 +1437,7 @@ b.join();
 | 7 | `wait()` يجب أن تكون دائماً داخل حلقة `while` وليس `if`. |
 | 8 | `notify()` تصحي خيطاً عشوائياً واحداً فقط؛ `notifyAll()` تصحي الجميع — استخدمها عند وجود أنواع خيوط متعددة منتظرة. |
 
-## مرجع سريع للمصطلحات
+### مرجع سريع للمصطلحات
 
 | المصطلح | التعريف بسطر |
 | --- | --- |
@@ -1458,7 +1458,7 @@ b.join();
 
 ---
 
-# الجزء الثالث: بطاقات سؤال وجواب (Q&A Cards)
+## الجزء الثالث: بطاقات سؤال وجواب (Q&A Cards)
 
 ### البطاقة 1
 **Q1:** شو الفرق بين `Parallel` و `Concurrent`؟
@@ -1514,7 +1514,7 @@ b.join();
 
 ---
 
-## ملاحظة حول محتوى غير قابل للتمثيل بالكامل بصيغة نصية
+### ملاحظة حول محتوى غير قابل للتمثيل بالكامل بصيغة نصية
 
 #### ملاحظة:
 بعض الرسومات بالمحاضرة الأصلية (مثل الشعار البصري لمخطط `Systems = Objects + Activities` بالصفحة 6، والرسمة اللونية لتوزيع `Thread A-G` على `Core 0-3` بالصفحة 8) هي رسومات توضيحية بصرية بحتة تم تمثيل محتواها المنطقي كاملاً بجداول ومخططات `flowchart` أعلاه، لكن الشكل الفني الدقيق (الألوان، الأسهم المنحنية) موجود فقط بالملف الأصلي (PDF) إذا رغبت بمراجعته بصرياً.

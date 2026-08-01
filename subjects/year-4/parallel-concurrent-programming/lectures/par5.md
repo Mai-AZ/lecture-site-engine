@@ -3,7 +3,7 @@
 
 ---
 
-# الجزء الأول: ملخص منظم (اقرأ قبل المحاضرة!)
+## الجزء الأول: ملخص منظم (اقرأ قبل المحاضرة!)
 
 ### 1. lecture_overview — عن ماذا هذه المحاضرة؟
 هاي المحاضرة بتكمل موضوع أدوات التزامن اللي بدأنا فيه بالمحاضرات السابقة (`Barrier`)، وبتوريك كيف تخلي التزامن بين الخيوط **أذكى وأسرع** من خلال `Phasers`، وبعدين بتستخدم نفس الفكرة لبناء نمطين مهمين من التوازي: `Pipeline Parallelism` (خط الإنتاج) و `Data Flow Parallelism` (تدفق البيانات حسب الاعتماديات مش حسب الترتيب).
@@ -43,9 +43,9 @@
 
 ---
 
-# الجزء الثاني: الشرح التفصيلي
+## الجزء الثاني: الشرح التفصيلي
 
-## 1. Split-Phase Barriers with Java Phasers (الحواجز المقسومة بمرحلتين)
+### 1. Split-Phase Barriers with Java Phasers (الحواجز المقسومة بمرحلتين)
 
 #### 📍 أين نحن الآن؟
 هاي المجموعة (1.1 → 1.2) بتقدّم فكرة جديدة كلياً: الحاجز التقليدي (`Barrier`) ممكن يتقسم لخطوتين منفصلتين بدل خطوة وحدة، وهاد بيفتح فرصة لأداء أفضل.
@@ -53,7 +53,7 @@
 #### ⬅️ الربط مع السابق
 بالمحاضرة السابقة اتعلمنا إنو `Barrier` بيوقف كل الخيوط عند نقطة واحدة لحد ما توصل كلها. هون رح نشوف إنو هالتوقف الكامل مش دايماً ضروري — ممكن نأجل جزء من الانتظار ونخلي شغل مستقل يصير بالتوازي معه.
 
-### 1.1. لماذا نقسم الحاجز؟ (`Fuzzy Barrier`)
+#### 1.1. لماذا نقسم الحاجز؟ (`Fuzzy Barrier`)
 <!-- @render: {type: "code-first", visualization: "none", coverage: "95%"} -->
 <!-- @connectivity: {prerequisite: "lecture_4_barrier", group: "1.1-1.2"} -->
 
@@ -109,7 +109,7 @@ forall (i : [0:n-1]) {
 
 ---
 
-### 1.2. `ph.arrive()` و `ph.awaitAdvance()` — الـ API الفعلي
+#### 1.2. `ph.arrive()` و `ph.awaitAdvance()` — الـ API الفعلي
 <!-- @render: {type: "code-first", visualization: "none", coverage: "100%"} -->
 <!-- @connectivity: {prerequisite: "section_1.1", group: "1.1-1.2"} -->
 
@@ -172,7 +172,7 @@ forall (i : [0:n-1]) {
 
 ---
 
-## 2. Point-to-Point Synchronization (التزامن نقطة-لنقطة)
+### 2. Point-to-Point Synchronization (التزامن نقطة-لنقطة)
 
 #### 📍 أين نحن الآن؟
 هاي المجموعة (2.1) بتاخد فكرة `Phaser` وبتوسعها: بدل `Phaser` واحد مشترك بين كل الخيوط، منستخدم **`Phaser` منفصل لكل خيط**، فيصير كل خيط ينتظر بس اللي فعلاً محتاجه.
@@ -180,7 +180,7 @@ forall (i : [0:n-1]) {
 #### ⬅️ الربط مع السابق
 بالفقرة 1 تعلمنا نقسم الحاجز لمرحلتين لنفس مجموعة الخيوط. هلق الخطوة التالية أبعد: ليش أصلاً نخلي **كل** الخيوط تتزامن مع بعض؟ بعض الخيوط أصلاً مش محتاجة تنتظر بعضها.
 
-### 2.1. مثال Point-to-Point: تقليل الـ Span
+#### 2.1. مثال Point-to-Point: تقليل الـ Span
 <!-- @render: {type: "code-first", visualization: "none", coverage: "90%"} -->
 <!-- @connectivity: {prerequisite: "section_1.2", group: "2.1"} -->
 
@@ -252,7 +252,7 @@ forall (i : [0:n-1]) {
 
 ---
 
-## 3. Example of Parallel Iterative Averaging (مثال التقريب التكراري المتوازي)
+### 3. Example of Parallel Iterative Averaging (مثال التقريب التكراري المتوازي)
 
 #### 📍 أين نحن الآن؟
 هاي المجموعة (3.1) بتاخد فكرة `Point-to-Point Synchronization` وبتطبقها على مسألة عددية واقعية — حساب متوسط عناصر مصفوفة بشكل تكراري.
@@ -260,7 +260,7 @@ forall (i : [0:n-1]) {
 #### ⬅️ الربط مع السابق
 بفقرة 2 شفنا `Point-to-Point` بمثال مجرد (Task 0/1/2). هلق رح نشوف كيف نفس الفكرة بتتطبق على مصفوفة كبيرة فيها اعتماديات بين **الجيران** بس، مش بين كل العناصر.
 
-### 3.1. Barrier مقابل Point-to-Point بمسألة 1D Iterative Averaging
+#### 3.1. Barrier مقابل Point-to-Point بمسألة 1D Iterative Averaging
 <!-- @render: {type: "diagram-first", visualization: "flowchart", coverage: "95%"} -->
 <!-- @connectivity: {prerequisite: "section_2.1", group: "3.1"} -->
 
@@ -357,7 +357,7 @@ forall (i : [1:n-1]) {
 
 ---
 
-## 4. Pipeline Parallelism (التوازي بنمط خط الإنتاج)
+### 4. Pipeline Parallelism (التوازي بنمط خط الإنتاج)
 
 #### 📍 أين نحن الآن؟
 هاي المجموعة (4.1 → 4.3) بتقدّم نمط توازي جديد كلياً — `Pipeline` — وبتستخدم فيه بالضبط أداة `Point-to-Point Synchronization` اللي اتعلمناها بالفقرتين قبل.
@@ -365,7 +365,7 @@ forall (i : [1:n-1]) {
 #### ⬅️ الربط مع السابق
 لاحظ إنو نمط `Point-to-Point` بمثال `Iterative Averaging` كان بين **جيران متجاورين مكانياً**. بـ `Pipeline`، رح نشوف نفس نمط "انتظار الجار بس" لكن بين **مراحل معالجة متتالية**، مش عناصر مصفوفة.
 
-### 4.1. البنية العامة لـ 1D Pipeline
+#### 4.1. البنية العامة لـ 1D Pipeline
 <!-- @render: {type: "diagram-first", visualization: "flowchart", coverage: "100%"} -->
 <!-- @connectivity: {prerequisite: "section_3.1", group: "4.1-4.3"} -->
 
@@ -420,7 +420,7 @@ forall (i : [1:n-1]) {
 
 ---
 
-### 4.2. Timing Diagram و المعادلات: Work / CPL / Ideal Parallelism
+#### 4.2. Timing Diagram و المعادلات: Work / CPL / Ideal Parallelism
 <!-- @render: {type: "equation-first", visualization: "none", coverage: "100%"} -->
 <!-- @connectivity: {prerequisite: "section_4.1", group: "4.1-4.3"} -->
 
@@ -482,7 +482,7 @@ $$PAR = \frac{WORK}{CPL} = \frac{n \times p}{n + p - 1}$$
 
 ---
 
-### 4.3. تطبيق Phasers على مراحل الـ Pipeline
+#### 4.3. تطبيق Phasers على مراحل الـ Pipeline
 <!-- @render: {type: "code-first", visualization: "none", coverage: "100%"} -->
 <!-- @connectivity: {prerequisite: "section_4.2", group: "4.1-4.3"} -->
 
@@ -531,7 +531,7 @@ while (there is an input to be processed) {
 
 ---
 
-## 5. Data Flow Parallelism (التوازي بنمط تدفق البيانات)
+### 5. Data Flow Parallelism (التوازي بنمط تدفق البيانات)
 
 #### 📍 أين نحن الآن؟
 هاي المجموعة (5.1 → 5.2) بتقدّم آخر مفهوم بالمحاضرة — نموذج تزامن مختلف كلياً بيعتمد على **رسمة اعتماديات** (`Computation Graph`) بدل تحديد ترتيب صريح للتنفيذ.
@@ -539,7 +539,7 @@ while (there is an input to be processed) {
 #### ⬅️ الربط مع السابق
 كل أدوات التزامن اللي شفناها لحد هلق (`Phaser`, `Point-to-Point`, `Pipeline`) بتحدد **متى** ينتظر الخيط بشكل صريح بالكود. بـ `Data Flow`، منعكس الفكرة: منعرّف بس **شو بيعتمد على شو** (الرسمة)، والنظام هو يلي بيرتب التنفيذ تلقائياً.
 
-### 5.1. Computation Graph و asyncAwait
+#### 5.1. Computation Graph و asyncAwait
 <!-- @render: {type: "diagram-first", visualization: "flowchart", coverage: "100%"} -->
 <!-- @connectivity: {prerequisite: "section_4.3", group: "5.1-5.2"} -->
 
@@ -625,7 +625,7 @@ asyncAwait(B, () -> {/* Task E */} );     // Only execute task after event B is 
 
 ---
 
-### 5.2. ترتيب الأسطر غير مهم — وخطر "الـ Deadlock" بنسيان put()
+#### 5.2. ترتيب الأسطر غير مهم — وخطر "الـ Deadlock" بنسيان put()
 <!-- @render: {type: "code-first", visualization: "none", coverage: "100%"} -->
 <!-- @connectivity: {prerequisite: "section_5.1", group: "5.1-5.2"} -->
 
@@ -675,9 +675,9 @@ async( () -> {/* Task B */; B.put(); } ); // Complete task and trigger event B
 
 ---
 
-# الجزء الثاني (تكملة): ملخص شامل — قراءة بديلة كاملة
+## الجزء الثاني (تكملة): ملخص شامل — قراءة بديلة كاملة
 
-## ملخص شامل — Data Flow Synchronization and Pipelining
+### ملخص شامل — Data Flow Synchronization and Pipelining
 
 خلّينا نبلّش من نقطة البداية: ليش أصلاً محتاجين نطوّر أدوات تزامن أذكى من `Barrier` العادي؟ لأنو `Barrier` — رغم بساطته — عنده مشكلة: بيوقف **كل** الخيوط عند نقطة واحدة، حتى لو بعضها ما إله علاقة ببعض. هاي المحاضرة كلها قصة تحسين هالفكرة، خطوة-خطوة، لحد ما توصل لنموذج مختلف كلياً بآخرها.
 
@@ -703,7 +703,7 @@ async( () -> {/* Task B */; B.put(); } ); // Complete task and trigger event B
 
 ---
 
-# الجزء الثالث: أسئلة اختيار من متعدد (MCQ)
+## الجزء الثالث: أسئلة اختيار من متعدد (MCQ)
 
 ### السؤال 1 (medium)
 **السؤال:** شو الفرق الأساسي بين `ph.arriveAndAwaitAdvance()` و استخدام `ph.arrive()` منفردة؟
@@ -1017,7 +1017,7 @@ forall (i : [0:n-1]) {
 
 ---
 
-# الجزء الثالث (تكملة): بطاقات سؤال وجواب (Q&A Cards)
+## الجزء الثالث (تكملة): بطاقات سؤال وجواب (Q&A Cards)
 
 ### البطاقة 1
 **Q1:** شو الفرق بين `ph.arrive()` و `ph.arriveAndAwaitAdvance()`؟
@@ -1073,7 +1073,7 @@ forall (i : [0:n-1]) {
 
 ---
 
-# الجزء الرابع: أسئلة تصحيح الكود
+## الجزء الرابع: أسئلة تصحيح الكود
 
 ### سؤال تصحيح 1 (logic)
 ```java
@@ -1146,9 +1146,9 @@ asyncAwait(A, () -> {/* Task C */} );
 
 ---
 
-# الجزء الرابع (تكملة): ورقة المراجعة السريعة (Cheat Sheet)
+## الجزء الرابع (تكملة): ورقة المراجعة السريعة (Cheat Sheet)
 
-## القواعد الذهبية
+### القواعد الذهبية
 
 | # | القاعدة |
 | --- | --- |
@@ -1161,7 +1161,7 @@ asyncAwait(A, () -> {/* Task C */} );
 | 7 | ترتيب أسطر `async`/`asyncAwait` بالكود لا يؤثر على المعنى — الاعتماديات فقط هي المهمة |
 | 8 | نسيان `.put()` لحدث = عالقة أبدية (شكل من `Deadlock`)، بدون أي `Exception` |
 
-## مرجع سريع للمصطلحات والصيغ
+### مرجع سريع للمصطلحات والصيغ
 
 | المصطلح | التعريف بسطر |
 | --- | --- |

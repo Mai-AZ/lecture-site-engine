@@ -5,7 +5,7 @@
 
 ---
 
-# الجزء الأول: ملخص منظم (اقرأ قبل المحاضرة!)
+## الجزء الأول: ملخص منظم (اقرأ قبل المحاضرة!)
 
 ### 1. lecture_overview
 هذه المحاضرة بتقدّم **Functional Parallelism** كأسلوب بديل للتوازي، مبني على مبادئ `Functional Programming` (تجنّب الحالة المشتركة والتعديل عليها). بتشرح رحلة الأفكار: من `Lazy Evaluation` (تأجيل الحساب)، لـ `Futures` (مهام بترجع قيمة)، لـ `Memoization` (تذكّر النتائج)، وصولاً لـ `Java Streams` كتطبيق عملي شامل لكل هالأفكار سوا، وأخيراً علاقة كل هذا بمشكلة `Data Race` ومفهوم `Determinism`.
@@ -48,13 +48,13 @@
 
 ---
 
-# الجزء الثاني: الشرح التفصيلي
+## الجزء الثاني: الشرح التفصيلي
 
-## 1. مقدمة (Introduction)
+### 1. مقدمة (Introduction)
 <!-- @render: {type: "code-first", visualization: "none", coverage: "100%"} -->
 <!-- @connectivity: {prerequisite: "lecture_2", group: "1.1"} -->
 
-### 1.1. ليش نحتاج Functional Parallelism أصلاً؟
+#### 1.1. ليش نحتاج Functional Parallelism أصلاً؟
 
 #### 📍 أين نحن الآن؟
 هاي أول نقطة بالمحاضرة، وهي بوابة الدخول لكل الأفكار الجاية: `Lazy Evaluation`, `Futures`, `Memoization`, `Streams` — كلها نابعة من فلسفة واحدة هي `Functional Programming`.
@@ -93,11 +93,11 @@
 
 ---
 
-## 2. البرمجة الوظيفية (Functional Programming)
+### 2. البرمجة الوظيفية (Functional Programming)
 <!-- @render: {type: "code-first", visualization: "none", coverage: "95%"} -->
 <!-- @connectivity: {prerequisite: "section_1.1", group: "2.1-2.2"} -->
 
-### 2.1. ما هي Functional Programming؟ وليش نستخدمها؟
+#### 2.1. ما هي Functional Programming؟ وليش نستخدمها؟
 
 #### 📍 أين نحن الآن؟
 هاي المجموعة (2.1) بتعرّف `Functional Programming` كـ `Programming Paradigm` (نمط برمجة)، وبتشرح خصائصها الأساسية، وليش هاي الخصائص بالذات هي اللي بتخليها مناسبة للتوازي.
@@ -162,11 +162,11 @@
 
 ---
 
-## 3. الحساب الكسول (Lazy Computation)
+### 3. الحساب الكسول (Lazy Computation)
 <!-- @render: {type: "code-first", visualization: "none", coverage: "95%"} -->
 <!-- @connectivity: {prerequisite: "section_2.1", group: "3.1-3.3"} -->
 
-### 3.1. Lazy Evaluation: ليش نأجل الحساب؟
+#### 3.1. Lazy Evaluation: ليش نأجل الحساب؟
 
 #### 📍 أين نحن الآن؟
 هاي المجموعة (3.1 → 3.3) بتشرح فكرة `Lazy Evaluation` من الأساس، وبعدين بتوريك تطبيقها العملي بـ `Lazy Memo`، وأخيراً كيف هاي الفكرة البسيطة بتتحول لبذرة التوازي.
@@ -215,7 +215,7 @@ Log.i(TAG, () -> "current input: " + input.toString()); // lazy
 
 ---
 
-### 3.2. Lazy Memo: تذكّر النتيجة بعد حسابها مرة وحدة
+#### 3.2. Lazy Memo: تذكّر النتيجة بعد حسابها مرة وحدة
 
 #### 💡 الفكرة الأساسية
 **`Lazy Memo` بتحسب القيمة مرة وحدة بس عند أول طلب، وبعدين بتحفظها عشان أي طلب لاحق يرجعها فوراً بدون إعادة حساب.**
@@ -280,7 +280,7 @@ public class Lazy<T> {
 
 ---
 
-### 3.3. من Laziness إلى Parallelism
+#### 3.3. من Laziness إلى Parallelism
 
 #### 💡 الفكرة الأساسية
 **بدل ما ننتظر حتى اللحظة اللي نحتاج فيها القيمة، ممكن نبلّش حسابها بخيط/معالج تاني من الآن، ونروح نعمل شغل تاني بالوقت هذا.**
@@ -313,11 +313,11 @@ public class Lazy<T> {
 
 ---
 
-## 4. Futures: مهام مع قيمة راجعة
+### 4. Futures: مهام مع قيمة راجعة
 <!-- @render: {type: "code-first", visualization: "none", coverage: "95%"} -->
 <!-- @connectivity: {prerequisite: "section_3.3", group: "4.1-4.4"} -->
 
-### 4.1. ما هو Future؟
+#### 4.1. ما هو Future؟
 
 #### 📍 أين نحن الآن؟
 هاي المجموعة (4.1 → 4.4) بتشرح `Future` بالتفصيل: تعريفه، مثال عملي بسيط، خصائصه الرسمية، والفرق التقني عن `Lazy Memo`، ووصولاً لتطبيقه بـ Java's Fork/Join Framework.
@@ -417,7 +417,7 @@ public static void main(String[] args) throws ExecutionException, InterruptedExc
 
 ---
 
-### 4.2. خصائص Future الرسمية
+#### 4.2. خصائص Future الرسمية
 
 #### 💡 الفكرة الأساسية
 **`Future` بيشبه `Lazy Memo` بمعظم خصائصه، إلا بفرق جوهري واحد: إمكانية التنفيذ المتوازي.**
@@ -462,7 +462,7 @@ public static void main(String[] args) throws ExecutionException, InterruptedExc
 
 ---
 
-### 4.3. Future Tasks: العمليتان الأساسيتان و MultiLisp
+#### 4.3. Future Tasks: العمليتان الأساسيتان و MultiLisp
 
 #### 💡 الفكرة الأساسية
 **`Future Task` هو مفهوم بسيط بس قوي جداً بالتوازي والتزامن، وله عمليتان أساسيتان محددتان بدقة: `Assignment` و `Blocking read`.**
@@ -505,7 +505,7 @@ public static void main(String[] args) throws ExecutionException, InterruptedExc
 
 ---
 
-### 4.4. مثال متكامل: جمع مصفوفة بالتوازي باستخدام Futures
+#### 4.4. مثال متكامل: جمع مصفوفة بالتوازي باستخدام Futures
 
 #### 💡 الفكرة الأساسية
 **نفس مسألة الجمع اللي شفناها بمحاضرات سابقة بـ `async`/`finish`، بس هلق نحسب النتيجة كـ قيمة راجعة من `Future` مباشرة بدل متغيّر مشترك.**
@@ -575,11 +575,11 @@ int total = sum1.get() + sum2;
 
 ---
 
-## 5. Futures في Java's Fork/Join Framework
+### 5. Futures في Java's Fork/Join Framework
 <!-- @render: {type: "code-first", visualization: "none", coverage: "95%"} -->
 <!-- @connectivity: {prerequisite: "section_4.4", group: "5.1-5.2"} -->
 
-### 5.1. الفرق بين Future Task و Regular Task بالـ FJ Framework
+#### 5.1. الفرق بين Future Task و Regular Task بالـ FJ Framework
 
 #### 📍 أين نحن الآن؟
 هاي المجموعة (5.1 → 5.2) بتاخد مفهوم `Future` النظري وتربطه مباشرة بـ Java's Fork/Join Framework العملي، من خلال `RecursiveTask` بدل `RecursiveAction`.
@@ -620,7 +620,7 @@ int total = sum1.get() + sum2;
 
 ---
 
-### 5.2. مثال متكامل: Recursive Array Sum — تسلسلي مقابل متوازي
+#### 5.2. مثال متكامل: Recursive Array Sum — تسلسلي مقابل متوازي
 
 #### 💡 الفكرة الأساسية
 **نمط `divide-and-conquer` التسلسلي المعروف بيتحول لنسخة متوازية بمجرد تغليف الاستدعاءات المتفرّعة بـ `future()` بدل استدعاء مباشر، ثم `.get()` لكل واحد بدل استخدام النتيجة مباشرة.**
@@ -691,11 +691,11 @@ int sum = computeSum(X, 0, X.length - 1); // main
 
 ---
 
-## 6. الحفظ التذكّري (Memoization)
+### 6. الحفظ التذكّري (Memoization)
 <!-- @render: {type: "code-first", visualization: "none", coverage: "90%"} -->
 <!-- @connectivity: {prerequisite: "section_5.2", group: "6.1"} -->
 
-### 6.1. Memoization بالتوازي: من Lookup إلى Future.get()
+#### 6.1. Memoization بالتوازي: من Lookup إلى Future.get()
 
 #### 📍 أين نحن الآن؟
 هاي الفقرة بتشرح `Memoization` كتقنية عامة، وبعدين توريك كيف تتحول بسهولة لنسخة متوازية باستخدام `Futures`.
@@ -740,11 +740,11 @@ int sum = computeSum(X, 0, X.length - 1); // main
 
 ---
 
-## 7. من Laziness إلى Parallelism: Java Streams
+### 7. من Laziness إلى Parallelism: Java Streams
 <!-- @render: {type: "code-first", visualization: "none", coverage: "95%"} -->
 <!-- @connectivity: {prerequisite: "section_6.1", group: "7.1-7.6"} -->
 
-### 7.1. فكرة Streams: تعميم Laziness على مجموعات كاملة
+#### 7.1. فكرة Streams: تعميم Laziness على مجموعات كاملة
 
 #### 📍 أين نحن الآن؟
 هاي أكبر مجموعة بالمحاضرة (7.1 → 7.6)، بتغطي `Java Streams` من الفكرة العامة، لإنشاء الـ Streams (منتهية ولا نهائية)، لأنواعها البدائية، لخط أنابيب المعالجة (`Pipeline`)، لتفصيل العمليات الوسيطة والنهائية، ووصولاً لتشغيلها بالتوازي.
@@ -787,7 +787,7 @@ int sum = computeSum(X, 0, X.length - 1); // main
 
 ---
 
-### 7.2. إنشاء Streams (منتهية ولا نهائية)
+#### 7.2. إنشاء Streams (منتهية ولا نهائية)
 
 #### 💡 الفكرة الأساسية
 **فيه أكتر من طريقة لإنشاء `Stream`: من لائحة فاضية، من `Collection` موجودة، من مصفوفة، أو حتى `Stream` لا نهائي.**
@@ -849,7 +849,7 @@ var fiveInts = streamIterated.limit(5); // Stream<Integer>. Runs in constant tim
 
 ---
 
-### 7.3. Streams للأنواع البدائية (Primitive Types)
+#### 7.3. Streams للأنواع البدائية (Primitive Types)
 
 #### 💡 الفكرة الأساسية
 **`Stream<T>` ما ينفع مباشرة للأنواع البدائية (`int`, `long`, `double`)، فجافا وفّرت أنواع خاصة: `IntStream`, `LongStream`, `DoubleStream`.**
@@ -897,7 +897,7 @@ var alsoFiveIntsStream = random.ints().limit(5); // IntStream of five random int
 
 ---
 
-### 7.4. Stream Pipeline: Source → Intermediate → Terminal
+#### 7.4. Stream Pipeline: Source → Intermediate → Terminal
 
 #### 💡 الفكرة الأساسية
 **كل `Stream Pipeline` بيتكون من ثلاثة أجزاء: مصدر (`source`)، عمليات وسيطة كسولة (`intermediate operations`)، وعملية نهائية واحدة بتحرّك التنفيذ (`terminal operation`).**
@@ -944,7 +944,7 @@ long size =
 
 ---
 
-### 7.5. العمليات الوسيطة والنهائية بالتفصيل
+#### 7.5. العمليات الوسيطة والنهائية بالتفصيل
 
 #### 💡 الفكرة الأساسية
 **العمليات الوسيطة (`intermediate`) كلها كسولة ولا تنفّذ شيء لحدها، أما العمليات النهائية (`terminal`) هي اللي بتحرّك التنفيذ الفعلي — وكلها بالنهاية حالات خاصة من `reduce()`.**
@@ -1045,7 +1045,7 @@ OWLS
 
 ---
 
-### 7.6. Parallel Streams: تفعيل التنفيذ المتوازي
+#### 7.6. Parallel Streams: تفعيل التنفيذ المتوازي
 
 #### 💡 الفكرة الأساسية
 **`Stream.parallel()` بس بتغيّر "علم" (`flag`) داخل الـ Stream يطلب من جافا تنفيذ العمليات بالتوازي — بدون أي ضمان فعلي بحصول ذلك، ولا بترتيب معين للعمليات.**
@@ -1109,11 +1109,11 @@ OWLS
 
 ---
 
-## 8. Data Race و Determinism
+### 8. Data Race و Determinism
 <!-- @render: {type: "code-first", visualization: "none", coverage: "90%"} -->
 <!-- @connectivity: {prerequisite: "section_7.6", group: "8.1-8.4"} -->
 
-### 8.1. تحديات البرمجة المتوازية: Correctness, Performance, Portability
+#### 8.1. تحديات البرمجة المتوازية: Correctness, Performance, Portability
 
 #### 📍 أين نحن الآن؟
 هاي أخر مجموعة بالمحاضرة (8.1 → 8.4)، وبترجعنا لسؤال جوهري: بعد كل الأدوات اللي تعلمناها، شو هي التحديات الحقيقية اللي بتواجه أي برنامج متوازي، وكيف ترتبط بمفهوم `Determinism`؟
@@ -1158,7 +1158,7 @@ OWLS
 
 ---
 
-### 8.2. مثال على Data Race
+#### 8.2. مثال على Data Race
 
 #### 💡 الفكرة الأساسية
 **`Data Race` بتصير لما خيطين يقدرو يوصلو (يقروا أو يكتبو) لنفس المتغيّر المشترك بدون أي تنسيق زمني بينهم، بحيث ترتيب الوصول غير مضمون.**
@@ -1213,7 +1213,7 @@ OWLS
 
 ---
 
-### 8.3. Functional Determinism مقابل Structural Determinism
+#### 8.3. Functional Determinism مقابل Structural Determinism
 
 #### 💡 الفكرة الأساسية
 **برنامج متوازي `functionally deterministic` لو دايماً بيحسب نفس الجواب لنفس المدخل، و`structurally deterministic` لو دايماً بينتج نفس `Computation Graph` لنفس المدخل — وغياب الـ `Data Race` بيضمن الاثنين معاً.**
@@ -1261,7 +1261,7 @@ OWLS
 
 ---
 
-### 8.4. مثال متكامل: البحث المتوازي عن نمط بنص و Benign Nondeterminism
+#### 8.4. مثال متكامل: البحث المتوازي عن نمط بنص و Benign Nondeterminism
 
 #### 💡 الفكرة الأساسية
 **تطبيق التوازي على خوارزمية بحث كلاسيكية بيوضح خمس نسخ مختلفة، بعضها متعمّد التصميم فيه `Data Race` "حميد" (`benign`) لأنه ما بيأثر على صحة النتيجة النهائية عملياً.**
@@ -1385,7 +1385,7 @@ print index
 
 ---
 
-# ملخص شامل — Functional Parallelism
+## ملخص شامل — Functional Parallelism
 
 خلّينا نرجع لنقطة البداية: ليش أصلاً احتجنا موضوع جديد اسمه "Functional Parallelism"؟ بالمحاضرات السابقة تعلمنا `async` و `finish`، وهي أدوات قوية، بس فيها فخ كبير: بتخليك تعدّل متغيرات مشتركة من جوا التاسكات، وأي تعديل مشترك زي هيك هو أرض خصبة لأخطاء صعبة الاكتشاف زي `Data Race`. فبدل ما نحارب هالمشكلة بعد ما تصير، فكرة هالمحاضرة إنو نتجنبها من جذورها — وهون بيدخل مفهوم `Functional Programming`: نمط برمجة بيعامل كل شيء كتقييم دوال رياضية بحتة، بلا أي أثر جانبي ولا تعديل حالة. وليش هذا مهم بالضبط؟ لأنه لو ما في حالة نعدّلها، فما في إمكانية أصلاً لصراع على تعديلها — نفس المدخلات دايماً بترجع نفس المخرجات، بغض النظر عن ترتيب أو توقيت التنفيذ. وهاي بالضبط الخاصية اللي بتخلي الكود أسهل بالتصميم، أسهل بالاختبار، وأسهل بتشغيله بالتوازي.
 
@@ -1415,7 +1415,7 @@ print index
 
 ---
 
-# الجزء الثالث: أسئلة اختيار من متعدد (MCQ)
+## الجزء الثالث: أسئلة اختيار من متعدد (MCQ)
 
 ### السؤال 1 (medium)
 **السؤال:** ما هو السبب **الرئيسي** اللي بيخلي `Functional Programming` مناسب للتوازي حسب المحاضرة؟
@@ -1759,7 +1759,7 @@ long size = list.stream()
 
 ---
 
-# الجزء الرابع: أسئلة تصحيح الكود
+## الجزء الرابع: أسئلة تصحيح الكود
 
 ### سؤال تصحيح 1 (logic)
 ```java
@@ -1895,7 +1895,7 @@ print index; // -1 لو ما وُجد، أو موقع فعلي (قد يكون غ
 
 ---
 
-# الجزء الثالث: بطاقات سؤال وجواب (Q&A Cards)
+## الجزء الثالث: بطاقات سؤال وجواب (Q&A Cards)
 
 ### البطاقة 1
 **Q1:** ما هو الدافع الأساسي وراء استخدام `Functional Programming` بالتوازي؟
@@ -1951,7 +1951,7 @@ print index; // -1 لو ما وُجد، أو موقع فعلي (قد يكون غ
 
 ---
 
-# ورقة المراجعة السريعة
+## ورقة المراجعة السريعة
 
 ### القواعد الذهبية
 
