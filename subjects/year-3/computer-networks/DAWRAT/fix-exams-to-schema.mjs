@@ -150,30 +150,24 @@ function renderQuestion(q, seq) {
   lines.push(`**المصدر:** [${q.source}]`);
   lines.push(`### السؤال ${seq} (${q.difficulty})`);
 
-  // EN then AR on separate lines (exam is English; Arabic is the translation).
+  // Question + options in English (exam language). Arabic only in التعليل.
   if (q.enStem) {
-    lines.push('**EN**');
     lines.push(q.enStem);
-  }
-  if (q.arStem) {
-    if (q.enStem) lines.push('');
-    lines.push('**AR**');
+  } else if (q.arStem) {
     lines.push(q.arStem);
-  }
-  if (!q.enStem && !q.arStem) {
+  } else {
     lines.push('TODO: missing stem');
+  }
+
+  if (q.arStem && q.enStem && q.arStem !== q.enStem) {
+    lines.push('');
+    lines.push(q.arStem);
   }
 
   lines.push('');
   for (const o of q.opts) {
-    const ar = o.arText || o.enText || '';
-    const en = o.enText || '';
-    if (en && ar && en !== ar) {
-      lines.push(`${o.key}) ${ar}`);
-      lines.push(`EN: ${en}`);
-    } else {
-      lines.push(`${o.key}) ${ar || en}`);
-    }
+    // Prefer English option text; fall back to Arabic only if EN missing.
+    lines.push(`${o.key}) ${o.enText || o.arText || ''}`);
   }
   lines.push(`**الإجابة الصحيحة: ${q.correctAr || 'TODO'}**`);
   lines.push('**التعليل:**');
