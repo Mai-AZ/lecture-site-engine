@@ -4,7 +4,8 @@
     "subjectNameEn": "Information Security",
     "year": "2025-2026",
     "academicYear": 5,
-    "theme": "amber-default",
+    "theme": "gis-earth",
+    "enabledLectures":true,
     "department": "القسم النظري"
   },
   "title": "أمن المعلومات — Information Security",
