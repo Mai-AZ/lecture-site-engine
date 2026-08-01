@@ -117,22 +117,22 @@ function parseQuestions(md) {
       explain += (explain ? '\n\n' : '') + `المرجع في الملف الأصلي: ${lecLine}`;
     }
 
+    const enByKey = Object.fromEntries(enOpts.map((o) => [o.enKey, o.enText]));
     const opts = (arOpts.length ? arOpts : enOpts.map((o) => ({
       enKey: o.enKey,
       arText: o.enText,
     }))).map((o) => ({
       key: LETTER_AR[o.enKey] || o.enKey,
-      text: o.arText || '',
+      arText: o.arText || '',
+      enText: enByKey[o.enKey] || '',
     }));
 
-    // Prefer Arabic stem; fall back to English.
-    const stem = arStem || enStem;
-    const difficulty = guessDifficulty(stem, explain);
+    const difficulty = guessDifficulty(arStem || enStem, explain);
 
     questions.push({
       source,
       lectureNum,
-      stem,
+      arStem,
       enStem,
       opts,
       correctAr,
@@ -149,13 +149,31 @@ function renderQuestion(q, seq) {
   const lines = [];
   lines.push(`**المصدر:** [${q.source}]`);
   lines.push(`### السؤال ${seq} (${q.difficulty})`);
-  lines.push(q.stem);
-  if (q.enStem && q.enStem !== q.stem) {
-    lines.push('');
-    lines.push(`> EN: ${q.enStem}`);
+
+  // EN then AR on separate lines (exam is English; Arabic is the translation).
+  if (q.enStem) {
+    lines.push('**EN**');
+    lines.push(q.enStem);
   }
+  if (q.arStem) {
+    if (q.enStem) lines.push('');
+    lines.push('**AR**');
+    lines.push(q.arStem);
+  }
+  if (!q.enStem && !q.arStem) {
+    lines.push('TODO: missing stem');
+  }
+
+  lines.push('');
   for (const o of q.opts) {
-    lines.push(`${o.key}) ${o.text}`);
+    const ar = o.arText || o.enText || '';
+    const en = o.enText || '';
+    if (en && ar && en !== ar) {
+      lines.push(`${o.key}) ${ar}`);
+      lines.push(`EN: ${en}`);
+    } else {
+      lines.push(`${o.key}) ${ar || en}`);
+    }
   }
   lines.push(`**الإجابة الصحيحة: ${q.correctAr || 'TODO'}**`);
   lines.push('**التعليل:**');
@@ -165,16 +183,19 @@ function renderQuestion(q, seq) {
 }
 
 function main() {
-  if (!existsSync(EXAMS_PATH)) {
-    console.error(`Not found: ${EXAMS_PATH}`);
+  const backupPath = path.join(HERE, 'exams.bilingual-source.md');
+  const sourcePath = existsSync(backupPath) ? backupPath : EXAMS_PATH;
+  if (!existsSync(sourcePath)) {
+    console.error(`Not found: ${sourcePath}`);
     process.exit(1);
   }
 
-  const md = readFileSync(EXAMS_PATH, 'utf8');
-  if (/^### السؤال \d+ \(/m.test(md) && !/^### Question \d+/m.test(md)) {
-    console.log('exams.md already looks SCHEMA-shaped; nothing to do.');
-    process.exit(0);
+  const md = readFileSync(sourcePath, 'utf8');
+  if (!/^### Question \d+/m.test(md)) {
+    console.error(`No bilingual ### Question N blocks in ${path.relative(process.cwd(), sourcePath)}`);
+    process.exit(1);
   }
+  console.log(`reading ${path.relative(process.cwd(), sourcePath)}`);
 
   const titles = lectureTitles();
   const questions = parseQuestions(md);
