@@ -6,9 +6,10 @@
 
 **المصدر:** [العام الدراسي 2021-2022 / الفصل الثاني / النموذج (B)]
 ### السؤال 1 (صعب)
+The data rate of twisted pair is-------
+
 معدل بيانات الزوج المجدول هو:
 
-> EN: The data rate of twisted pair is-------
 أ) 800 Mbps
 ب) 100 MHz
 ج) 100 Mbps
@@ -21,9 +22,10 @@
 
 **المصدر:** [العام الدراسي 2021-2022 / الفصل الثاني / النموذج (B)]
 ### السؤال 2 (صعب)
+Bandwidth of Coaxial Cable is --------
+
 عرض حزمة الكابل المحوري هو:
 
-> EN: Bandwidth of Coaxial Cable is --------
 أ) 500 Mbps
 ب) 500 MHz
 ج) 100 Mbps
@@ -36,13 +38,14 @@
 
 **المصدر:** [العام الدراسي 2021-2022 / الفصل الثاني / النموذج (B)]
 ### السؤال 3 (متوسط)
+Controls bits can include ........
+
 يمكن أن تتضمن بتات التحكم:
 
-> EN: Controls bits can include ........
-أ) بتات فحص الأخطاء
-ب) بتات نهاية الإطار
-ج) بتات التزامن SYN
-د) نوع الإطار
+أ) Error checking bits
+ب) End of frame bits
+ج) Syn. Bits
+د) Frame type
 **الإجابة الصحيحة: د**
 **التعليل:**
 تسرد المحاضرة ضمن Control bits: عنوان المصدر، عنوان الوجهة، عدد بايتات البيانات، رقم التسلسل، ونوع الإطار. أما Error-checking bits وEnd-of-frame bits فمذكورتان كحقلين منفصلين، وSYN في بداية الإطار المتزامن؛ لذا الخيار المطابق هو Frame type.
@@ -51,13 +54,14 @@
 
 **المصدر:** [العام الدراسي 2021-2022 / الفصل الثاني / النموذج (B)]
 ### السؤال 4 (متوسط)
+-------is Simultaneous bi-directional communications
+
 الاتصال ثنائي الاتجاه المتزامن في اللحظة نفسها هو:
 
-> EN: -------is Simultaneous bi-directional communications
-أ) اتصال أحادي الاتجاه
-ب) اتصال نصف مزدوج
-ج) اتصال مزدوج كامل
-د) لا شيء مما سبق
+أ) Simplex
+ب) Half-duplex
+ج) Full-duplex
+د) None of the above
 **الإجابة الصحيحة: ج**
 **التعليل:**
 Full-duplex يسمح للطرفين بالإرسال والاستقبال في الوقت نفسه. Half-duplex يسمح بالاتجاهين ولكن بالتناوب، وSimplex في اتجاه واحد فقط.
@@ -66,13 +70,14 @@ Full-duplex يسمح للطرفين بالإرسال والاستقبال في �
 
 **المصدر:** [العام الدراسي 2021-2022 / الفصل الثاني / النموذج (B)]
 ### السؤال 5 (متوسط)
+------------- Requires no obstacles between transmitter and receiver
+
 أي وسط يتطلب عدم وجود عوائق بين المرسل والمستقبل؟
 
-> EN: ------------- Requires no obstacles between transmitter and receiver
-أ) الموجات الميكروية
-ب) الكابل المحوري
-ج) الزوج المجدول
-د) جميع ما سبق
+أ) Microwave
+ب) Coaxial Cable
+ج) Twisted Pair
+د) All of the above.
 **الإجابة الصحيحة: أ**
 **التعليل:**
 الإرسال بالميكروويف يحتاج خط رؤية مباشر Line of Sight، لذلك يجب ألا توجد عوائق بين الهوائيين. الكابل المحوري والزوج المجدول وسطان موجهان ولا يشترطان خط رؤية.
@@ -81,13 +86,14 @@ Full-duplex يسمح للطرفين بالإرسال والاستقبال في �
 
 **المصدر:** [العام الدراسي 2021-2022 / الفصل الثاني / النموذج (B)]
 ### السؤال 6 (متوسط)
+A parallel transmission requires transmitting a group of data bits ---------
+
 يتطلب النقل التفرعي إرسال مجموعة من بتات البيانات:
 
-> EN: A parallel transmission requires transmitting a group of data bits ---------
-أ) تسلسلياً
-ب) بالتزامن
-ج) عبر قناة واحدة
-د) ضمن إطار
+أ) serially
+ب) simultaneously
+ج) through single channel
+د) in a frame
 **الإجابة الصحيحة: ب**
 **التعليل:**
 في النقل التفرعي تُرسل عدة بتات بالتزامن عبر عدة خطوط، بخلاف النقل التسلسلي الذي يرسل البتات واحداً بعد الآخر.
@@ -96,13 +102,14 @@ Full-duplex يسمح للطرفين بالإرسال والاستقبال في �
 
 **المصدر:** [العام الدراسي 2021-2022 / الفصل الثاني / النموذج (B)]
 ### السؤال 7 (متوسط)
+The synchronous transmission requires ---
+
 يتطلب النقل المتزامن:
 
-> EN: The synchronous transmission requires ---
-أ) توقيت المرسل مختلف عن توقيت المستقبل
-ب) يبدأ إطار البيانات بنمط SYN
-ج) تسبق البتات المرسلة ببت بدء واحد وتنتهي ببت توقف
-د) طول وحدة البيانات بايت واحد
+أ) The sender timing is different from the receiver timing
+ب) The data frame is started with SYN pattern
+ج) The transmitted bits is preceded with 1 start bit and ending with stop one
+د) The data length is one byte
 **الإجابة الصحيحة: ب**
 **التعليل:**
 تنظم البيانات في إطار، وتحتوي بداية الإطار على نمط أو محارف SYN لتنبيه المستقبل ومزامنته مع معدل البتات. Start/Stop يخص النقل غير المتزامن.
@@ -111,9 +118,10 @@ Full-duplex يسمح للطرفين بالإرسال والاستقبال في �
 
 **المصدر:** [العام الدراسي 2021-2022 / الفصل الثاني / النموذج (B)]
 ### السؤال 8 (صعب)
+If the frequency = 10^8 (Hz) what is the Wavelength.
+
 إذا كان التردد 10⁸ Hz، فما الطول الموجي؟
 
-> EN: If the frequency = 10^8 (Hz) what is the Wavelength.
 أ) 300 m
 ب) 3 m
 ج) 0.03 m
@@ -126,13 +134,14 @@ Full-duplex يسمح للطرفين بالإرسال والاستقبال في �
 
 **المصدر:** [العام الدراسي 2022-2023 / الفصل الأول / النموذج (B)]
 ### السؤال 9 (متوسط)
+Controls bits can include.........
+
 يمكن أن تتضمن بتات التحكم:
 
-> EN: Controls bits can include.........
-أ) بتات فحص الأخطاء
-ب) بتات نهاية الإطار
-ج) بتات التزامن SYN
-د) نوع الإطار
+أ) Error checking bits
+ب) End of frame bits
+ج) Syn. Bits
+د) Frame type
 **الإجابة الصحيحة: د**
 **التعليل:**
 وفق تقسيم المحاضرة، Frame type جزء من Control bits، بينما Error checking وEnd of frame حقول منفصلة، وSYN خاص ببداية الإطار المتزامن. لذلك Frame type.
@@ -141,13 +150,14 @@ Full-duplex يسمح للطرفين بالإرسال والاستقبال في �
 
 **المصدر:** [العام الدراسي 2022-2023 / الفصل الأول / النموذج (B)]
 ### السؤال 10 (متوسط)
+Data rate -------------- up to 300 Mb
+
 أي وسط يصل معدل بياناته إلى 300 Mbps؟
 
-> EN: Data rate -------------- up to 300 Mb
-أ) الموجات الميكروية
-ب) الكابل المحوري
-ج) الزوج المجدول
-د) لا شيء مما سبق
+أ) Microwave
+ب) Coaxial Cable
+ج) Twisted Pair
+د) None of the above.
 **الإجابة الصحيحة: أ**
 **التعليل:**
 تذكر المحاضرة أن Microwave يصل إلى 300 Mbps. كما تذكر القيمة نفسها للأقمار الصناعية، لكنها ليست ضمن الخيارات في هذا السؤال؛ لذا A.
@@ -156,13 +166,14 @@ Full-duplex يسمح للطرفين بالإرسال والاستقبال في �
 
 **المصدر:** [العام الدراسي 2022-2023 / الفصل الأول / النموذج (B)]
 ### السؤال 11 (صعب)
+Telephone bandwidth -------------
+
 مجال ترددات الهاتف هو:
 
-> EN: Telephone bandwidth -------------
 أ) 0-3300 Hz
 ب) 0-4000 Hz
 ج) 300-3300 Hz
-د) لا شيء مما سبق
+د) None of the above
 **الإجابة الصحيحة: ج**
 **التعليل:**
 تحدد المحاضرة Telephone bandwidth من 300 Hz إلى 3300 Hz. لذلك الخيار C، وليس 0-4000 Hz الذي استُخدم تقريباً في حساب أخذ العينات.
@@ -171,9 +182,10 @@ Full-duplex يسمح للطرفين بالإرسال والاستقبال في �
 
 **المصدر:** [العام الدراسي 2022-2023 / الفصل الأول / النموذج (B)]
 ### السؤال 12 (صعب)
+If the frequency = 10^8 (Hz) what is the wavelength?
+
 إذا كان التردد 10⁸ Hz، فما الطول الموجي؟
 
-> EN: If the frequency = 10^8 (Hz) what is the wavelength?
 أ) 300 m
 ب) 3 m
 ج) 0.03 m
@@ -186,13 +198,14 @@ Full-duplex يسمح للطرفين بالإرسال والاستقبال في �
 
 **المصدر:** [العام الدراسي 2022-2023 / الفصل الأول / النموذج (B)]
 ### السؤال 13 (متوسط)
+Serial transmission ------------
+
 النقل التسلسلي:
 
-> EN: Serial transmission ------------
-أ) معدل بتات مرتفع
-ب) ينقل مجموعة من البتات
-ج) أكثر موثوقية وأقل تكلفة للمسافات الطويلة
-د) جميع ما سبق
+أ) High bit rate
+ب) Transmits a group of bits
+ج) More reliable an less expensive for longer distances
+د) All of the above
 **الإجابة الصحيحة: ج**
 **التعليل:**
 يرسل البتات واحداً بعد الآخر، وهو أبطأ من التفرعي لكنه أكثر موثوقية وأقل تكلفة للمسافات الطويلة. لذلك C فقط صحيحة.
@@ -201,13 +214,14 @@ Full-duplex يسمح للطرفين بالإرسال والاستقبال في �
 
 **المصدر:** [العام الدراسي 2022-2023 / الفصل الأول / النموذج (B)]
 ### السؤال 14 (متوسط)
+Asynchronous transmission ---
+
 النقل غير المتزامن:
 
-> EN: Asynchronous transmission ---
-أ) توقيت المرسل مختلف عن توقيت المستقبل
-ب) يستخدم بتات البدء والتوقف
-ج) طول وحدة البيانات بايت واحد
-د) جميع ما سبق
+أ) The sender timing is different from the receiver timing.
+ب) Uses start and stop bits.
+ج) The data length is one byte
+د) All the above.
 **الإجابة الصحيحة: د**
 **التعليل:**
 في النقل غير المتزامن لا يلزم تطابق ساعة المرسل والمستقبل، وتُرسل البيانات غالباً على هيئة بايتات محاطة ببت بدء وبت توقف. لذلك العبارات الثلاث مقصودة في السؤال والإجابة All the above.
@@ -216,13 +230,14 @@ Full-duplex يسمح للطرفين بالإرسال والاستقبال في �
 
 **المصدر:** [العام الدراسي 2022-2023 / الفصل الأول / النموذج (B)]
 ### السؤال 15 (متوسط)
+Bi-directional communications, but must Alternate is ------
+
 الاتصال ثنائي الاتجاه الذي يجب أن يتم بالتناوب هو:
 
-> EN: Bi-directional communications, but must Alternate is ------
-أ) اتصال أحادي الاتجاه
-ب) اتصال نصف مزدوج
-ج) اتصال مزدوج كامل
-د) لا شيء مما سبق
+أ) Simplex
+ب) Half-duplex
+ج) Full-duplex
+د) None of the above
 **الإجابة الصحيحة: ب**
 **التعليل:**
 Half-duplex يسمح للطرفين بالإرسال، لكن ليس في الوقت نفسه؛ يتبادلان الدور. Full-duplex يسمح بالإرسال المتزامن، وSimplex اتجاه واحد.
@@ -231,13 +246,14 @@ Half-duplex يسمح للطرفين بالإرسال، لكن ليس في الو
 
 **المصدر:** [العام الدراسي 2022-2023 / الفصل الأول / النموذج (B)]
 ### السؤال 16 (صعب)
+The data rate of twisted pair is--------
+
 معدل بيانات الزوج المجدول هو:
 
-> EN: The data rate of twisted pair is--------
 أ) 800 Mb
 ب) 100 MHz
 ج) 100 Mbps
-د) لا شيء مما سبق
+د) None of the above
 **الإجابة الصحيحة: ج**
 **التعليل:**
 تذكر المحاضرة أن عرض حزمة الزوج المجدول 250 KHz، بينما معدل البيانات 100 Mbps. يجب التمييز بين وحدة التردد Hz ووحدة معدل البيانات bps.
@@ -246,13 +262,14 @@ Half-duplex يسمح للطرفين بالإرسال، لكن ليس في الو
 
 **المصدر:** [العام الدراسي 2022-2023 / الفصل الثاني / النموذج (B)]
 ### السؤال 17 (متوسط)
+Requires no obstacles between transmitter and receiver
+
 أي وسط يتطلب عدم وجود عوائق بين المرسل والمستقبل؟
 
-> EN: Requires no obstacles between transmitter and receiver
-أ) الموجات الميكروية
-ب) الكابل المحوري
-ج) الزوج المجدول
-د) لا شيء مما سبق
+أ) Microwave
+ب) Coaxial Cable
+ج) Twisted Pair
+د) None of the above.
 **الإجابة الصحيحة: أ**
 **التعليل:**
 الإرسال بالميكروويف يحتاج خط رؤية مباشر Line of Sight، لذلك يجب ألا توجد عوائق بين الهوائيين. الكابل المحوري والزوج المجدول وسطان موجهان ولا يشترطان خط رؤية.
@@ -261,13 +278,14 @@ Half-duplex يسمح للطرفين بالإرسال، لكن ليس في الو
 
 **المصدر:** [العام الدراسي 2022-2023 / الفصل الثاني / النموذج (B)]
 ### السؤال 18 (متوسط)
+The bandwidth of a medium is --------------
+
 عرض حزمة الوسط يساوي:
 
-> EN: The bandwidth of a medium is --------------
-أ) أعلى تردد ناقص أدنى تردد
-ب) أعلى تردد زائد أدنى تردد
-ج) جميع ما سبق
-د) لا شيء مما سبق
+أ) Fmax - Fmin
+ب) Fmax + Fmin
+ج) All of the above
+د) None of the above
 **الإجابة الصحيحة: أ**
 **التعليل:**
 عرض الحزمة هو الفرق بين أعلى تردد وأدنى تردد يستطيع الوسط تمريرهما: BW=Fmax−Fmin.
@@ -276,13 +294,14 @@ Half-duplex يسمح للطرفين بالإرسال، لكن ليس في الو
 
 **المصدر:** [العام الدراسي 2022-2023 / الفصل الثاني / النموذج (B)]
 ### السؤال 19 (متوسط)
+Simultaneous bi-directional communications is -
+
 الاتصال ثنائي الاتجاه المتزامن هو:
 
-> EN: Simultaneous bi-directional communications is -
-أ) اتصال أحادي الاتجاه
-ب) اتصال نصف مزدوج
-ج) اتصال مزدوج كامل
-د) لا شيء مما سبق
+أ) Simplex
+ب) Half-duplex
+ج) Full-duplex
+د) None of the above
 **الإجابة الصحيحة: ج**
 **التعليل:**
 هذا هو Full-duplex؛ إذ يستطيع الطرفان الإرسال والاستقبال في الوقت نفسه.
@@ -291,13 +310,14 @@ Half-duplex يسمح للطرفين بالإرسال، لكن ليس في الو
 
 **المصدر:** [العام الدراسي 2022-2023 / الفصل الثاني / النموذج (B)]
 ### السؤال 20 (متوسط)
+Uses start and stop bits is ----------- transmission
+
 النقل الذي يستخدم بتات البدء والتوقف هو:
 
-> EN: Uses start and stop bits is ----------- transmission
-أ) نقل تفرعي Parallel
-ب) نقل تسلسلي Serial
-ج) نقل متزامن Synchronous
-د) لا شيء مما سبق
+أ) Parallel
+ب) Serial
+ج) Synchronous
+د) None of the above
 **الإجابة الصحيحة: ب**
 **التعليل:**
 التسمية الأدق هي Asynchronous Serial Transmission. بما أن Asynchronous غير موجودة بين الخيارات، فإن Serial هو الأقرب والأصح ضمن الخيارات المتاحة؛ أما Synchronous فيستخدم SYN وإطاراً منظماً.
@@ -310,13 +330,14 @@ Half-duplex يسمح للطرفين بالإرسال، لكن ليس في الو
 
 **المصدر:** [العام الدراسي 2022-2023 / الفصل الثاني / النموذج (B)]
 ### السؤال 21 (متوسط)
+Guard bands are used to prevent ---
+
 تُستخدم الحزم الحارسة Guard Bands لمنع:
 
-> EN: Guard bands are used to prevent ---
-أ) التوهين
-ب) الضجيج
-ج) التداخل
-د) لا شيء مما سبق
+أ) Attenuation
+ب) Noise
+ج) interference
+د) None of the above
 **الإجابة الصحيحة: ج**
 **التعليل:**
 في FDM تفصل Guard Bands بين القنوات المتجاورة كي لا تتداخل أطيافها، ولذلك تمنع interference بين القنوات.
@@ -325,13 +346,14 @@ Half-duplex يسمح للطرفين بالإرسال، لكن ليس في الو
 
 **المصدر:** [العام الدراسي 2022-2023 / الفصل الثاني / النموذج (B)]
 ### السؤال 22 (متوسط)
+Reason behind multiplexing----------
+
 من أسباب استخدام Multiplexing:
 
-> EN: Reason behind multiplexing----------
-أ) الاستفادة القصوى من الوسط
-ب) قناة بيانات منخفضة السرعة
-ج) جميع ما سبق
-د) لا شيء مما سبق
+أ) Maximum utilization.
+ب) low speed data channel
+ج) All of the above
+د) None of the above
 **الإجابة الصحيحة: ج**
 **التعليل:**
 تذكر المحاضرة: وجود قناة عالية السرعة، وأجهزة أو مصادر أبطأ نسبياً، وتحقيق الاستفادة القصوى من الوسط. الخيار B صيغته غير دقيقة لكنه يقصد المصادر منخفضة السرعة؛ لذلك الأقرب إلى قصد السؤال هو All of the above.
@@ -344,13 +366,14 @@ Half-duplex يسمح للطرفين بالإرسال، لكن ليس في الو
 
 **المصدر:** [العام الدراسي 2023-2024 / الفصل الأول / النموذج (A)]
 ### السؤال 23 (متوسط)
+Bandwidth-------------- 500 MHz
+
 أي وسط يبلغ عرض حزمته 500 MHz؟
 
-> EN: Bandwidth-------------- 500 MHz
-أ) الموجات الميكروية
-ب) الكابل المحوري
-ج) الزوج المجدول
-د) لا شيء مما سبق
+أ) Microwave
+ب) Coaxial Cable
+ج) Twisted Pair
+د) None of the above.
 **الإجابة الصحيحة: ب**
 **التعليل:**
 القيمة 500 MHz مذكورة للكابل المحوري Coaxial Cable، بينما الزوج المجدول 250 KHz في المحاضرة.
@@ -359,13 +382,14 @@ Half-duplex يسمح للطرفين بالإرسال، لكن ليس في الو
 
 **المصدر:** [العام الدراسي 2023-2024 / الفصل الأول / النموذج (A)]
 ### السؤال 24 (متوسط)
+Requires no obstacles between transmitter and receiver is----------
+
 أي من الآتي يتطلب عدم وجود عوائق بين المرسل والمستقبل؟
 
-> EN: Requires no obstacles between transmitter and receiver is----------
-أ) الموجات الميكروية
-ب) القمر الصناعي
-ج) جميع ما سبق
-د) لا شيء مما سبق
+أ) Microwave
+ب) Satellite
+ج) All of the above
+د) None of the above
 **الإجابة الصحيحة: ج**
 **التعليل:**
 تذكر المحاضرة شرط خط الرؤية لكل من Microwave وSatellite، لذلك الخياران A وB صحيحان، والإجابة All of the above.
@@ -374,13 +398,14 @@ Half-duplex يسمح للطرفين بالإرسال، لكن ليس في الو
 
 **المصدر:** [العام الدراسي 2023-2024 / الفصل الأول / النموذج (A)]
 ### السؤال 25 (متوسط)
+Asynchronous Transmission ----------
+
 النقل غير المتزامن:
 
-> EN: Asynchronous Transmission ----------
-أ) يستخدم بتات البدء والتوقف
-ب) ينقل مجموعة من البتات
-ج) جميع ما سبق
-د) لا شيء مما سبق
+أ) Uses start and stop bits
+ب) Transmits a group of bits
+ج) All of the above
+د) None of the above
 **الإجابة الصحيحة: أ**
 **التعليل:**
 الميزة المميزة في المحاضرة هي استخدام بتات البدء والتوقف ليعرف المستقبل حدود البيانات. عبارة Transmits a group of bits عامة وليست سبباً لاختيار جميع ما سبق؛ لذا A.
@@ -389,13 +414,14 @@ Half-duplex يسمح للطرفين بالإرسال، لكن ليس في الو
 
 **المصدر:** [العام الدراسي 2023-2024 / الفصل الأول / النموذج (A)]
 ### السؤال 26 (متوسط)
+Bi-directional communications, but must alternate is -------
+
 الاتصال ثنائي الاتجاه الذي يجب أن يتم بالتناوب هو:
 
-> EN: Bi-directional communications, but must alternate is -------
-أ) اتصال أحادي الاتجاه
-ب) اتصال نصف مزدوج
-ج) اتصال مزدوج كامل
-د) لا شيء مما سبق
+أ) Simplex
+ب) Half-duplex
+ج) Full-duplex
+د) None of the above
 **الإجابة الصحيحة: ب**
 **التعليل:**
 Half-duplex يسمح للطرفين بالإرسال، لكن ليس في الوقت نفسه؛ يتبادلان الدور. Full-duplex يسمح بالإرسال المتزامن، وSimplex اتجاه واحد.
@@ -404,13 +430,14 @@ Half-duplex يسمح للطرفين بالإرسال، لكن ليس في الو
 
 **المصدر:** [العام الدراسي 2023-2024 / الفصل الأول / النموذج (A)]
 ### السؤال 27 (متوسط)
+The data rate of fiber optics is-------
+
 معدل بيانات الألياف الضوئية هو:
 
-> EN: The data rate of fiber optics is-------
 أ) 800 Mb
 ب) 100 MHz
 ج) 28 Tbps
-د) لا شيء مما سبق
+د) None of the above
 **الإجابة الصحيحة: د**
 **التعليل:**
 المحاضرة تذكر Optical Fibre: data rate up to 28 Gbps، بينما الخيار C مكتوب 28 Tbps، وهي قيمة مختلفة بألف مرة. لذلك وفق المحاضرة لا يوجد خيار صحيح وتكون D.
@@ -423,13 +450,14 @@ Half-duplex يسمح للطرفين بالإرسال، لكن ليس في الو
 
 **المصدر:** [العام الدراسي 2023-2024 / الفصل الأول / النموذج (A)]
 ### السؤال 28 (متوسط)
+Control's bits can include.........
+
 يمكن أن تتضمن بتات التحكم:
 
-> EN: Control's bits can include.........
-أ) بتات فحص الأخطاء
-ب) بتات نهاية الإطار
-ج) جميع ما سبق
-د) لا شيء مما سبق
+أ) Error checking bits
+ب) End of frame bits
+ج) All of the above
+د) None of the above
 **الإجابة الصحيحة: د**
 **التعليل:**
 المحاضرة تفصل بين Control bits وبين Error-checking bits وEnd-of-frame bits. بما أن الخيارين A وB ليسا مدرجين تحت Control bits بالتصنيف المستخدم في الشريحة، فلا يصح All of the above، وتكون None of the above.
@@ -440,13 +468,14 @@ Half-duplex يسمح للطرفين بالإرسال، لكن ليس في الو
 
 **المصدر:** [العام الدراسي 2021-2022 / الفصل الثاني / النموذج (B)]
 ### السؤال 29 (صعب)
+The bit rate of Telephone is--------
+
 معدل البتات للهاتف هو:
 
-> EN: The bit rate of Telephone is--------
 أ) 64 Kbps
 ب) 32 MHz
 ج) 128 Mbps.
-د) لا شيء مما سبق
+د) none of the above
 **الإجابة الصحيحة: أ**
 **التعليل:**
 حسب أخذ العينات: أعلى تردد للهاتف 4 KHz، فنأخذ 8000 عينة/ثانية، وكل عينة 8 بتات. إذن 8000 × 8 = 64000 bit/s = 64 Kbps.
@@ -455,13 +484,14 @@ Half-duplex يسمح للطرفين بالإرسال، لكن ليس في الو
 
 **المصدر:** [العام الدراسي 2021-2022 / الفصل الثاني / النموذج (B)]
 ### السؤال 30 (متوسط)
+Encoding --------------------------------
+
 الترميز Encoding هو:
 
-> EN: Encoding --------------------------------
-أ) عدد تغيرات الإشارة في الثانية
-ب) استقبال الإشارة التماثلية
-ج) إسناد معنى إلى الإشارات
-د) مزيج من التقنيات التماثلية والرقمية
+أ) Number of signal changes per second
+ب) Receive the analog signal
+ج) Assigning a meaning to signals
+د) Mixture of analog and digital techniques
 **الإجابة الصحيحة: ج**
 **التعليل:**
 تعرف المحاضرة Encoding بأنه إسناد معنى إلى الإشارات. Number of signal changes per second هو Baud rate، وباقي الخيارات لا تعرّف الترميز.
@@ -470,13 +500,14 @@ Half-duplex يسمح للطرفين بالإرسال، لكن ليس في الو
 
 **المصدر:** [العام الدراسي 2022-2023 / الفصل الأول / النموذج (B)]
 ### السؤال 31 (صعب)
+The bit rate of Telephone is---------
+
 معدل البتات للهاتف هو:
 
-> EN: The bit rate of Telephone is---------
 أ) 64 Kbps
 ب) 32 MHz
 ج) 128 Mbps.
-د) لا شيء مما سبق
+د) none of the above
 **الإجابة الصحيحة: أ**
 **التعليل:**
 حسب أخذ العينات: أعلى تردد للهاتف 4 KHz، فنأخذ 8000 عينة/ثانية، وكل عينة 8 بتات. إذن 8000 × 8 = 64000 bit/s = 64 Kbps.
@@ -485,13 +516,14 @@ Half-duplex يسمح للطرفين بالإرسال، لكن ليس في الو
 
 **المصدر:** [العام الدراسي 2022-2023 / الفصل الأول / النموذج (B)]
 ### السؤال 32 (متوسط)
+Signal is----------
+
 الإشارة Signal هي:
 
-> EN: Signal is----------
-أ) إسناد معنى
-ب) وسيلة لنقل المعلومات
-ج) عديمة القيمة إذا لم يُسند إليها معنى
-د) لا شيء مما سبق
+أ) Assigning a meaning
+ب) A way of conveying information
+ج) worthless if no meaning
+د) None of the above
 **الإجابة الصحيحة: ب**
 **التعليل:**
 تعرف المحاضرة الإشارة بأنها وسيلة لنقل المعلومات، مثل الصوت أو الجهد أو موجات الراديو أو الضوء. أما Assigning a meaning فهو تعريف Encoding.
@@ -500,13 +532,14 @@ Half-duplex يسمح للطرفين بالإرسال، لكن ليس في الو
 
 **المصدر:** [العام الدراسي 2022-2023 / الفصل الأول / النموذج (B)]
 ### السؤال 33 (متوسط)
+The functions of the Modem are __________.
+
 وظائف المودم هي:
 
-> EN: The functions of the Modem are __________.
-أ) يحوّل الرقمي إلى تماثلي
-ب) استقبال الإشارة التماثلية
-ج) يحوّل الإشارة التماثلية إلى رقمية
-د) جميع ما سبق
+أ) Converts digital to analog,
+ب) Receive the analog signal
+ج) Convert the analog signal to digital
+د) All above
 **الإجابة الصحيحة: د**
 **التعليل:**
 المودم Modulator-Demodulator يحول البيانات الرقمية إلى إشارة تماثلية للإرسال، يستقبل الإشارة التماثلية، ثم يعيد تحويلها إلى رقمية. لذلك جميع ما سبق.
@@ -515,13 +548,14 @@ Half-duplex يسمح للطرفين بالإرسال، لكن ليس في الو
 
 **المصدر:** [العام الدراسي 2022-2023 / الفصل الثاني / النموذج (B)]
 ### السؤال 34 (متوسط)
+Number of signal changes per second---------
+
 عدد تغيرات الإشارة في الثانية هو:
 
-> EN: Number of signal changes per second---------
-أ) معدل البتات
-ب) معدل البود
-ج) معدل خطأ البت BER
-د) لا شيء مما سبق
+أ) Bit rate
+ب) Baud rate
+ج) BER
+د) None of the above
 **الإجابة الصحيحة: ب**
 **التعليل:**
 Baud rate يقيس عدد الرموز أو تغيرات الإشارة في الثانية. Bit rate يقيس عدد البتات في الثانية وقد يساوي Baud مضروباً بعدد البتات التي يمثلها كل رمز.
@@ -530,13 +564,14 @@ Baud rate يقيس عدد الرموز أو تغيرات الإشارة في ا�
 
 **المصدر:** [العام الدراسي 2023-2024 / الفصل الأول / النموذج (A)]
 ### السؤال 35 (متوسط)
+Encoding is-----------
+
 الترميز Encoding هو:
 
-> EN: Encoding is-----------
-أ) إسناد معنى
-ب) وسيلة لنقل المعلومات
-ج) جميع ما سبق
-د) لا شيء مما سبق
+أ) Assigning a meaning
+ب) A way of conveying information
+ج) All of the above
+د) None of the above
 **الإجابة الصحيحة: أ**
 **التعليل:**
 Encoding يعني إسناد معنى إلى الإشارات. أما «وسيلة لنقل المعلومات» فهو تعريف Signal، لذلك لا يصح All of the above.
@@ -545,13 +580,14 @@ Encoding يعني إسناد معنى إلى الإشارات. أما «وسيل
 
 **المصدر:** [العام الدراسي 2023-2024 / الفصل الأول / النموذج (A)]
 ### السؤال 36 (متوسط)
+The functions of the Modem are __________.
+
 وظائف المودم هي:
 
-> EN: The functions of the Modem are __________.
-أ) يحوّل الرقمي إلى تماثلي
-ب) استقبال الإشارة التماثلية
-ج) يحوّل الإشارة التماثلية إلى رقمية
-د) جميع ما سبق
+أ) Converts digital to analog,
+ب) Receive the analog signal
+ج) Convert the analog signal to digital
+د) All above
 **الإجابة الصحيحة: د**
 **التعليل:**
 المودم Modulator-Demodulator يحول البيانات الرقمية إلى إشارة تماثلية للإرسال، يستقبل الإشارة التماثلية، ثم يعيد تحويلها إلى رقمية. لذلك جميع ما سبق.
@@ -560,13 +596,14 @@ Encoding يعني إسناد معنى إلى الإشارات. أما «وسيل
 
 **المصدر:** [العام الدراسي 2023-2024 / الفصل الأول / النموذج (A)]
 ### السؤال 37 (صعب)
+The bit rate of Telephone is---------
+
 معدل البتات للهاتف هو:
 
-> EN: The bit rate of Telephone is---------
 أ) 64 Kbps
 ب) 64 KHz
 ج) 64 Mbps.
-د) لا شيء مما سبق
+د) none of the above
 **الإجابة الصحيحة: أ**
 **التعليل:**
 حسب أخذ العينات: أعلى تردد للهاتف 4 KHz، فنأخذ 8000 عينة/ثانية، وكل عينة 8 بتات. إذن 8000 × 8 = 64000 bit/s = 64 Kbps.
@@ -577,13 +614,14 @@ Encoding يعني إسناد معنى إلى الإشارات. أما «وسيل
 
 **المصدر:** [العام الدراسي 2021-2022 / الفصل الثاني / النموذج (B)]
 ### السؤال 38 (سهل)
+The capability to detect when a transmission has been changed is called:----------
+
 تُسمّى القدرة على اكتشاف أن البيانات تغيّرت أثناء الإرسال بـ:
 
-> EN: The capability to detect when a transmission has been changed is called:----------
-أ) تصحيح الأخطاء
-ب) سلامة البيانات
-ج) كشف الأخطاء
-د) أمن البيانات
+أ) Error correction
+ب) Data integrity
+ج) Error detection
+د) Data security
 **الإجابة الصحيحة: ب**
 **التعليل:**
 سلامة البيانات تعني أن تكون البيانات المستقبلة مطابقة لما أُرسل. كشف التغيير هو الآلية التي نتحقق بها من هذه السلامة؛ لذلك المصطلح المطلوب في صياغة السؤال هو Data Integrity، حتى لو كان Error Detection مفهوماً فرعياً داخلها.
@@ -592,13 +630,14 @@ Encoding يعني إسناد معنى إلى الإشارات. أما «وسيل
 
 **المصدر:** [العام الدراسي 2021-2022 / الفصل الثاني / النموذج (B)]
 ### السؤال 39 (صعب)
+If G(x) = x^4 + x^3 + 1 what is the generator bit String----------
+
 إذا كان G(x)=x⁴+x³+1، فما سلسلة بتات المولّد؟
 
-> EN: If G(x) = x^4 + x^3 + 1 what is the generator bit String----------
 أ) 10001
 ب) 11001
 ج) 11101
-د) لا شيء مما سبق
+د) none of the above
 **الإجابة الصحيحة: ب**
 **التعليل:**
 نكتب معاملات الحدود من x⁴ حتى x⁰: معامل x⁴=1، x³=1، x²=0، x¹=0، والثابت=1. لذلك السلسلة هي 11001.
@@ -607,9 +646,10 @@ Encoding يعني إسناد معنى إلى الإشارات. أما «وسيل
 
 **المصدر:** [العام الدراسي 2021-2022 / الفصل الثاني / النموذج (B)]
 ### السؤال 40 (صعب)
+What polynomial corresponds to the following bit string: 01100100110101111
+
 ما كثير الحدود الموافق لسلسلة البتات 01100100110101111؟
 
-> EN: What polynomial corresponds to the following bit string: 01100100110101111
 أ) X^15+X^14+X^11+X^8+X^7+X^5+X^3+X^2+X+1
 ب) X^15+X^13+X^11+X^8+X^7+X^5+X^3+X^2+X+1
 ج) X^15+X^14+X^11+X^8+X^6+X^5+X^3+X^2+X+1
@@ -622,9 +662,10 @@ Encoding يعني إسناد معنى إلى الإشارات. أما «وسيل
 
 **المصدر:** [العام الدراسي 2021-2022 / الفصل الثاني / النموذج (B)]
 ### السؤال 41 (متوسط)
+Which one of the following is a correct data when using odd Parity
+
 أي البيانات الآتية صحيحة عند استخدام التكافؤ الفردي؟
 
-> EN: Which one of the following is a correct data when using odd Parity
 أ) 01101101 0
 ب) 01101101 1
 ج) 10110010 0
@@ -637,13 +678,14 @@ Encoding يعني إسناد معنى إلى الإشارات. أما «وسيل
 
 **المصدر:** [العام الدراسي 2022-2023 / الفصل الأول / النموذج (B)]
 ### السؤال 42 (متوسط)
+Which one of the following is a correct 01 when using even Parity
+
 أي سلسلة صحيحة عند استخدام التكافؤ الزوجي؟
 
-> EN: Which one of the following is a correct 01 when using even Parity
 أ) 01101101 0
 ب) 11001101 0
 ج) 01100101 0
-د) لا شيء مما سبق
+د) none of the above
 **الإجابة الصحيحة: ج**
 **التعليل:**
 في Even Parity يجب أن يكون مجموع الواحدات زوجياً. 01100101 تحوي أربع واحدات، ومع بت التكافؤ 0 يبقى المجموع أربعة؛ لذلك C.
@@ -652,13 +694,14 @@ Encoding يعني إسناد معنى إلى الإشارات. أما «وسيل
 
 **المصدر:** [العام الدراسي 2022-2023 / الفصل الأول / النموذج (B)]
 ### السؤال 43 (سهل)
+The capability to detect when transmission has been changed is called:-------------------
+
 تُسمّى القدرة على اكتشاف تغير البيانات أثناء الإرسال:
 
-> EN: The capability to detect when transmission has been changed is called:-------------------
-أ) تصحيح الأخطاء
-ب) سلامة البيانات
-ج) أمن البيانات
-د) لا شيء مما سبق
+أ) Error correction
+ب) Data integrity
+ج) Data security
+د) none of the above
 **الإجابة الصحيحة: ب**
 **التعليل:**
 المصطلح المقصود هو Data Integrity، أي ضمان أن البيانات المستقبلة مطابقة للمرسلة. كشف الأخطاء إحدى تقنيات تحقيق هذه السلامة.
@@ -667,13 +710,14 @@ Encoding يعني إسناد معنى إلى الإشارات. أما «وسيل
 
 **المصدر:** [العام الدراسي 2022-2023 / الفصل الأول / النموذج (B)]
 ### السؤال 44 (صعب)
+If G(x) = x^4 + x^3 + 1 what is the generator bit String---
+
 إذا كان G(x)=x⁴+x³+1، فما سلسلة بتات المولّد؟
 
-> EN: If G(x) = x^4 + x^3 + 1 what is the generator bit String---
 أ) 10001
 ب) 11001
 ج) 11101
-د) لا شيء مما سبق
+د) none of the above
 **الإجابة الصحيحة: ب**
 **التعليل:**
 نكتب معاملات الحدود من x⁴ حتى x⁰: معامل x⁴=1، x³=1، x²=0، x¹=0، والثابت=1. لذلك السلسلة هي 11001.
@@ -682,13 +726,14 @@ Encoding يعني إسناد معنى إلى الإشارات. أما «وسيل
 
 **المصدر:** [العام الدراسي 2022-2023 / الفصل الثاني / النموذج (B)]
 ### السؤال 45 (صعب)
+If the data is 110 1011 and G(x) = x^4 + x^3 + 1, R will be---------
+
 إذا كانت البيانات 1101011 وكان G(x)=x⁴+x³+1، فما الباقي R؟
 
-> EN: If the data is 110 1011 and G(x) = x^4 + x^3 + 1, R will be---------
 أ) 1101
 ب) 1010
 ج) 1001
-د) لا شيء مما سبق
+د) None of the above
 **الإجابة الصحيحة: ب**
 **التعليل:**
 سلسلة المولد هي 11001 ودرجتها 4، فنضيف أربعة أصفار إلى البيانات: 11010110000، ثم نجري قسمة XOR (Modulo-2) على 11001. الباقي النهائي هو 1010، أي الخيار B.
@@ -697,13 +742,14 @@ Encoding يعني إسناد معنى إلى الإشارات. أما «وسيل
 
 **المصدر:** [العام الدراسي 2022-2023 / الفصل الثاني / النموذج (B)]
 ### السؤال 46 (متوسط)
+Which one of the following is a correct when using Odd Parity ------
+
 أي مما يأتي صحيح عند استخدام التكافؤ الفردي؟
 
-> EN: Which one of the following is a correct when using Odd Parity ------
 أ) 01101101 0
 ب) 11001100 0
-ج) جميع ما سبق
-د) لا شيء مما سبق
+ج) All of the above
+د) None of the above
 **الإجابة الصحيحة: أ**
 **التعليل:**
 01101101 تحتوي خمسة بتات 1، ومع بت تكافؤ 0 يبقى العدد الكلي فردياً؛ لذا A صحيحة. الخيار B يحتوي عدداً زوجياً من الواحدات.
@@ -712,13 +758,14 @@ Encoding يعني إسناد معنى إلى الإشارات. أما «وسيل
 
 **المصدر:** [العام الدراسي 2022-2023 / الفصل الثاني / النموذج (B)]
 ### السؤال 47 (سهل)
+The capability to detect when transmission has been changed is called:---------------
+
 تُسمّى القدرة على اكتشاف تغير البيانات أثناء الإرسال:
 
-> EN: The capability to detect when transmission has been changed is called:---------------
-أ) تصحيح الأخطاء
-ب) سلامة البيانات
-ج) أمن البيانات
-د) لا شيء مما سبق
+أ) Error correction
+ب) Data integrity
+ج) Data security
+د) None of the above
 **الإجابة الصحيحة: ب**
 **التعليل:**
 المصطلح المقصود هو Data Integrity، أي ضمان أن البيانات المستقبلة مطابقة للمرسلة. كشف الأخطاء إحدى تقنيات تحقيق هذه السلامة.
@@ -727,13 +774,14 @@ Encoding يعني إسناد معنى إلى الإشارات. أما «وسيل
 
 **المصدر:** [العام الدراسي 2022-2023 / الفصل الثاني / النموذج (B)]
 ### السؤال 48 (صعب)
+Detection Schemes------------
+
 مخططات كشف الأخطاء تشمل:
 
-> EN: Detection Schemes------------
-أ) فحص التكافؤ Parity
-ب) فحص CRC
-ج) جميع ما سبق
-د) لا شيء مما سبق
+أ) Parity checking
+ب) CRC
+ج) All of the above
+د) None of the above
 **الإجابة الصحيحة: ج**
 **التعليل:**
 تسرد المحاضرة Parity checking وCRC بوصفهما طريقتين لكشف الأخطاء، لذلك جميع ما سبق.
@@ -742,13 +790,14 @@ Encoding يعني إسناد معنى إلى الإشارات. أما «وسيل
 
 **المصدر:** [العام الدراسي 2022-2023 / الفصل الثاني / النموذج (B)]
 ### السؤال 49 (متوسط)
+error detection techniques require us to send additional bits whose value depends upon the data that is------
+
 تتطلب تقنيات كشف الأخطاء إرسال بتات إضافية تعتمد قيمتها على البيانات التي تم:
 
-> EN: error detection techniques require us to send additional bits whose value depends upon the data that is------
-أ) تمت مراجعته
-ب) المُرسلة
-ج) جميع ما سبق
-د) لا شيء مما سبق
+أ) revised
+ب) sent
+ج) All of the above
+د) None of the above
 **الإجابة الصحيحة: ب**
 **التعليل:**
 تذكر المحاضرة أن قيمة البتات الإضافية تعتمد على البيانات المرسلة. إذا فسدت البيانات فلن تعود هذه البتات متطابقة معها، فيُكتشف الخطأ.
@@ -757,13 +806,14 @@ Encoding يعني إسناد معنى إلى الإشارات. أما «وسيل
 
 **المصدر:** [العام الدراسي 2022-2023 / الفصل الثاني / النموذج (B)]
 ### السؤال 50 (صعب)
+If G(x) = x^5 + x^3 + what is the generator bit String---------
+
 إذا كان G(x)=x⁵+x³+…، فما سلسلة بتات المولد؟
 
-> EN: If G(x) = x^5 + x^3 + what is the generator bit String---------
 أ) 101001
 ب) 1001000
 ج) 101000
-د) لا شيء مما سبق
+د) none of the above
 **الإجابة الصحيحة: أ**
 **التعليل:**
 صيغة السؤال مقطوعة بعد علامة الجمع. الخيار A=101001 يمثل G(x)=x⁵+x³+1، وهو الشكل المنطقي المرجح للسؤال؛ أما 101000 فيمثل x⁵+x³ فقط. لذلك نختار A على افتراض أن الحد المفقود هو +1.
@@ -776,13 +826,14 @@ Encoding يعني إسناد معنى إلى الإشارات. أما «وسيل
 
 **المصدر:** [العام الدراسي 2023-2024 / الفصل الأول / النموذج (A)]
 ### السؤال 51 (متوسط)
+Which one of the following is not a correct data when using odd Parity
+
 أي البيانات الآتية غير صحيحة عند استخدام التكافؤ الفردي؟
 
-> EN: Which one of the following is not a correct data when using odd Parity
 أ) 01101101 0
 ب) 11001101 0
 ج) 01100101 0
-د) لا شيء مما سبق
+د) none of the above
 **الإجابة الصحيحة: ج**
 **التعليل:**
 A وB يحتوي كل منهما خمسة بتات 1 مع بت تكافؤ 0، فهما صحيحان للتكافؤ الفردي. C تحتوي أربع واحدات مع 0، أي مجموع زوجي، ولذلك هي غير الصحيحة.
@@ -791,13 +842,14 @@ A وB يحتوي كل منهما خمسة بتات 1 مع بت تكافؤ 0، ف
 
 **المصدر:** [العام الدراسي 2023-2024 / الفصل الأول / النموذج (A)]
 ### السؤال 52 (سهل)
+The capability to detect when transmission has been changed is called:-----------
+
 تُسمّى القدرة على اكتشاف تغير البيانات أثناء الإرسال:
 
-> EN: The capability to detect when transmission has been changed is called:-----------
-أ) تصحيح الأخطاء
-ب) سلامة البيانات
-ج) أمن البيانات
-د) لا شيء مما سبق
+أ) Error correction
+ب) Data integrity
+ج) Data security
+د) none of the above
 **الإجابة الصحيحة: ب**
 **التعليل:**
 المصطلح المقصود هو Data Integrity، أي ضمان أن البيانات المستقبلة مطابقة للمرسلة. كشف الأخطاء إحدى تقنيات تحقيق هذه السلامة.
@@ -806,13 +858,14 @@ A وB يحتوي كل منهما خمسة بتات 1 مع بت تكافؤ 0، ف
 
 **المصدر:** [العام الدراسي 2023-2024 / الفصل الأول / النموذج (A)]
 ### السؤال 53 (صعب)
+If G(x) = x^4 + x^3 + 1 what is the generator bit String--------
+
 إذا كان G(x)=x⁴+x³+1، فما سلسلة بتات المولّد؟
 
-> EN: If G(x) = x^4 + x^3 + 1 what is the generator bit String--------
 أ) 10101
 ب) 11001
 ج) 11101
-د) لا شيء مما سبق
+د) none of the above
 **الإجابة الصحيحة: ب**
 **التعليل:**
 نكتب معاملات الحدود من x⁴ حتى x⁰: معامل x⁴=1، x³=1، x²=0، x¹=0، والثابت=1. لذلك السلسلة هي 11001.
@@ -823,13 +876,14 @@ A وB يحتوي كل منهما خمسة بتات 1 مع بت تكافؤ 0، ف
 
 **المصدر:** [العام الدراسي 2021-2022 / الفصل الثاني / النموذج (B)]
 ### السؤال 54 (متوسط)
+-------------transform information into a different, unintelligible form
+
 ما العملية التي تحول المعلومات إلى صورة مختلفة غير مفهومة؟
 
-> EN: -------------transform information into a different, unintelligible form
-أ) أمن البيانات
-ب) سلامة البيانات
-ج) فك التشفير
-د) التشفير
+أ) Data security
+ب) Data Integrity
+ج) Decryption
+د) Encryption
 **الإجابة الصحيحة: د**
 **التعليل:**
 Encryption هو تحويل النص الأصلي Plaintext إلى Ciphertext غير مفهوم. Decryption يعيد النص الأصلي، بينما Data Security هو المجال العام وليست اسم العملية نفسها.
@@ -838,13 +892,14 @@ Encryption هو تحويل النص الأصلي Plaintext إلى Ciphertext غ�
 
 **المصدر:** [العام الدراسي 2021-2022 / الفصل الثاني / النموذج (B)]
 ### السؤال 55 (متوسط)
+Public key cryptosystems use two keys to encrypting/decrypting a message. Which one of the following statements describe the encryption and decryption methods:
+
 تستخدم أنظمة المفتاح العام مفتاحين للتشفير وفك التشفير؛ أي عبارة تصف الطريقة؟
 
-> EN: Public key cryptosystems use two keys to encrypting/decrypting a message. Which one of the following statements describe the encryption and decryption methods:
-أ) تستخدم دالتا التشفير وفك التشفير مفتاحين عامّين
-ب) تستخدم دالتا التشفير وفك التشفير مفتاحين خاصّين
-ج) تستخدم دالة التشفير المفتاح العام، وتستخدم دالة فك التشفير المفتاح الخاص
-د) تستخدم دالة التشفير المفتاح الخاص، وتستخدم دالة فك التشفير المفتاح العام
+أ) Both encryption and decryption functions use public keys.
+ب) Both encryption and decryption functions use private keys.
+ج) the encryption function uses public key while decryption function uses private key.
+د) the encryption function uses private key while decryption function uses public key.
 **الإجابة الصحيحة: ج**
 **التعليل:**
 يرسل المرسل الرسالة بعد تشفيرها بالمفتاح العام للمستقبل، ولا يستطيع فكها إلا المستقبل بمفتاحه الخاص. لذلك التشفير بالمفتاح العام وفك التشفير بالمفتاح الخاص.
@@ -853,13 +908,14 @@ Encryption هو تحويل النص الأصلي Plaintext إلى Ciphertext غ�
 
 **المصدر:** [العام الدراسي 2022-2023 / الفصل الثاني / النموذج (B)]
 ### السؤال 56 (متوسط)
+Public key cryptosystems-------------
+
 أنظمة التشفير بالمفتاح العام:
 
-> EN: Public key cryptosystems-------------
-أ) دالتا التشفير وفك التشفير منفصلتان
-ب) يمكن استخدام مفتاح التشفير لفك الرسالة
-ج) مفتاح فك التشفير عام، بينما مفتاح التشفير لا يعرفه إلا المستقبل
-د) لا شيء مما سبق
+أ) Encryption and decryption functions are separated
+ب) Encryption key can be used to decrypt a message
+ج) The decryption key is public; but the encryption key is only known to the receiver.
+د) None of the above
 **الإجابة الصحيحة: أ**
 **التعليل:**
 في أنظمة المفتاح العام تكون وظيفتا التشفير وفك التشفير منفصلتين، ولا يمكن استخدام المفتاح العام نفسه لفك الرسالة. المفتاح العام للتشفير، والخاص عند المستقبل لفك التشفير.
@@ -870,13 +926,14 @@ Encryption هو تحويل النص الأصلي Plaintext إلى Ciphertext غ�
 
 **المصدر:** [العام الدراسي 2021-2022 / الفصل الثاني / النموذج (B)]
 ### السؤال 57 (متوسط)
+Logical connection is the responsibility of the ----------- layer.
+
 الاتصال المنطقي من مسؤولية أي طبقة؟
 
-> EN: Logical connection is the responsibility of the ----------- layer.
-أ) طبقة الشبكة
-ب) طبقة النقل
-ج) طبقة التطبيق
-د) لا شيء مما سبق
+أ) Network
+ب) Transport
+ج) Application
+د) None of the above
 **الإجابة الصحيحة: د**
 **التعليل:**
 المحاضرة تنص على أن طبقة الجلسة Session تسمح للتطبيقات على حاسوبين بإنشاء جلسة أو اتصال منطقي. طبقة Session غير موجودة بين A وB وC، لذا تكون الإجابة الصحيحة ضمن الخيارات: لا شيء مما سبق.
@@ -889,13 +946,14 @@ Encryption هو تحويل النص الأصلي Plaintext إلى Ciphertext غ�
 
 **المصدر:** [العام الدراسي 2021-2022 / الفصل الثاني / النموذج (B)]
 ### السؤال 58 (سهل)
+-------------- called the “bit pipe”
+
 أي طبقة تُسمّى «أنبوب البتات» Bit Pipe؟
 
-> EN: -------------- called the “bit pipe”
-أ) طبقة الشبكة
-ب) طبقة النقل
-ج) طبقة التطبيق
-د) الطبقة الفيزيائية
+أ) Network
+ب) Transport
+ج) Application
+د) Physical
 **الإجابة الصحيحة: د**
 **التعليل:**
 الطبقة الفيزيائية تنقل البتات الخام وتتعامل مع الوسط والإشارات، ولذلك تسمى أحياناً bit pipe. الخيار D هو Physical في هذا السؤال.
@@ -904,13 +962,14 @@ Encryption هو تحويل النص الأصلي Plaintext إلى Ciphertext غ�
 
 **المصدر:** [العام الدراسي 2021-2022 / الفصل الثاني / النموذج (B)]
 ### السؤال 59 (متوسط)
+Components of Each OSI Layer------
+
 مكوّنات كل طبقة من طبقات OSI هي:
 
-> EN: Components of Each OSI Layer------
-أ) الخدمة
-ب) الواجهة
-ج) البروتوكول
-د) جميع ما سبق
+أ) Service
+ب) Interface
+ج) Protocol
+د) all of the above.
 **الإجابة الصحيحة: د**
 **التعليل:**
 تتكون كل طبقة بحسب المحاضرة من Service وInterface وProtocol: الخدمة تحدد ماذا تقدم الطبقة، والواجهة تحدد كيفية التعامل مع الطبقات المجاورة، والبروتوكول يحدد قواعد التخاطب النظير. لذلك جميع الخيارات صحيحة.
@@ -919,13 +978,14 @@ Encryption هو تحويل النص الأصلي Plaintext إلى Ciphertext غ�
 
 **المصدر:** [العام الدراسي 2021-2022 / الفصل الثاني / النموذج (B)]
 ### السؤال 60 (صعب)
+CRC, Hamming codes are the responsibility of the --------------- layer.
+
 تقع CRC وHamming Codes ضمن مسؤولية أي طبقة؟
 
-> EN: CRC, Hamming codes are the responsibility of the --------------- layer.
-أ) طبقة الشبكة
-ب) طبقة ربط البيانات
-ج) طبقة التطبيق
-د) طبقة الجلسة
+أ) Network
+ب) Data link
+ج) Application
+د) Session
 **الإجابة الصحيحة: ب**
 **التعليل:**
 طبقة ربط البيانات تكشف أو تصحح الأخطاء لضمان رسائل خالية من الخطأ، وتذكر المحاضرة CRC وHamming Codes صراحةً ضمن هذه المهمة.
@@ -934,13 +994,14 @@ Encryption هو تحويل النص الأصلي Plaintext إلى Ciphertext غ�
 
 **المصدر:** [العام الدراسي 2021-2022 / الفصل الثاني / النموذج (B)]
 ### السؤال 61 (متوسط)
+Flow control between source and destination is the responsibility of the -------- layer
+
 التحكم بالتدفق بين المصدر والوجهة من مسؤولية أي طبقة؟
 
-> EN: Flow control between source and destination is the responsibility of the -------- layer
-أ) طبقة الشبكة
-ب) طبقة النقل
-ج) طبقة التطبيق
-د) لا شيء مما سبق
+أ) Network
+ب) Transport
+ج) Application
+د) None of the above
 **الإجابة الصحيحة: ب**
 **التعليل:**
 طبقة النقل توفر تحكماً بالتدفق من طرف إلى طرف بين المصدر والوجهة. أما طبقة ربط البيانات فتتعامل مع التحكم بالتدفق بين عقدتين متجاورتين فقط.
@@ -949,13 +1010,14 @@ Encryption هو تحويل النص الأصلي Plaintext إلى Ciphertext غ�
 
 **المصدر:** [العام الدراسي 2021-2022 / الفصل الثاني / النموذج (B)]
 ### السؤال 62 (متوسط)
+The process of ensuring that all pieces of packets arrive correctly at receiver and reassembles them into the original order is the responsibility of the -----------layer.
+
 ضمان وصول جميع أجزاء الرزم صحيحة وإعادة تجميعها بترتيبها الأصلي من مسؤولية أي طبقة؟
 
-> EN: The process of ensuring that all pieces of packets arrive correctly at receiver and reassembles them into the original order is the responsibility of the -----------layer.
-أ) طبقة الشبكة
-ب) طبقة النقل
-ج) طبقة التطبيق
-د) الطبقة الفيزيائية
+أ) Network
+ب) Transport
+ج) Application
+د) Physical
 **الإجابة الصحيحة: ب**
 **التعليل:**
 طبقة النقل تقسّم بيانات الطبقات العليا عند الحاجة، وتضمن وصول الأجزاء، ثم تعيد ترتيبها وتجميعها عند المستقبل. لذلك الإجابة Transport.
@@ -964,13 +1026,14 @@ Encryption هو تحويل النص الأصلي Plaintext إلى Ciphertext غ�
 
 **المصدر:** [العام الدراسي 2021-2022 / الفصل الثاني / النموذج (B)]
 ### السؤال 63 (متوسط)
+Which of the following statement is not true for the Ring Topology---------
+
 أي العبارات الآتية غير صحيحة عن الطوبولوجيا الحلقية؟
 
-> EN: Which of the following statement is not true for the Ring Topology---------
-أ) تمر الرسائل عبر كل جهاز
-ب) يتم التنسيق بتمرير رمز Token
-ج) لا يوجد تنسيق مركزي
-د) المحطات الواقعة بين المرسل والمستقبل غير مشاركة في تمرير الرسالة
+أ) Messages pass through each device.
+ب) Co-ordination is by passing a token
+ج) No central coordination.
+د) All stations in between sender and receiver are not involved when passing a message
 **الإجابة الصحيحة: د**
 **التعليل:**
 في Ring تمر الرسائل عبر الأجهزة، ويتم التنسيق بتمرير Token، ولا يوجد تنسيق مركزي. العبارة D تنفي مشاركة المحطات الواقعة بين المرسل والمستقبل، بينما المحاضرة تؤكد أنها تشارك؛ لذا D هي العبارة غير الصحيحة.
@@ -979,13 +1042,14 @@ Encryption هو تحويل النص الأصلي Plaintext إلى Ciphertext غ�
 
 **المصدر:** [العام الدراسي 2021-2022 / الفصل الثاني / النموذج (B)]
 ### السؤال 64 (متوسط)
+The following layer of OSI model is responsible For remotely login to the system:-
+
 أي طبقة في OSI مسؤولة عن تسجيل الدخول عن بعد؟
 
-> EN: The following layer of OSI model is responsible For remotely login to the system:-
-أ) طبقة النقل
-ب) طبقة العرض
-ج) طبقة الجلسة
-د) لا شيء مما سبق
+أ) Transport layer
+ب) Presentation layer
+ج) Session layer
+د) None of the above
 **الإجابة الصحيحة: ج**
 **التعليل:**
 تذكر المحاضرة Remote login ضمن استخدامات طبقة الجلسة Session، والخيار C في هذا السؤال هو Session Layer.
@@ -1000,13 +1064,14 @@ Encryption هو تحويل النص الأصلي Plaintext إلى Ciphertext غ�
 
 **المصدر:** [العام الدراسي 2022-2023 / الفصل الأول / النموذج (B)]
 ### السؤال 65 (سهل)
+-------- called the “bit pipe”
+
 أي طبقة تُسمّى «أنبوب البتات» Bit Pipe؟
 
-> EN: -------- called the “bit pipe”
-أ) طبقة الشبكة
-ب) طبقة النقل
-ج) طبقة التطبيق
-د) الطبقة الفيزيائية
+أ) Network
+ب) Transport
+ج) Application
+د) Physical
 **الإجابة الصحيحة: د**
 **التعليل:**
 الطبقة الفيزيائية تنقل البتات الخام وتتعامل مع الوسط والإشارات، ولذلك تسمى أحياناً bit pipe. الخيار D هو Physical في هذا السؤال.
@@ -1015,13 +1080,14 @@ Encryption هو تحويل النص الأصلي Plaintext إلى Ciphertext غ�
 
 **المصدر:** [العام الدراسي 2022-2023 / الفصل الأول / النموذج (B)]
 ### السؤال 66 (متوسط)
+------ Flow control between source and destination is the responsibility of the ------- layer
+
 التحكم بالتدفق بين المصدر والوجهة من مسؤولية أي طبقة؟
 
-> EN: ------ Flow control between source and destination is the responsibility of the ------- layer
-أ) طبقة الشبكة
-ب) طبقة النقل
-ج) طبقة التطبيق
-د) لا شيء مما سبق
+أ) Network
+ب) Transport
+ج) Application
+د) None of the above
 **الإجابة الصحيحة: ب**
 **التعليل:**
 طبقة النقل توفر تحكماً بالتدفق من طرف إلى طرف بين المصدر والوجهة. أما طبقة ربط البيانات فتتعامل مع التحكم بالتدفق بين عقدتين متجاورتين فقط.
@@ -1030,13 +1096,14 @@ Encryption هو تحويل النص الأصلي Plaintext إلى Ciphertext غ�
 
 **المصدر:** [العام الدراسي 2022-2023 / الفصل الأول / النموذج (B)]
 ### السؤال 67 (متوسط)
+Bus Topology------
+
 في طوبولوجيا الناقل Bus:
 
-> EN: Bus Topology------
-أ) الأجهزة المتواصلة فقط هي المشاركة عند تمرير الرسائل
-ب) من السهل إضافة الأجهزة أو إزالتها
-ج) جميع ما سبق
-د) لا شيء مما سبق
+أ) the communicating devices are involved when passing messages.
+ب) easy to add or remove devices
+ج) All of the above
+د) None of the above
 **الإجابة الصحيحة: ج**
 **التعليل:**
 تذكر المحاضرة أن الأجهزة المتواصلة فقط تشارك في تمرير الرسالة، ومن مزايا Bus سهولة إضافة الأجهزة أو إزالتها. لذلك الخياران صحيحان.
@@ -1045,13 +1112,14 @@ Encryption هو تحويل النص الأصلي Plaintext إلى Ciphertext غ�
 
 **المصدر:** [العام الدراسي 2022-2023 / الفصل الأول / النموذج (B)]
 ### السؤال 68 (متوسط)
+The process of ensuring that all pieces of packets arrive correctly at receiver is the responsibility of the--- layer
+
 ضمان وصول جميع أجزاء الرزم بصورة صحيحة من مسؤولية أي طبقة؟
 
-> EN: The process of ensuring that all pieces of packets arrive correctly at receiver is the responsibility of the--- layer
-أ) طبقة الشبكة
-ب) طبقة النقل
-ج) طبقة التطبيق
-د) لا شيء مما سبق
+أ) Network
+ب) Transport
+ج) Application
+د) None of the above
 **الإجابة الصحيحة: ب**
 **التعليل:**
 هذه وظيفة طبقة النقل؛ فهي تضمن وصول الأجزاء وتعيد تجميعها وترتيبها لدى المستقبل.
@@ -1060,13 +1128,14 @@ Encryption هو تحويل النص الأصلي Plaintext إلى Ciphertext غ�
 
 **المصدر:** [العام الدراسي 2022-2023 / الفصل الأول / النموذج (B)]
 ### السؤال 69 (متوسط)
+Components of Each OSI Layer-------
+
 مكوّنات كل طبقة من طبقات OSI هي:
 
-> EN: Components of Each OSI Layer-------
-أ) الخدمة
-ب) الواجهة
-ج) البروتوكول
-د) جميع ما سبق
+أ) Service
+ب) Interface
+ج) Protocol
+د) all of the above
 **الإجابة الصحيحة: د**
 **التعليل:**
 تتكون كل طبقة بحسب المحاضرة من Service وInterface وProtocol: الخدمة تحدد ماذا تقدم الطبقة، والواجهة تحدد كيفية التعامل مع الطبقات المجاورة، والبروتوكول يحدد قواعد التخاطب النظير. لذلك جميع الخيارات صحيحة.
@@ -1075,13 +1144,14 @@ Encryption هو تحويل النص الأصلي Plaintext إلى Ciphertext غ�
 
 **المصدر:** [العام الدراسي 2022-2023 / الفصل الأول / النموذج (B)]
 ### السؤال 70 (متوسط)
+Logical connection is the responsibility of the ---------- layer.
+
 الاتصال المنطقي من مسؤولية أي طبقة؟
 
-> EN: Logical connection is the responsibility of the ---------- layer.
-أ) طبقة الشبكة
-ب) طبقة النقل
-ج) طبقة التطبيق
-د) لا شيء مما سبق
+أ) Network
+ب) Transport
+ج) Application
+د) None of the above
 **الإجابة الصحيحة: د**
 **التعليل:**
 المحاضرة تنص على أن طبقة الجلسة Session تسمح للتطبيقات على حاسوبين بإنشاء جلسة أو اتصال منطقي. طبقة Session غير موجودة بين A وB وC، لذا تكون الإجابة الصحيحة ضمن الخيارات: لا شيء مما سبق.
@@ -1094,13 +1164,14 @@ Encryption هو تحويل النص الأصلي Plaintext إلى Ciphertext غ�
 
 **المصدر:** [العام الدراسي 2022-2023 / الفصل الأول / النموذج (B)]
 ### السؤال 71 (متوسط)
+The following layer of OSI model is responsible for synchronisation-------- layer
+
 أي طبقة من OSI مسؤولة عن المزامنة؟
 
-> EN: The following layer of OSI model is responsible for synchronisation-------- layer
-أ) طبقة النقل
-ب) طبقة العرض
-ج) طبقة التطبيق
-د) لا شيء مما سبق
+أ) Transport
+ب) Presentation
+ج) Application
+د) None of the above
 **الإجابة الصحيحة: د**
 **التعليل:**
 المحاضرة تضع تنسيق من يرسل ومن يستمع، أي synchronisation، ضمن طبقة الجلسة Session. هذه الطبقة غير موجودة بين الخيارات، لذا None of the above.
@@ -1113,13 +1184,14 @@ Encryption هو تحويل النص الأصلي Plaintext إلى Ciphertext غ�
 
 **المصدر:** [العام الدراسي 2022-2023 / الفصل الأول / النموذج (B)]
 ### السؤال 72 (صعب)
+CRC is the responsibility of the---------layer
+
 فحص CRC من مسؤولية أي طبقة؟
 
-> EN: CRC is the responsibility of the---------layer
-أ) طبقة الشبكة
-ب) طبقة ربط البيانات
-ج) طبقة التطبيق
-د) لا شيء مما سبق
+أ) Network
+ب) Data link
+ج) Application
+د) none of the above
 **الإجابة الصحيحة: ب**
 **التعليل:**
 CRC آلية لكشف أخطاء الإطارات، وتندرج ضمن مسؤوليات طبقة ربط البيانات Data Link.
@@ -1128,13 +1200,14 @@ CRC آلية لكشف أخطاء الإطارات، وتندرج ضمن مسؤو
 
 **المصدر:** [العام الدراسي 2022-2023 / الفصل الأول / النموذج (B)]
 ### السؤال 73 (متوسط)
+Which of the following statement is true for the Star Topology--------
+
 أي عبارة صحيحة عن الطوبولوجيا النجمية؟
 
-> EN: Which of the following statement is true for the Star Topology--------
-أ) اتصال ثنائي الاتجاه
-ب) يتم التنسيق بتمرير رمز Token
-ج) تنسيق مركزي
-د) لا شيء مما سبق
+أ) bi-directional communication.
+ب) Co-ordination is by passing a token
+ج) Central coordination
+د) None of the above
 **الإجابة الصحيحة: ج**
 **التعليل:**
 في Star يكون التحكم مركزياً، وكل جهاز يتواصل عبر الحاسوب أو الجهاز المركزي. تمرير Token خاص غالباً بالطوبولوجيا الحلقية.
@@ -1143,13 +1216,14 @@ CRC آلية لكشف أخطاء الإطارات، وتندرج ضمن مسؤو
 
 **المصدر:** [العام الدراسي 2022-2023 / الفصل الثاني / النموذج (B)]
 ### السؤال 74 (متوسط)
+----- Flow control between source and destination is the responsibility of the ------- layer
+
 التحكم بالتدفق بين المصدر والوجهة من مسؤولية أي طبقة؟
 
-> EN: ----- Flow control between source and destination is the responsibility of the ------- layer
-أ) طبقة الشبكة
-ب) طبقة النقل
-ج) طبقة التطبيق
-د) لا شيء مما سبق
+أ) Network
+ب) Transport
+ج) Application
+د) None of the above
 **الإجابة الصحيحة: ب**
 **التعليل:**
 طبقة النقل توفر تحكماً بالتدفق من طرف إلى طرف بين المصدر والوجهة. أما طبقة ربط البيانات فتتعامل مع التحكم بالتدفق بين عقدتين متجاورتين فقط.
@@ -1158,13 +1232,14 @@ CRC آلية لكشف أخطاء الإطارات، وتندرج ضمن مسؤو
 
 **المصدر:** [العام الدراسي 2022-2023 / الفصل الثاني / النموذج (B)]
 ### السؤال 75 (صعب)
+Duplicate frame is the responsibility of the------- layer
+
 التعامل مع الإطار المكرر من مسؤولية أي طبقة؟
 
-> EN: Duplicate frame is the responsibility of the------- layer
-أ) طبقة الشبكة
-ب) طبقة النقل
-ج) طبقة ربط البيانات
-د) لا شيء مما سبق
+أ) Network
+ب) Transport
+ج) Data link
+د) None of the above
 **الإجابة الصحيحة: ج**
 **التعليل:**
 تذكر المحاضرة أن Error control في Data Link يتعامل مع الإطارات التالفة والمفقودة والمكررة، لذلك Data Link.
@@ -1173,13 +1248,14 @@ CRC آلية لكشف أخطاء الإطارات، وتندرج ضمن مسؤو
 
 **المصدر:** [العام الدراسي 2022-2023 / الفصل الثاني / النموذج (B)]
 ### السؤال 76 (متوسط)
+Logical connection is the responsibility of the ---------- layer.
+
 الاتصال المنطقي من مسؤولية أي طبقة؟
 
-> EN: Logical connection is the responsibility of the ---------- layer.
-أ) طبقة الشبكة
-ب) طبقة النقل
-ج) طبقة التطبيق
-د) لا شيء مما سبق
+أ) Network
+ب) Transport
+ج) Application
+د) None of the above
 **الإجابة الصحيحة: د**
 **التعليل:**
 المحاضرة تنص على أن طبقة الجلسة Session تسمح للتطبيقات على حاسوبين بإنشاء جلسة أو اتصال منطقي. طبقة Session غير موجودة بين A وB وC، لذا تكون الإجابة الصحيحة ضمن الخيارات: لا شيء مما سبق.
@@ -1192,13 +1268,14 @@ CRC آلية لكشف أخطاء الإطارات، وتندرج ضمن مسؤو
 
 **المصدر:** [العام الدراسي 2022-2023 / الفصل الثاني / النموذج (B)]
 ### السؤال 77 (متوسط)
+Which one of the following layer of OSI model is responsible for control of congestion is---- layer
+
 أي طبقة من OSI مسؤولة عن التحكم بالازدحام؟
 
-> EN: Which one of the following layer of OSI model is responsible for control of congestion is---- layer
-أ) طبقة النقل
-ب) طبقة العرض
-ج) طبقة التطبيق
-د) لا شيء مما سبق
+أ) Transport
+ب) Presentation
+ج) Application
+د) None of the above
 **الإجابة الصحيحة: د**
 **التعليل:**
 التحكم بالازدحام مذكور ضمن وظائف Network Layer، لكنها ليست ضمن الخيارات A وB وC في هذا السؤال، ولذلك None of the above.
@@ -1211,13 +1288,14 @@ CRC آلية لكشف أخطاء الإطارات، وتندرج ضمن مسؤو
 
 **المصدر:** [العام الدراسي 2022-2023 / الفصل الثاني / النموذج (B)]
 ### السؤال 78 (متوسط)
+Remote file transfer is the responsibility of the--------layer.
+
 نقل الملفات عن بعد من مسؤولية أي طبقة؟
 
-> EN: Remote file transfer is the responsibility of the--------layer.
-أ) طبقة الشبكة
-ب) طبقة ربط البيانات
-ج) طبقة التطبيق
-د) لا شيء مما سبق
+أ) Network
+ب) Data link
+ج) Application
+د) none of the above
 **الإجابة الصحيحة: د**
 **التعليل:**
 العبارة الدقيقة Remote file transfer وردت في المحاضرة ضمن أمثلة Session Layer. ولأن Session غير موجودة في الخيارات، تكون الإجابة None of the above. قد تقدم Application خدمات نقل ملفات عامة، لكن السؤال استخدم العبارة المطابقة حرفياً لطبقة الجلسة.
@@ -1230,13 +1308,14 @@ CRC آلية لكشف أخطاء الإطارات، وتندرج ضمن مسؤو
 
 **المصدر:** [العام الدراسي 2022-2023 / الفصل الثاني / النموذج (B)]
 ### السؤال 79 (متوسط)
+Which of the following statement is NOT true for the RING Topology-------
+
 أي العبارات الآتية غير صحيحة عن الطوبولوجيا الحلقية؟
 
-> EN: Which of the following statement is NOT true for the RING Topology-------
-أ) اتصال ثنائي الاتجاه
-ب) يتم التنسيق بتمرير رمز Token
-ج) تنسيق مركزي
-د) لا شيء مما سبق
+أ) bi-directional communication.
+ب) Co-ordination is by passing a token
+ج) Central coordination
+د) None of the above
 **الإجابة الصحيحة: ج**
 **التعليل:**
 يمكن أن يكون الاتصال في الحلقة أحادي الاتجاه أو ثنائي الاتجاه، ويتم التنسيق بتمرير Token. المحاضرة تذكر ميزة no central coordination، لذلك عبارة Central coordination هي غير الصحيحة.
@@ -1245,13 +1324,14 @@ CRC آلية لكشف أخطاء الإطارات، وتندرج ضمن مسؤو
 
 **المصدر:** [العام الدراسي 2023-2024 / الفصل الأول / النموذج (A)]
 ### السؤال 80 (متوسط)
+The responsibility of control of congestion is--------layer-
+
 مسؤولية التحكم بالازدحام تقع على طبقة:
 
-> EN: The responsibility of control of congestion is--------layer-
-أ) طبقة الشبكة
-ب) طبقة النقل
-ج) طبقة التطبيق
-د) لا شيء مما سبق
+أ) Network
+ب) Transport
+ج) Application
+د) None of the above
 **الإجابة الصحيحة: أ**
 **التعليل:**
 تضع المحاضرة Control of congestion ضمن وظائف Network Layer، ولذلك A.
@@ -1260,13 +1340,14 @@ CRC آلية لكشف أخطاء الإطارات، وتندرج ضمن مسؤو
 
 **المصدر:** [العام الدراسي 2023-2024 / الفصل الأول / النموذج (A)]
 ### السؤال 81 (متوسط)
+Flow control between source and destination is the responsibility of the -------- layer
+
 التحكم بالتدفق بين المصدر والوجهة من مسؤولية أي طبقة؟
 
-> EN: Flow control between source and destination is the responsibility of the -------- layer
-أ) طبقة الشبكة
-ب) طبقة النقل
-ج) طبقة التطبيق
-د) لا شيء مما سبق
+أ) Network
+ب) Transport
+ج) Application
+د) None of the above
 **الإجابة الصحيحة: ب**
 **التعليل:**
 طبقة النقل توفر تحكماً بالتدفق من طرف إلى طرف بين المصدر والوجهة. أما طبقة ربط البيانات فتتعامل مع التحكم بالتدفق بين عقدتين متجاورتين فقط.
@@ -1275,13 +1356,14 @@ CRC آلية لكشف أخطاء الإطارات، وتندرج ضمن مسؤو
 
 **المصدر:** [العام الدراسي 2023-2024 / الفصل الأول / النموذج (A)]
 ### السؤال 82 (متوسط)
+Remote login is the responsibility of the -------- layer.
+
 تسجيل الدخول عن بعد من مسؤولية أي طبقة؟
 
-> EN: Remote login is the responsibility of the -------- layer.
-أ) طبقة الشبكة
-ب) طبقة النقل
-ج) طبقة التطبيق
-د) لا شيء مما سبق
+أ) Network
+ب) Transport
+ج) Application
+د) None of the above
 **الإجابة الصحيحة: د**
 **التعليل:**
 المحاضرة تذكر Remote login ضمن Session Layer. لأن Session غير معروضة في الخيارات، فالاختيار الصحيح ضمن القائمة هو None of the above.
@@ -1294,13 +1376,14 @@ CRC آلية لكشف أخطاء الإطارات، وتندرج ضمن مسؤو
 
 **المصدر:** [العام الدراسي 2023-2024 / الفصل الأول / النموذج (A)]
 ### السؤال 83 (متوسط)
+The responsibility for synchronisation is------ layer
+
 المزامنة من مسؤولية أي طبقة؟
 
-> EN: The responsibility for synchronisation is------ layer
-أ) طبقة النقل
-ب) طبقة العرض
-ج) جميع ما سبق
-د) لا شيء مما سبق
+أ) Transport
+ب) Presentation
+ج) all of the above
+د) None of the above
 **الإجابة الصحيحة: د**
 **التعليل:**
 تنسيق متى يرسل كل طرف ومتى يستمع هو من وظائف Session Layer. الخيار Session غير موجود، لذا None of the above.
@@ -1313,13 +1396,14 @@ CRC آلية لكشف أخطاء الإطارات، وتندرج ضمن مسؤو
 
 **المصدر:** [العام الدراسي 2023-2024 / الفصل الأول / النموذج (A)]
 ### السؤال 84 (صعب)
+CRC is the responsibility of the-------layer
+
 فحص CRC من مسؤولية أي طبقة؟
 
-> EN: CRC is the responsibility of the-------layer
-أ) طبقة الشبكة
-ب) طبقة ربط البيانات
-ج) طبقة التطبيق
-د) لا شيء مما سبق
+أ) Network
+ب) Data link
+ج) Application
+د) none of the above
 **الإجابة الصحيحة: ب**
 **التعليل:**
 CRC آلية لكشف أخطاء الإطارات، وتندرج ضمن مسؤوليات طبقة ربط البيانات Data Link.
@@ -1328,13 +1412,14 @@ CRC آلية لكشف أخطاء الإطارات، وتندرج ضمن مسؤو
 
 **المصدر:** [العام الدراسي 2023-2024 / الفصل الأول / النموذج (A)]
 ### السؤال 85 (متوسط)
+Which of the following statement is true for the Star Topology--------
+
 أي عبارة صحيحة عن الطوبولوجيا النجمية؟
 
-> EN: Which of the following statement is true for the Star Topology--------
-أ) اتصال ثنائي الاتجاه
-ب) يتم التنسيق بتمرير رمز Token
-ج) تنسيق مركزي
-د) لا شيء مما سبق
+أ) bi-directional communication.
+ب) Co-ordination is by passing a token
+ج) Central coordination
+د) None of the above
 **الإجابة الصحيحة: ج**
 **التعليل:**
 في Star يكون التحكم مركزياً، وكل جهاز يتواصل عبر الحاسوب أو الجهاز المركزي. تمرير Token خاص غالباً بالطوبولوجيا الحلقية.
@@ -1343,13 +1428,14 @@ CRC آلية لكشف أخطاء الإطارات، وتندرج ضمن مسؤو
 
 **المصدر:** [العام الدراسي 2023-2024 / الفصل الأول / النموذج (A)]
 ### السؤال 86 (متوسط)
+-------- layer called the “bit pipe”
+
 أي طبقة تسمى bit pipe؟
 
-> EN: -------- layer called the “bit pipe”
-أ) طبقة الشبكة
-ب) طبقة النقل
-ج) طبقة التطبيق
-د) لا شيء مما سبق
+أ) Network
+ب) Transport
+ج) Application
+د) None of the above
 **الإجابة الصحيحة: د**
 **التعليل:**
 الطبقة الفيزيائية هي المسماة bit pipe، لكنها غير موجودة في A وB وC، لذا None of the above.
@@ -1362,13 +1448,14 @@ CRC آلية لكشف أخطاء الإطارات، وتندرج ضمن مسؤو
 
 **المصدر:** [العام الدراسي 2023-2024 / الفصل الأول / النموذج (A)]
 ### السؤال 87 (صعب)
+Duplicate frame is the responsibility of the------- layer
+
 التعامل مع الإطار المكرر من مسؤولية أي طبقة؟
 
-> EN: Duplicate frame is the responsibility of the------- layer
-أ) طبقة الشبكة
-ب) طبقة النقل
-ج) طبقة التطبيق
-د) لا شيء مما سبق
+أ) Network
+ب) Transport
+ج) Application
+د) None of the above
 **الإجابة الصحيحة: د**
 **التعليل:**
 المسؤولية لطبقة Data Link، لكنها غير موجودة بين Network وTransport وApplication، لذلك None of the above.
@@ -1381,13 +1468,14 @@ CRC آلية لكشف أخطاء الإطارات، وتندرج ضمن مسؤو
 
 **المصدر:** [العام الدراسي 2023-2024 / الفصل الأول / النموذج (A)]
 ### السؤال 88 (متوسط)
+Bus Topology------
+
 في طوبولوجيا الناقل Bus:
 
-> EN: Bus Topology------
-أ) الأجهزة المتواصلة فقط هي المشاركة عند تمرير الرسائل
-ب) من السهل إضافة الأجهزة أو إزالتها
-ج) جميع ما سبق
-د) لا شيء مما سبق
+أ) the communicating devices are involved when passing messages.
+ب) easy to add or remove devices
+ج) All of the above
+د) None of the above
 **الإجابة الصحيحة: ج**
 **التعليل:**
 تذكر المحاضرة أن الأجهزة المتواصلة فقط تشارك في تمرير الرسالة، ومن مزايا Bus سهولة إضافة الأجهزة أو إزالتها. لذلك الخياران صحيحان.
@@ -1398,13 +1486,14 @@ CRC آلية لكشف أخطاء الإطارات، وتندرج ضمن مسؤو
 
 **المصدر:** [العام الدراسي 2021-2022 / الفصل الثاني / النموذج (B)]
 ### السؤال 89 (متوسط)
+Poll used in--------
+
 تُستخدم طريقة Poll في:
 
-> EN: Poll used in--------
-أ) الاتصالات المتنقلة
-ب) التلفاز
-ج) الاتصالات عبر الأقمار الصناعية
-د) لا شيء مما سبق
+أ) Mobile communication
+ب) TV
+ج) Satellite communication
+د) None of the above
 **الإجابة الصحيحة: ج**
 **التعليل:**
 تذكر المحاضرة أن المنسّق يسأل المحطات واحدة تلو الأخرى عن حاجتها للإرسال، وأن هذه الطريقة مستخدمة في شبكات الأقمار الصناعية.
@@ -1413,13 +1502,14 @@ CRC آلية لكشف أخطاء الإطارات، وتندرج ضمن مسؤو
 
 **المصدر:** [العام الدراسي 2021-2022 / الفصل الثاني / النموذج (B)]
 ### السؤال 90 (صعب)
+Contention protocols are basically controlled-
+
 بروتوكولات التنافس هي أساساً ... مضبوطة:
 
-> EN: Contention protocols are basically controlled-
-أ) الاستقرار
-ب) الجودة
-ج) الفوضى
-د) لا شيء مما سبق
+أ) Stability
+ب) Quality
+ج) Anarchy
+د) None of the above
 **الإجابة الصحيحة: ج**
 **التعليل:**
 وصف المحاضرة بروتوكولات التنافس بأنها controlled anarchy، أي «فوضى مضبوطة»: ترسل المحطات بحرية نسبية، ثم تُعالج التصادمات عند وقوعها.
@@ -1428,13 +1518,14 @@ CRC آلية لكشف أخطاء الإطارات، وتندرج ضمن مسؤو
 
 **المصدر:** [العام الدراسي 2021-2022 / الفصل الثاني / النموذج (B)]
 ### السؤال 91 (متوسط)
+Non contention access---------
+
 الوصول غير التنافسي يتضمن:
 
-> EN: Non contention access---------
-أ) خطوط مخصصة
-ب) تعدد الإرسال / تجميع القنوات
-ج) جميع ما سبق
-د) لا شيء مما سبق
+أ) Dedicated lines
+ب) Multiplexing
+ج) All of the above
+د) None of the above
 **الإجابة الصحيحة: ج**
 **التعليل:**
 تضع المحاضرة Dedicated lines وMultiplexing تحت Non-contention access؛ لأن المستخدمين لا يتنافسون آنياً على القناة بالطريقة الموجودة في ALOHA أو CSMA. لذلك جميع ما سبق.
@@ -1443,13 +1534,14 @@ CRC آلية لكشف أخطاء الإطارات، وتندرج ضمن مسؤو
 
 **المصدر:** [العام الدراسي 2021-2022 / الفصل الثاني / النموذج (B)]
 ### السؤال 92 (صعب)
+Contention means --------
+
 يعني التنافس Contention أن:
 
-> EN: Contention means --------
-أ) عدة مستخدمين يتشاركون قناة مشتركة
-ب) قد يستخدمونها في الوقت نفسه
-ج) جميع ما سبق
-د) لا شيء مما سبق
+أ) multiple users share a common channel
+ب) will use it at the same time.
+ج) All of the above
+د) None of the above
 **الإجابة الصحيحة: ج**
 **التعليل:**
 التنافس يعني أن عدة مستخدمين يتشاركون قناة مشتركة وقد يحاولون استخدامها في الوقت نفسه، وهذا ما يسبب احتمال التصادم. الخياران A وB يكمل أحدهما الآخر، لذا الإجابة جميع ما سبق.
@@ -1458,13 +1550,14 @@ CRC آلية لكشف أخطاء الإطارات، وتندرج ضمن مسؤو
 
 **المصدر:** [العام الدراسي 2021-2022 / الفصل الثاني / النموذج (B)]
 ### السؤال 93 (صعب)
+A collision occurs when--------
+
 يحدث التصادم عندما:
 
-> EN: A collision occurs when--------
-أ) مستخدم واحد يستخدم القناة نفسها
-ب) استخدام القناة نفسها بالتزامن
-ج) جميع ما سبق
-د) لا شيء مما سبق
+أ) one user use the same channel
+ب) use the same channel simultaneously.
+ج) All of the above
+د) None of the above
 **الإجابة الصحيحة: ب**
 **التعليل:**
 التعريف الدقيق: يحدث التصادم عندما يستخدم مستخدمان أو أكثر القناة نفسها في الوقت نفسه. الخيار B هو الأقرب لهذا التعريف، بينما A يتحدث عن مستخدم واحد فقط، ولذلك لا يمكن اختيار All of the above.
@@ -1473,13 +1566,14 @@ CRC آلية لكشف أخطاء الإطارات، وتندرج ضمن مسؤو
 
 **المصدر:** [العام الدراسي 2021-2022 / الفصل الثاني / النموذج (B)]
 ### السؤال 94 (صعب)
+Collision detection requires -----
+
 يتطلب كشف التصادم:
 
-> EN: Collision detection requires -----
-أ) إطاراً بحد أدنى للحجم
-ب) حداً أدنى لحجم الإطار مقداره 256 بتاً
-ج) جميع ما سبق
-د) لا شيء مما سبق
+أ) a minimum size frame
+ب) minimum frame size of 256 bits
+ج) All of the above
+د) None of the above.
 **الإجابة الصحيحة: أ**
 **التعليل:**
 يجب أن يبقى المرسل في طور الإرسال مدة تكفي لوصول أثر التصادم إليه؛ لذلك يلزم حد أدنى لحجم الإطار. المحاضرة تذكر أن Ethernet يتطلب 512 بتاً، وليس 256 بتاً، لذا A فقط صحيحة.
@@ -1488,13 +1582,14 @@ CRC آلية لكشف أخطاء الإطارات، وتندرج ضمن مسؤو
 
 **المصدر:** [العام الدراسي 2022-2023 / الفصل الأول / النموذج (B)]
 ### السؤال 95 (صعب)
+Contention means -------
+
 يعني التنافس Contention أن:
 
-> EN: Contention means -------
-أ) عدة مستخدمين يتشاركون قناة مشتركة
-ب) قد يستخدمونها في الوقت نفسه
-ج) جميع ما سبق
-د) لا شيء مما سبق
+أ) multiple users share a common channel
+ب) will use it at the same time.
+ج) All of the above
+د) None of the above
 **الإجابة الصحيحة: ج**
 **التعليل:**
 التنافس يعني أن عدة مستخدمين يتشاركون قناة مشتركة وقد يحاولون استخدامها في الوقت نفسه، وهذا ما يسبب احتمال التصادم. الخياران A وB يكمل أحدهما الآخر، لذا الإجابة جميع ما سبق.
@@ -1503,13 +1598,14 @@ CRC آلية لكشف أخطاء الإطارات، وتندرج ضمن مسؤو
 
 **المصدر:** [العام الدراسي 2022-2023 / الفصل الأول / النموذج (B)]
 ### السؤال 96 (صعب)
+A collision occurs when--------
+
 يحدث التصادم عندما:
 
-> EN: A collision occurs when--------
-أ) مستخدم واحد يستخدم القناة نفسها
-ب) استخدام القناة نفسها بالتزامن
-ج) جميع ما سبق
-د) لا شيء مما سبق
+أ) one user use the same channel
+ب) use the same channel simultaneously.
+ج) All of the above
+د) None of the above
 **الإجابة الصحيحة: ب**
 **التعليل:**
 التعريف الدقيق: يحدث التصادم عندما يستخدم مستخدمان أو أكثر القناة نفسها في الوقت نفسه. الخيار B هو الأقرب لهذا التعريف، بينما A يتحدث عن مستخدم واحد فقط، ولذلك لا يمكن اختيار All of the above.
@@ -1518,13 +1614,14 @@ CRC آلية لكشف أخطاء الإطارات، وتندرج ضمن مسؤو
 
 **المصدر:** [العام الدراسي 2022-2023 / الفصل الأول / النموذج (B)]
 ### السؤال 97 (متوسط)
+Poll used in---------
+
 تُستخدم طريقة Poll في:
 
-> EN: Poll used in---------
-أ) الاتصالات المتنقلة
-ب) التلفاز
-ج) الاتصالات عبر الأقمار الصناعية
-د) لا شيء مما سبق
+أ) Mobile communication
+ب) TV
+ج) Satellite communication
+د) none of the above
 **الإجابة الصحيحة: ج**
 **التعليل:**
 تذكر المحاضرة أن المنسّق يسأل المحطات واحدة تلو الأخرى عن حاجتها للإرسال، وأن هذه الطريقة مستخدمة في شبكات الأقمار الصناعية.
@@ -1533,13 +1630,14 @@ CRC آلية لكشف أخطاء الإطارات، وتندرج ضمن مسؤو
 
 **المصدر:** [العام الدراسي 2022-2023 / الفصل الأول / النموذج (B)]
 ### السؤال 98 (صعب)
+Collision detection requires -----
+
 يتطلب كشف التصادم:
 
-> EN: Collision detection requires -----
-أ) إطاراً بحد أدنى للحجم
-ب) حداً أدنى لحجم الإطار مقداره 256 بتاً
-ج) جميع ما سبق
-د) لا شيء مما سبق
+أ) a minimum size frame
+ب) minimum frame size of 256 bits
+ج) All of the above
+د) None of the above
 **الإجابة الصحيحة: أ**
 **التعليل:**
 يجب أن يبقى المرسل في طور الإرسال مدة تكفي لوصول أثر التصادم إليه؛ لذلك يلزم حد أدنى لحجم الإطار. المحاضرة تذكر أن Ethernet يتطلب 512 بتاً، وليس 256 بتاً، لذا A فقط صحيحة.
@@ -1548,13 +1646,14 @@ CRC آلية لكشف أخطاء الإطارات، وتندرج ضمن مسؤو
 
 **المصدر:** [العام الدراسي 2022-2023 / الفصل الأول / النموذج (B)]
 ### السؤال 99 (صعب)
+Packet radio protocol in which a device sends a packet and, if it collides with another, will send another after a random amount of time is called ____________
+
 ما بروتوكول الراديو الرزمي الذي يرسل الرزمة، ثم يعيد إرسالها بعد زمن عشوائي إذا حدث تصادم؟
 
-> EN: Packet radio protocol in which a device sends a packet and, if it collides with another, will send another after a random amount of time is called ____________
-أ) بروتوكول ALOHA
-ب) بروتوكول CSMA
-ج) بروتوكول CSMA/CD
-د) Token Ring
+أ) Aloha protocol
+ب) CSMA
+ج) CSMA/CD
+د) Token ring
 **الإجابة الصحيحة: أ**
 **التعليل:**
 في ALOHA ترسل المحطة عندما تكون جاهزة. إذا لم يصل ACK تفترض وجود تصادم، تنتظر زمناً عشوائياً، ثم تعيد الإرسال.
@@ -1563,13 +1662,14 @@ CRC آلية لكشف أخطاء الإطارات، وتندرج ضمن مسؤو
 
 **المصدر:** [العام الدراسي 2022-2023 / الفصل الأول / النموذج (B)]
 ### السؤال 100 (متوسط)
+Non contention access-----------
+
 الوصول غير التنافسي يتضمن:
 
-> EN: Non contention access-----------
-أ) خطوط مخصصة
-ب) تعدد الإرسال / تجميع القنوات
-ج) جميع ما سبق
-د) لا شيء مما سبق
+أ) Dedicated lines
+ب) Multiplexing
+ج) All of the above
+د) None of the above
 **الإجابة الصحيحة: ج**
 **التعليل:**
 تضع المحاضرة Dedicated lines وMultiplexing تحت Non-contention access؛ لأن المستخدمين لا يتنافسون آنياً على القناة بالطريقة الموجودة في ALOHA أو CSMA. لذلك جميع ما سبق.
@@ -1584,13 +1684,14 @@ CRC آلية لكشف أخطاء الإطارات، وتندرج ضمن مسؤو
 
 **المصدر:** [العام الدراسي 2022-2023 / الفصل الثاني / النموذج (B)]
 ### السؤال 101 (صعب)
+Contention means -------
+
 يعني التنافس Contention أن:
 
-> EN: Contention means -------
-أ) عدة مستخدمين يتشاركون قناة مشتركة
-ب) قد يستخدمونها في الوقت نفسه
-ج) جميع ما سبق
-د) لا شيء مما سبق
+أ) multiple users share a common channel
+ب) will use it at the same time.
+ج) All of the above
+د) None of the above
 **الإجابة الصحيحة: ج**
 **التعليل:**
 التنافس يعني أن عدة مستخدمين يتشاركون قناة مشتركة وقد يحاولون استخدامها في الوقت نفسه، وهذا ما يسبب احتمال التصادم. الخياران A وB يكمل أحدهما الآخر، لذا الإجابة جميع ما سبق.
@@ -1599,13 +1700,14 @@ CRC آلية لكشف أخطاء الإطارات، وتندرج ضمن مسؤو
 
 **المصدر:** [العام الدراسي 2022-2023 / الفصل الثاني / النموذج (B)]
 ### السؤال 102 (صعب)
+A collision occurs when--------
+
 يحدث التصادم عندما:
 
-> EN: A collision occurs when--------
-أ) مستخدم واحد يستخدم القناة نفسها
-ب) استخدام القناة نفسها بالتزامن
-ج) جميع ما سبق
-د) لا شيء مما سبق
+أ) one user use the same channel
+ب) use the same channel simultaneously.
+ج) All of the above
+د) None of the above
 **الإجابة الصحيحة: ب**
 **التعليل:**
 التعريف الدقيق: يحدث التصادم عندما يستخدم مستخدمان أو أكثر القناة نفسها في الوقت نفسه. الخيار B هو الأقرب لهذا التعريف، بينما A يتحدث عن مستخدم واحد فقط، ولذلك لا يمكن اختيار All of the above.
@@ -1614,13 +1716,14 @@ CRC آلية لكشف أخطاء الإطارات، وتندرج ضمن مسؤو
 
 **المصدر:** [العام الدراسي 2022-2023 / الفصل الثاني / النموذج (B)]
 ### السؤال 103 (متوسط)
+Non contention access-----------
+
 الوصول غير التنافسي يتضمن:
 
-> EN: Non contention access-----------
-أ) خطوط مخصصة
-ب) تعدد الإرسال / تجميع القنوات
-ج) جميع ما سبق
-د) لا شيء مما سبق
+أ) Dedicated lines
+ب) Multiplexing
+ج) All of the above
+د) None of the above
 **الإجابة الصحيحة: ج**
 **التعليل:**
 تضع المحاضرة Dedicated lines وMultiplexing تحت Non-contention access؛ لأن المستخدمين لا يتنافسون آنياً على القناة بالطريقة الموجودة في ALOHA أو CSMA. لذلك جميع ما سبق.
@@ -1635,13 +1738,14 @@ CRC آلية لكشف أخطاء الإطارات، وتندرج ضمن مسؤو
 
 **المصدر:** [العام الدراسي 2023-2024 / الفصل الأول / النموذج (A)]
 ### السؤال 104 (صعب)
+A collision occurs when--------
+
 يحدث التصادم عندما:
 
-> EN: A collision occurs when--------
-أ) مستخدم واحد يستخدم القناة نفسها
-ب) استخدام القناة نفسها بالتزامن
-ج) جميع ما سبق
-د) لا شيء مما سبق
+أ) one user use the same channel
+ب) use the same channel simultaneously.
+ج) All of the above
+د) None of the above
 **الإجابة الصحيحة: ب**
 **التعليل:**
 التعريف الدقيق: يحدث التصادم عندما يستخدم مستخدمان أو أكثر القناة نفسها في الوقت نفسه. الخيار B هو الأقرب لهذا التعريف، بينما A يتحدث عن مستخدم واحد فقط، ولذلك لا يمكن اختيار All of the above.
@@ -1650,13 +1754,14 @@ CRC آلية لكشف أخطاء الإطارات، وتندرج ضمن مسؤو
 
 **المصدر:** [العام الدراسي 2023-2024 / الفصل الأول / النموذج (A)]
 ### السؤال 105 (متوسط)
+Non contention access----------
+
 الوصول غير التنافسي يتضمن:
 
-> EN: Non contention access----------
-أ) خطوط مخصصة
-ب) تعدد الإرسال / تجميع القنوات
-ج) جميع ما سبق
-د) لا شيء مما سبق
+أ) Dedicated lines
+ب) Multiplexing
+ج) All of the above
+د) None of the above
 **الإجابة الصحيحة: ج**
 **التعليل:**
 تضع المحاضرة Dedicated lines وMultiplexing تحت Non-contention access؛ لأن المستخدمين لا يتنافسون آنياً على القناة بالطريقة الموجودة في ALOHA أو CSMA. لذلك جميع ما سبق.
@@ -1665,13 +1770,14 @@ CRC آلية لكشف أخطاء الإطارات، وتندرج ضمن مسؤو
 
 **المصدر:** [العام الدراسي 2023-2024 / الفصل الأول / النموذج (A)]
 ### السؤال 106 (صعب)
+Contention means -------
+
 يعني التنافس Contention أن:
 
-> EN: Contention means -------
-أ) عدة مستخدمين يتشاركون قناة مشتركة
-ب) قد يستخدمونها في الوقت نفسه
-ج) جميع ما سبق
-د) لا شيء مما سبق
+أ) multiple users share a common channel
+ب) will use it at the same time.
+ج) All of the above
+د) None of the above
 **الإجابة الصحيحة: ج**
 **التعليل:**
 التنافس يعني أن عدة مستخدمين يتشاركون قناة مشتركة وقد يحاولون استخدامها في الوقت نفسه، وهذا ما يسبب احتمال التصادم. الخياران A وB يكمل أحدهما الآخر، لذا الإجابة جميع ما سبق.
@@ -1680,13 +1786,14 @@ CRC آلية لكشف أخطاء الإطارات، وتندرج ضمن مسؤو
 
 **المصدر:** [العام الدراسي 2023-2024 / الفصل الأول / النموذج (A)]
 ### السؤال 107 (متوسط)
+Poll used in---------
+
 تُستخدم طريقة Poll في:
 
-> EN: Poll used in---------
-أ) الاتصالات المتنقلة
-ب) التلفاز
-ج) الاتصالات عبر الأقمار الصناعية
-د) لا شيء مما سبق
+أ) Mobile communication
+ب) TV
+ج) Satellite communication
+د) none of the above
 **الإجابة الصحيحة: ج**
 **التعليل:**
 تذكر المحاضرة أن المنسّق يسأل المحطات واحدة تلو الأخرى عن حاجتها للإرسال، وأن هذه الطريقة مستخدمة في شبكات الأقمار الصناعية.
@@ -1695,13 +1802,14 @@ CRC آلية لكشف أخطاء الإطارات، وتندرج ضمن مسؤو
 
 **المصدر:** [العام الدراسي 2023-2024 / الفصل الأول / النموذج (A)]
 ### السؤال 108 (صعب)
+Collision detection requires -----
+
 يتطلب كشف التصادم:
 
-> EN: Collision detection requires -----
-أ) إطاراً بحد أدنى للحجم
-ب) حداً أدنى لحجم الإطار مقداره 256 بتاً
-ج) جميع ما سبق
-د) لا شيء مما سبق
+أ) a minimum size frame
+ب) minimum frame size of 256 bits
+ج) All of the above
+د) None of the above
 **الإجابة الصحيحة: أ**
 **التعليل:**
 يجب أن يبقى المرسل في طور الإرسال مدة تكفي لوصول أثر التصادم إليه؛ لذلك يلزم حد أدنى لحجم الإطار. المحاضرة تذكر أن Ethernet يتطلب 512 بتاً، وليس 256 بتاً، لذا A فقط صحيحة.
@@ -1710,13 +1818,14 @@ CRC آلية لكشف أخطاء الإطارات، وتندرج ضمن مسؤو
 
 **المصدر:** [العام الدراسي 2023-2024 / الفصل الأول / النموذج (A)]
 ### السؤال 109 (صعب)
+Packet radio protocol in which send a packet and, if it collides another, will send after a random with amount of time is called
+
 ما بروتوكول الراديو الرزمي الذي يعيد الإرسال بعد زمن عشوائي عند التصادم؟
 
-> EN: Packet radio protocol in which send a packet and, if it collides another, will send after a random with amount of time is called
-أ) بروتوكول ALOHA
-ب) بروتوكول CSMA
-ج) بروتوكول CSMA/CD
-د) Token Ring
+أ) Aloha protocol
+ب) CSMA
+ج) CSMA/CD
+د) Token ring
 **الإجابة الصحيحة: أ**
 **التعليل:**
 هذا هو ALOHA: ترسل المحطة عند الجاهزية، وإذا لم تستلم ACK تفترض التصادم وتنتظر زمناً عشوائياً قبل إعادة الإرسال.
@@ -1731,13 +1840,14 @@ CRC آلية لكشف أخطاء الإطارات، وتندرج ضمن مسؤو
 
 **المصدر:** [العام الدراسي 2022-2023 / الفصل الأول / النموذج (B)]
 ### السؤال 110 (متوسط)
+Flow control-------
+
 التحكم بالتدفق Flow Control:
 
-> EN: Flow control-------
-أ) يحدد كيفية إرسال عدة إطارات
-ب) يحدد متى تُرسل الإطارات
-ج) جميع ما سبق
-د) لا شيء مما سبق
+أ) Defines the way multiple frames are sent
+ب) When to send frames
+ج) All of the above
+د) None of the above
 **الإجابة الصحيحة: ج**
 **التعليل:**
 يحدد كيفية إرسال عدة إطارات وتتبعها، ومتى يبدأ الإرسال ومتى يتوقف. لذلك العبارتان A وB صحيحتان والإجابة All of the above.
@@ -1746,13 +1856,14 @@ CRC آلية لكشف أخطاء الإطارات، وتندرج ضمن مسؤو
 
 **المصدر:** [العام الدراسي 2022-2023 / الفصل الثاني / النموذج (B)]
 ### السؤال 111 (متوسط)
+Signalling is used in ---------
+
 تُستخدم آلية Signalling في:
 
-> EN: Signalling is used in ---------
-أ) العتاد
-ب) البرمجيات
-ج) جميع ما سبق
-د) لا شيء مما سبق
+أ) Hardware
+ب) Software
+ج) All of the above
+د) None of the above
 **الإجابة الصحيحة: ج**
 **التعليل:**
 المحاضرة تذكر استخدامها في العتاد مثل RS-232، وفي البرمجيات مثل X-ON وX-OFF. لذلك جميع ما سبق.
@@ -1761,13 +1872,14 @@ CRC آلية لكشف أخطاء الإطارات، وتندرج ضمن مسؤو
 
 **المصدر:** [العام الدراسي 2022-2023 / الفصل الثاني / النموذج (B)]
 ### السؤال 112 (متوسط)
+Flow control--------
+
 التحكم بالتدفق Flow Control:
 
-> EN: Flow control--------
-أ) يحدد كيفية إرسال عدة إطارات
-ب) يحدد متى تُرسل الإطارات
-ج) جميع ما سبق
-د) لا شيء مما سبق
+أ) Defines the way multiple frames are sent
+ب) When to send frames
+ج) All of the above
+د) None of the above
 **الإجابة الصحيحة: ج**
 **التعليل:**
 يحدد كيفية إرسال عدة إطارات وتتبعها، ومتى يبدأ الإرسال ومتى يتوقف. لذلك العبارتان A وB صحيحتان والإجابة All of the above.
@@ -1776,13 +1888,14 @@ CRC آلية لكشف أخطاء الإطارات، وتندرج ضمن مسؤو
 
 **المصدر:** [العام الدراسي 2022-2023 / الفصل الثاني / النموذج (B)]
 ### السؤال 113 (متوسط)
+Frames is the type of data in ------
+
 الإطارات Frames هي وحدة البيانات في أي طبقة؟
 
-> EN: Frames is the type of data in ------
-أ) طبقة الشبكة
-ب) طبقة النقل
-ج) طبقة التطبيق
-د) لا شيء مما سبق
+أ) Network
+ب) Transport
+ج) Application
+د) None of the above
 **الإجابة الصحيحة: د**
 **التعليل:**
 تذكر المحاضرة أن البيانات في طبقة ربط البيانات تُنقل على شكل Frames. Data Link غير موجودة بين A وB وC، لذا None of the above.
@@ -1795,13 +1908,14 @@ CRC آلية لكشف أخطاء الإطارات، وتندرج ضمن مسؤو
 
 **المصدر:** [العام الدراسي 2023-2024 / الفصل الأول / النموذج (A)]
 ### السؤال 114 (متوسط)
+Error control----------
+
 التحكم بالأخطاء Error Control:
 
-> EN: Error control----------
-أ) يحدد كيفية إرسال عدة إطارات
-ب) يحدد متى تُرسل الإطارات
-ج) جميع ما سبق
-د) لا شيء مما سبق
+أ) Defines the way multiple frames are sent
+ب) When to send frames
+ج) All of the above
+د) None of the above
 **الإجابة الصحيحة: د**
 **التعليل:**
 العبارتان A وB تصفان Flow Control: كيفية إرسال الإطارات ومتى تُرسل. أما Error Control فيحدد كيفية فحص الإطارات وما العمل عند حدوث أخطاء، لذلك لا شيء مما سبق.
@@ -1812,13 +1926,14 @@ CRC آلية لكشف أخطاء الإطارات، وتندرج ضمن مسؤو
 
 **المصدر:** [العام الدراسي 2022-2023 / الفصل الثاني / النموذج (B)]
 ### السؤال 115 (متوسط)
+Used to extend the distance covered by LAN is------
+
 ما الجهاز المستخدم لزيادة المسافة التي تغطيها LAN؟
 
-> EN: Used to extend the distance covered by LAN is------
-أ) الموجّه Router
-ب) المبدّل Switch
-ج) المكررات Repeaters
-د) لا شيء مما سبق
+أ) Router
+ب) Switch
+ج) Repeaters
+د) None of the above
 **الإجابة الصحيحة: ج**
 **التعليل:**
 المكرر Repeater يستقبل الإشارة ويعيد توليدها ثم يرسلها، ويعمل في الطبقة الفيزيائية لتمديد المسافة التي تغطيها الشبكة المحلية.
@@ -1827,13 +1942,14 @@ CRC آلية لكشف أخطاء الإطارات، وتندرج ضمن مسؤو
 
 **المصدر:** [العام الدراسي 2022-2023 / الفصل الثاني / النموذج (B)]
 ### السؤال 116 (متوسط)
+Perform error detection, frame formatting, and frame routing, is ----------
+
 الجهاز الذي ينفذ كشف الأخطاء وتنسيق الإطارات وتوجيهها هو:
 
-> EN: Perform error detection, frame formatting, and frame routing, is ----------
-أ) الموجّه Router
-ب) المبدّل Switch
-ج) الجسر Bridge
-د) لا شيء مما سبق
+أ) Router
+ب) Switch
+ج) Bridge
+د) None of the above
 **الإجابة الصحيحة: ج**
 **التعليل:**
 تذكر المحاضرة هذه الوظائف نصاً تحت Bridges. الجسر يعمل في طبقة ربط البيانات ويمكنه إعادة تنسيق الإطارات وربط أنواع مختلفة من LAN.
@@ -1844,13 +1960,14 @@ CRC آلية لكشف أخطاء الإطارات، وتندرج ضمن مسؤو
 
 **المصدر:** [العام الدراسي 2022-2023 / الفصل الثاني / النموذج (B)]
 ### السؤال 117 (متوسط)
+Message Switching is-------
+
 تبديل الرسائل Message Switching هو:
 
-> EN: Message Switching is-------
-أ) خدمة غير موجهة للاتصال
-ب) خدمة موجهة للاتصال
-ج) جميع ما سبق
-د) لا شيء مما سبق
+أ) Connectionless service
+ب) Connection-oriented service
+ج) All of the above
+د) None of the above
 **الإجابة الصحيحة: أ**
 **التعليل:**
 في تبديل الرسائل لا تُنشأ دارة محجوزة مسبقاً؛ تُخزن الرسالة كاملة ثم تُمرر من عقدة إلى أخرى بأسلوب Store-and-Forward. لذلك يُعد خدمة غير موجهة للاتصال.
@@ -1863,13 +1980,14 @@ CRC آلية لكشف أخطاء الإطارات، وتندرج ضمن مسؤو
 
 **المصدر:** [العام الدراسي 2022-2023 / الفصل الثاني / النموذج (B)]
 ### السؤال 118 (متوسط)
+Packet Switching is------
+
 تبديل الرزم Packet Switching هو:
 
-> EN: Packet Switching is------
-أ) خدمة غير موجهة للاتصال
-ب) خدمة موجهة للاتصال
-ج) جميع ما سبق
-د) لا شيء مما سبق
+أ) Connectionless service
+ب) Connection-oriented service
+ج) All of the above
+د) None of the above
 **الإجابة الصحيحة: ج**
 **التعليل:**
 يمكن أن يعمل Packet Switching بأسلوب Datagram غير الموجه للاتصال، أو بأسلوب Virtual Circuit الموجه للاتصال. لذلك كلا الخيارين A وB ممكنان، والإجابة All of the above.
