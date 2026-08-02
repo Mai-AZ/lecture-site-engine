@@ -3,7 +3,7 @@ import { ms, PART_MAT_ICONS } from '../core/icons.js';
 import { isChecklistPart } from '../core/part-filters.js';
 import { renderBlocks } from '../blocks/index.js';
 import { renderPart } from '../parts/index.js';
-import { mcqSectionAnchor, normalizeMcqSection } from '../core/slug.js';
+import { mcqCardDomId, mcqSectionAnchor, normalizeMcqSection } from '../core/slug.js';
 
 export function renderAiDisclaimer(config) {
   const site = config.defaultTitle || 'Study Guide';
@@ -15,6 +15,48 @@ export function renderAiDisclaimer(config) {
 
 export function renderDisclaimers(config) {
   return `<div class="disclaimers-stack mb-xl">${renderAiDisclaimer(config)}</div>`;
+}
+
+/** Clickable list of past-exam questions whose answer key was corrected. */
+export function renderAnswerCorrections(guide) {
+  const corr = guide?.answerCorrections;
+  const groups = corr?.groups;
+  if (!Array.isArray(groups) || !groups.length) return '';
+
+  const mcqPi = guide.parts?.findIndex((p) => p.type === 'mcq');
+  if (mcqPi < 0) return '';
+  const partId = `${guide.id}-p${mcqPi + 1}`;
+  const intro =
+    corr.intro ||
+    'شوف الأسئلة اللي تغيّرت إجاباتهن (اضغط على الرقم للتنقل مباشرة):';
+
+  const rows = groups
+    .map((g) => {
+      const section = normalizeMcqSection(g.section || '');
+      if (!section || !Array.isArray(g.questions) || !g.questions.length) return '';
+      const ref = esc(g.ref || section);
+      const links = g.questions
+        .map((n) => {
+          const id = mcqCardDomId(partId, { num: n, section });
+          return `<a href="#${esc(id)}" class="answer-corrections__q">${esc(String(n))}</a>`;
+        })
+        .join('');
+      return `<div class="answer-corrections__row">
+        <span class="answer-corrections__ref">${ref}</span>
+        <span class="answer-corrections__qs">${links}</span>
+      </div>`;
+    })
+    .filter(Boolean)
+    .join('');
+
+  if (!rows) return '';
+  return `<aside id="${esc(guide.id)}-answer-corrections" class="answer-corrections mb-xl scroll-mt-16 anchor-target" role="note" aria-label="أسئلة مصحّحة">
+    ${ms('published_with_changes', false, 'answer-corrections__icon')}
+    <div class="answer-corrections__body">
+      <p class="answer-corrections__intro"><strong>تنبيه:</strong> ${esc(intro)}</p>
+      ${rows}
+    </div>
+  </aside>`;
 }
 
 function partRenderCtx(partId, part, deps) {
@@ -98,7 +140,11 @@ export function renderCodeGuide(guide, deps, badgeLabel = '💻 أكواد ال�
     </a>`;
   }
 
-  html += `</section><div class="lecture-body">`;
+  html += `</section>`;
+
+  html += renderAnswerCorrections(guide);
+
+  html += `<div class="lecture-body">`;
 
   guide.parts.forEach((part, pi) => {
     const partId = `${guide.id}-p${pi + 1}`;
@@ -302,11 +348,8 @@ function buildPartSubsections(part) {
 }
 
 export function buildTocData(lectures) {
-  return lectures.map(lec => ({
-    id: lec.id,
-    title: lec.title,
-    tag: lec.tag,
-    parts: lec.parts
+  return lectures.map(lec => {
+    const parts = lec.parts
       .map((p, i) => ({ part: p, index: i }))
       .filter(({ part }) => !isChecklistPart(part))
       .map(({ part, index }) => ({
@@ -315,8 +358,26 @@ export function buildTocData(lectures) {
       type: part.type,
       icon: PART_MAT_ICONS[part.type] || 'article',
       subsections: buildPartSubsections(part),
-    })),
-  }));
+    }));
+
+    // Jump target for the DAWRAT answer-corrections banner (rendered above parts).
+    if (lec.answerCorrections?.groups?.length) {
+      parts.unshift({
+        id: `${lec.id}-answer-corrections`,
+        title: 'تصحيحات الإجابات',
+        type: 'corrections',
+        icon: 'published_with_changes',
+        subsections: [],
+      });
+    }
+
+    return {
+      id: lec.id,
+      title: lec.title,
+      tag: lec.tag,
+      parts,
+    };
+  });
 }
 
 export function shortLectureTitle(title) {

@@ -28,7 +28,7 @@ if (!existsSync(examsPath)) {
 const { parseMCQ } = await import(path.join(REPO_ROOT, 'parser/parts/handlers.js'));
 
 const md = readFileSync(examsPath, 'utf8');
-const arabicKey = { أ: 'a', ا: 'a', ب: 'b', ج: 'c', د: 'd' };
+const arabicKey = { أ: 'a', ا: 'a', ب: 'b', ج: 'c', د: 'd', ه: 'e', a: 'a', b: 'b', c: 'c', d: 'd', e: 'e' };
 const parsed = parseMCQ(md, { arabicKey });
 
 // Flatten Case-2 groups so every individually-answerable question is checked.
@@ -37,8 +37,8 @@ const questions = parsed.flatMap(q => (q.type === 'group' ? q.questions : [q]));
 const missingCorrect = questions.filter(q => !q.correct);
 const missingExplain = questions.filter(q => !q.explain);
 const unknownNum = questions.filter(q => q.num === '?');
-// Exactly 2 options is fine for a True/False question — only flag counts that are neither 2 nor 4.
-const badOptionCount = questions.filter(q => q.options.length !== 4 && q.options.length !== 2);
+// 2 = True/False, 4 = standard MCQ, 5 = MCQ with هـ — flag anything else.
+const badOptionCount = questions.filter(q => ![2, 4, 5].includes(q.options.length));
 const nums = questions.map(q => q.num);
 const dupNums = [...new Set(nums.filter((n, i) => nums.indexOf(n) !== i))];
 
@@ -52,7 +52,7 @@ console.log(`sections (in order): ${JSON.stringify(sections, null, 2)}`);
 console.log(`missing correct answer: ${missingCorrect.length}${missingCorrect.length ? ' → nums ' + missingCorrect.map(q => q.num).join(', ') : ''}`);
 console.log(`missing التعليل: ${missingExplain.length}${missingExplain.length ? ' → nums ' + missingExplain.map(q => q.num).join(', ') : ''}`);
 console.log(`heading missing (difficulty) → num came back '?': ${unknownNum.length}`);
-console.log(`suspicious option count (not 2 or 4): ${badOptionCount.length}${badOptionCount.length ? ' → ' + badOptionCount.map(q => `${q.num}:${q.options.length}`).join(', ') : ''}`);
+console.log(`suspicious option count (not 2, 4, or 5): ${badOptionCount.length}${badOptionCount.length ? ' → ' + badOptionCount.map(q => `${q.num}:${q.options.length}`).join(', ') : ''}`);
 console.log(`duplicate question numbers: ${dupNums.length ? dupNums.join(', ') : 'none'}`);
 
 const ok = !missingCorrect.length && !missingExplain.length && !unknownNum.length && !badOptionCount.length && !dupNums.length;

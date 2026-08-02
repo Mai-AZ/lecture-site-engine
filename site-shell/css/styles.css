@@ -1206,6 +1206,105 @@ details[open] summary .acc-chevron { transform: rotate(180deg); }
   gap: 0.625rem;
 }
 
+/* ── DAWRAT answer-correction jump box ── */
+.answer-corrections {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.75rem;
+  max-width: 48rem;
+  margin-inline: auto;
+  padding: 0.875rem 1rem;
+  border-radius: 0.75rem;
+  border: 1px solid color-mix(in srgb, var(--color-tertiary) 30%, var(--color-outline-variant));
+  border-right: 3px solid var(--color-tertiary);
+  background: linear-gradient(
+    135deg,
+    color-mix(in srgb, var(--color-tertiary-fixed) 42%, var(--color-surface-container-lowest)),
+    color-mix(in srgb, var(--color-secondary-fixed) 28%, var(--color-surface-container-lowest))
+  );
+  color: var(--color-on-surface);
+  text-align: right;
+}
+
+.answer-corrections__icon {
+  flex-shrink: 0;
+  font-size: 1.35rem;
+  margin-top: 0.1rem;
+  color: var(--color-tertiary);
+}
+
+.answer-corrections__body {
+  flex: 1;
+  min-width: 0;
+}
+
+.answer-corrections__intro {
+  margin: 0 0 0.65rem;
+  font-size: 0.875rem;
+  line-height: 1.65;
+}
+
+.answer-corrections__row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.4rem 0.55rem;
+  margin-top: 0.4rem;
+}
+
+.answer-corrections__ref {
+  font-size: 0.8rem;
+  font-weight: 700;
+  color: var(--color-on-tertiary-fixed-variant, var(--color-tertiary));
+  background: color-mix(in srgb, var(--color-tertiary) 14%, transparent);
+  border-radius: 999px;
+  padding: 0.2rem 0.55rem;
+}
+
+.answer-corrections__qs {
+  display: inline-flex;
+  flex-wrap: wrap;
+  gap: 0.35rem;
+}
+
+.answer-corrections__q {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 2rem;
+  padding: 0.2rem 0.45rem;
+  border-radius: 0.45rem;
+  border: 1px solid color-mix(in srgb, var(--color-primary) 28%, var(--color-outline-variant));
+  background: var(--color-surface-container-lowest);
+  color: var(--color-primary);
+  font-size: 0.8rem;
+  font-weight: 700;
+  text-decoration: none;
+  transition: background 0.15s ease, border-color 0.15s ease;
+}
+
+.answer-corrections__q:hover {
+  background: color-mix(in srgb, var(--color-primary) 12%, var(--color-surface-container-lowest));
+  border-color: var(--color-primary);
+}
+
+.dark .answer-corrections {
+  border-color: color-mix(in srgb, var(--color-tertiary) 32%, var(--dm-border));
+  border-right-color: var(--color-tertiary);
+  background: linear-gradient(
+    135deg,
+    color-mix(in srgb, var(--color-tertiary) 14%, var(--dm-elevated)),
+    color-mix(in srgb, var(--color-secondary) 10%, var(--dm-elevated))
+  );
+  color: var(--dm-text);
+}
+
+.dark .answer-corrections__q {
+  background: var(--dm-elevated);
+  border-color: color-mix(in srgb, var(--color-primary) 35%, var(--dm-border));
+  color: var(--color-primary);
+}
+
 /* ── Study tip (lecture intro) ── */
 .study-tip {
   display: flex;

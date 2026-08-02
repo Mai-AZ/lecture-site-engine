@@ -18,3 +18,19 @@ export function normalizeMcqSection(section) {
 export function mcqSectionAnchor(section) {
   return `sec-${slugify(normalizeMcqSection(section) || section)}`;
 }
+
+/**
+ * DOM id for an MCQ card. When questions are grouped under "## نمط …" /
+ * "## المحاضرة …" dividers, include the section so duplicate question numbers
+ * across sittings stay unique (needed for deep-links).
+ */
+export function mcqCardDomId(partId, qOrNum, subNum) {
+  const num = typeof qOrNum === 'object' && qOrNum != null ? qOrNum.num : qOrNum;
+  const section =
+    typeof qOrNum === 'object' && qOrNum != null
+      ? normalizeMcqSection(qOrNum.section)
+      : '';
+  const sec = section ? `${mcqSectionAnchor(section)}-` : '';
+  const base = `${partId}-${sec}q${num}`;
+  return subNum != null && subNum !== '' ? `${base}-${subNum}` : base;
+}

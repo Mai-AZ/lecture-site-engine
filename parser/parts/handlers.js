@@ -23,8 +23,8 @@ export function parseDetailPart(title, body, ctx) {
 // code block — see the `pending` accumulation below.
 //
 // Only the Arabic letters (أ-ي) count as markers — NOT the bare Latin
-// "a"/"b"/"c"/"d" that `arabicKey` maps option keys to. Every real
-// question in the repo marks its options with أ/ب/ج/د; nothing uses a
+// "a"/"b"/"c"/"d"/"e" that `arabicKey` maps option keys to. Every real
+// question in the repo marks its options with أ/ب/ج/د/ه; nothing uses a
 // literal "a)"/"b)" as the marker itself. But quite a few questions
 // mention math/code that legitimately CONTAINS a lone Latin a/b/c/d —
 // e.g. an SVM option's own text "... W·Xi + b) = 1" (closing a
@@ -36,7 +36,11 @@ export function parseDetailPart(title, body, ctx) {
 // whole class of false positives (year-5/1-kdd/lectures/par7-sec1.md
 // السؤال 10, year-4/android-dev-fundamentals/lectures/par3.md
 // السؤال 5).
-const optStartRe = /^[-*]?\s*([أ-ي])[)\.]\s*(.*)$/i;
+//
+// Optional tatweel (ـ) after the letter is common on the 5th choice in
+// past exams ("هـ)" / "**الإجابة الصحيحة: هـ**") — without it, the
+// fifth option and its answer key are silently dropped.
+const optStartRe = /^[-*]?\s*([أ-ي])(?:ـ)?[)\.]\s*(.*)$/i;
 
 // Finds every marker occurrence within a single line, for the
 // all-options-crammed-on-one-line layout. Requires the marker to be
@@ -54,7 +58,7 @@ const optStartRe = /^[-*]?\s*([أ-ي])[)\.]\s*(.*)$/i;
 // year-1/2-mabade2-th/lectures/par6.md السؤال 2.3, most of the
 // *-compiler-principles files). A genuine marker is always its own
 // token, set off by whitespace or the very start of the line.
-const optGlobalRe = /(?:^|(?<=\s))([أ-ي])[)\.]\s*/gi;
+const optGlobalRe = /(?:^|(?<=\s))([أ-ي])(?:ـ)?[)\.]\s*/gi;
 
 /**
  * Parses a question's stem + options + answer + rationale out of the text
@@ -74,14 +78,15 @@ function parseQuestionContent(content, arabicKey) {
   // Match all three. Left blank (extraction-only prompts), answerM must stay
   // null and correct must stay '' — it must NOT fall through to some other
   // Arabic letter later in the text. The captured class here is deliberately
-  // the four literal option letters (+ bare "ا", which arabicKey also maps
-  // to option "a") — NOT the sweeping [أ-ي] range, which spans nearly the
-  // *entire* Arabic alphabet. With a blank answer field followed directly by
-  // "**التعليل:**", [أ-ي] happily matched the "ا" inside "التعليل" itself and
-  // silently "answered" the question — reproduced with a real دورات extract
-  // (subjects/year-4/android-dev-fundamentals/exams/exams.md): every blank
-  // answer resolved to "a" for exactly this reason.
-  const answerRe = /الإجابة(?:\s+الصحيحة)?[:\s*]*([أابجدهabcde])(?![؀-ۿ])/i;
+  // the five literal option letters أ/ب/ج/د/ه (+ bare "ا", which arabicKey
+  // also maps to option "a") — NOT the sweeping [أ-ي] range, which spans
+  // nearly the *entire* Arabic alphabet. With a blank answer field followed
+  // directly by "**التعليل:**", [أ-ي] happily matched the "ا" inside
+  // "التعليل" itself and silently "answered" the question — reproduced with
+  // a real دورات extract (subjects/year-4/android-dev-fundamentals/exams/exams.md):
+  // every blank answer resolved to "a" for exactly this reason.
+  // Optional tatweel (ـ) covers "هـ" as written in many past-exam PDFs.
+  const answerRe = /الإجابة(?:\s+الصحيحة)?[:\s*]*([أابجدهabcde])(?:ـ)?(?![؀-ۿ])/i;
   const answerM = content.match(answerRe);
   let correct = answerM ? (arabicKey[answerM[1].toLowerCase()] || answerM[1].toLowerCase()) : '';
 
@@ -89,7 +94,7 @@ function parseQuestionContent(content, arabicKey) {
   // marked with a trailing "✅" instead. Only used as a fallback when the
   // label-based match above found nothing.
   if (!correct) {
-    const ckM = content.match(/([أابجدهabcde])\)[^\n]*?✅/);
+    const ckM = content.match(/([أابجدهabcde])(?:ـ)?\)[^\n]*?✅/);
     if (ckM) correct = arabicKey[ckM[1].toLowerCase()] || ckM[1].toLowerCase();
   }
 

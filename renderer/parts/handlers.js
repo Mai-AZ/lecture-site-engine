@@ -3,7 +3,7 @@ import { inlineMd } from '../core/inline-md.js';
 import { ms } from '../core/icons.js';
 import { renderBlocks } from '../blocks/index.js';
 import { calloutHtml, renderMermaid } from '../blocks/handlers.js';
-import { mcqSectionAnchor, normalizeMcqSection } from '../core/slug.js';
+import { mcqCardDomId, mcqSectionAnchor, normalizeMcqSection } from '../core/slug.js';
 
 function diffBadgeClass(d) {
   if (d === 'سهل') return 'bg-primary/20 text-primary';
@@ -122,7 +122,7 @@ function sourceTag(source) {
 /** Renders one answerable question as its own card — reused both for a
  * standalone question and for each sub-question inside a Case-2 group. */
 function renderMcqCard(q, cardId, { showSource = true } = {}) {
-  let html = `<article class="mcq-card bg-surface-container-lowest dark:bg-[#161b30] border border-outline-variant dark:border-[#1e40af] rounded-xl p-lg custom-shadow box-animate box-hover" id="${cardId}" data-correct="${q.correct}">
+  let html = `<article class="mcq-card bg-surface-container-lowest dark:bg-[#161b30] border border-outline-variant dark:border-[#1e40af] rounded-xl p-lg custom-shadow box-animate box-hover scroll-mt-16 anchor-target" id="${cardId}" data-correct="${q.correct}">
     <div class="flex items-center gap-md mb-md flex-wrap">
       <span class="px-sm py-xs bg-secondary-container text-on-secondary-container rounded-lg font-code-sm text-code-sm">س${q.num}</span>
       ${q.difficulty ? `<span class="font-label-md px-sm py-xs rounded-full ${diffBadgeClass(q.difficulty)}">${esc(q.difficulty)}</span>` : ''}
@@ -165,7 +165,7 @@ function renderMcqGroup(q, partId) {
     <div class="space-y-md mt-lg">`;
 
   q.questions.forEach(sub => {
-    html += renderMcqCard(sub, `${partId}-q${q.num}-${sub.num}`, { showSource: false });
+    html += renderMcqCard(sub, mcqCardDomId(partId, q, sub.num), { showSource: false });
   });
 
   return html + '</div></section>';
@@ -213,7 +213,7 @@ export function renderMCQ(questions, partId) {
       html += renderMcqGroup(q, partId);
       return;
     }
-    html += renderMcqCard(q, `${partId}-q${q.num}`);
+    html += renderMcqCard(q, mcqCardDomId(partId, q));
   });
 
   return html + '</div>';
