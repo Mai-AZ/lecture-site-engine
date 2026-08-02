@@ -50,7 +50,7 @@ export function renderAnswerCorrections(guide) {
     .join('');
 
   if (!rows) return '';
-  return `<aside class="answer-corrections mb-xl" role="note" aria-label="أسئلة مصحّحة">
+  return `<aside id="${esc(guide.id)}-answer-corrections" class="answer-corrections mb-xl scroll-mt-16 anchor-target" role="note" aria-label="أسئلة مصحّحة">
     ${ms('published_with_changes', false, 'answer-corrections__icon')}
     <div class="answer-corrections__body">
       <p class="answer-corrections__intro"><strong>تنبيه:</strong> ${esc(intro)}</p>
@@ -348,11 +348,8 @@ function buildPartSubsections(part) {
 }
 
 export function buildTocData(lectures) {
-  return lectures.map(lec => ({
-    id: lec.id,
-    title: lec.title,
-    tag: lec.tag,
-    parts: lec.parts
+  return lectures.map(lec => {
+    const parts = lec.parts
       .map((p, i) => ({ part: p, index: i }))
       .filter(({ part }) => !isChecklistPart(part))
       .map(({ part, index }) => ({
@@ -361,8 +358,26 @@ export function buildTocData(lectures) {
       type: part.type,
       icon: PART_MAT_ICONS[part.type] || 'article',
       subsections: buildPartSubsections(part),
-    })),
-  }));
+    }));
+
+    // Jump target for the DAWRAT answer-corrections banner (rendered above parts).
+    if (lec.answerCorrections?.groups?.length) {
+      parts.unshift({
+        id: `${lec.id}-answer-corrections`,
+        title: 'تصحيحات الإجابات',
+        type: 'corrections',
+        icon: 'published_with_changes',
+        subsections: [],
+      });
+    }
+
+    return {
+      id: lec.id,
+      title: lec.title,
+      tag: lec.tag,
+      parts,
+    };
+  });
 }
 
 export function shortLectureTitle(title) {
