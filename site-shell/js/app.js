@@ -580,7 +580,7 @@ function loadExamView(index, anchorHash) {
     document.getElementById("mobileTocMatIcon").textContent =
       item.matIcon || "history_edu";
 
-    if (notice) showDawratNoticePopup(notice, "تنبيه: الملف غير جاهز بعد");
+    if (notice) showDawratNoticePopup(notice, "تنبيه مهم");
   } else {
     buildSidebar(item.toc);
     showView("lecture");
