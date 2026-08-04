@@ -690,6 +690,20 @@
     return n;
   }
 
+  /** Most recent activity (a comment or reply) in a discussion, as epoch ms. */
+  function latestActivityAt(discussion) {
+    var latest = 0;
+    (discussion && discussion.comments || []).forEach(function (c) {
+      var t = Date.parse(c.createdAt);
+      if (Number.isFinite(t) && t > latest) latest = t;
+      (c.replies || []).forEach(function (r) {
+        var rt = Date.parse(r.createdAt);
+        if (Number.isFinite(rt) && rt > latest) latest = rt;
+      });
+    });
+    return latest;
+  }
+
   /**
    * Resolve a discussion in the feed map. Tries the exact scoped term, then
    * drops a redundant `-pat-…-` segment (older threads / duplicated ids).
@@ -1332,6 +1346,76 @@
   }
 
   /**
+   * "الكل" tab: every general + correction thread with any activity, in one
+   * list. sortMode 'recent' surfaces new activity on old questions (someone
+   * commenting on س3 today should show up even if س40 has more comments
+   * overall); sortMode 'question' orders by pattern/number like the other tabs.
+   */
+  function renderAllDiscussionList(listEl, statusEl, questions, feedMap, sortMode) {
+    listEl.innerHTML = '';
+    statusEl.classList.add('hidden');
+
+    var matched = [];
+    questions.forEach(function (q) {
+      ['general', 'correction'].forEach(function (kind) {
+        var term = kind === 'correction' ? correctionTermFor(q.term) : q.term;
+        var discussion = lookupDiscussion(feedMap, term);
+        var count = discussion ? discussion.totalCount : 0;
+        if (count > 0) {
+          matched.push({
+            q: q,
+            kind: kind,
+            discussion: discussion,
+            count: count,
+            latest: latestActivityAt(discussion),
+          });
+        }
+      });
+    });
+
+    if (!matched.length) {
+      statusEl.textContent = 'ما في نقاشات على الأسئلة بعد — افتح أي سؤال وعلّق من أيقونة النقاش.';
+      statusEl.classList.remove('hidden');
+      return Promise.resolve(0);
+    }
+
+    if (sortMode === 'recent') {
+      matched.sort(function (a, b) { return b.latest - a.latest; });
+      matched.forEach(function (m) {
+        listEl.appendChild(buildQuestionFeedCard(
+          { term: m.q.term, num: m.q.num, source: m.q.source, count: m.count },
+          m.kind,
+          m.discussion,
+        ));
+      });
+    } else {
+      matched.sort(function (a, b) {
+        var byQ = compareQuestionIdentity(a.q, b.q);
+        if (byQ !== 0) return byQ;
+        // Same question: correction first (matches the corrections-first framing elsewhere).
+        return a.kind === b.kind ? 0 : a.kind === 'correction' ? -1 : 1;
+      });
+      var lastPattern = null;
+      matched.forEach(function (m) {
+        var label = patternLabel(m.q.source) || 'بدون نمط';
+        if (label !== lastPattern) {
+          lastPattern = label;
+          var h = document.createElement('h3');
+          h.className = 'font-label-md text-primary mt-sm mb-xs first:mt-0 sticky top-0 bg-surface/95 backdrop-blur-sm py-2xs z-[1]';
+          h.textContent = label;
+          listEl.appendChild(h);
+        }
+        listEl.appendChild(buildQuestionFeedCard(
+          { term: m.q.term, num: m.q.num, source: m.q.source, count: m.count },
+          m.kind,
+          m.discussion,
+        ));
+      });
+    }
+    return Promise.resolve(matched.length);
+  }
+
+  /**
    * When Worker is unavailable, fall back to giscus count probes and show
    * compact cards (still no expand/embed — point students at the question).
    */
@@ -1417,9 +1501,29 @@
     // Default tab = corrections (corrections-first overview).
     var tabCorr = makeTab('corrections', 'التصحيحات المقترحة');
     var tabByQ = makeTab('by-question', 'حسب النمط والسؤال');
+    var tabAll = makeTab('all', 'الكل');
     tabs.appendChild(tabCorr);
     tabs.appendChild(tabByQ);
+    tabs.appendChild(tabAll);
     panel.appendChild(tabs);
+
+    // Only relevant on "الكل" — lets recent activity on an old question
+    // surface even if it doesn't have the most comments overall.
+    var sortWrap = document.createElement('div');
+    sortWrap.className = 'hidden flex gap-xs mb-sm';
+    function makeSortBtn(id, label) {
+      var b = document.createElement('button');
+      b.type = 'button';
+      b.dataset.sort = id;
+      b.className = 'px-sm py-2xs rounded-full border border-outline-variant font-label-sm hover:bg-surface-variant transition-all';
+      b.textContent = label;
+      return b;
+    }
+    var sortRecent = makeSortBtn('recent', 'الأحدث أولاً');
+    var sortByQ = makeSortBtn('question', 'حسب السؤال');
+    sortWrap.appendChild(sortRecent);
+    sortWrap.appendChild(sortByQ);
+    panel.appendChild(sortWrap);
 
     var intro = document.createElement('p');
     intro.className = 'mb-md font-label-md text-on-surface-variant';
@@ -1439,17 +1543,33 @@
     scroller.appendChild(listEl);
 
     var feedMapRef = null;
+    // Recency is the point of "الكل", so it opens sorted that way by default.
+    var sortMode = 'recent';
 
     function setActiveTab(id) {
-      [tabByQ, tabCorr].forEach(function (b) {
+      [tabByQ, tabCorr, tabAll].forEach(function (b) {
         var on = b.dataset.tab === id;
         b.classList.toggle('bg-secondary-container', on);
         b.classList.toggle('text-on-secondary-container', on);
         b.classList.toggle('border-transparent', on);
       });
-      intro.textContent = id === 'corrections'
-        ? 'اقتراحات الطلاب بجانب كل خيار — وشارة "جواب الموقع" توضّح اختيار الدليل.'
-        : 'نقاش الأسئلة — اسحب داخل الصندوق للقراءة.';
+      sortWrap.classList.toggle('hidden', id !== 'all');
+      if (id === 'corrections') {
+        intro.textContent = 'اقتراحات الطلاب بجانب كل خيار — وشارة "جواب الموقع" توضّح اختيار الدليل.';
+      } else if (id === 'all') {
+        intro.textContent = 'كل شيء — تعليقات عامة وتصحيحات مع بعض، بلا تكرار الفتح لكل سؤال.';
+      } else {
+        intro.textContent = 'نقاش الأسئلة — اسحب داخل الصندوق للقراءة.';
+      }
+    }
+
+    function setActiveSort(id) {
+      [sortRecent, sortByQ].forEach(function (b) {
+        var on = b.dataset.sort === id;
+        b.classList.toggle('bg-secondary-container', on);
+        b.classList.toggle('text-on-secondary-container', on);
+        b.classList.toggle('border-transparent', on);
+      });
     }
 
     function showTab(id, forceFeed) {
@@ -1465,6 +1585,17 @@
 
       ready.then(function (feedMap) {
         feedMapRef = feedMap;
+        if (id === 'all') {
+          setActiveSort(sortMode);
+          if (feedMap) {
+            return renderAllDiscussionList(listEl, statusEl, questions, feedMap, sortMode)
+              .then(function () { if (btn) refreshGuideDiscussionBadge(btn, feedMap); });
+          }
+          // No Worker feed → no comment timestamps, so "الكل" can't sort by
+          // recency; fall back to the by-question view as the closest thing.
+          return renderDiscussionListFallback(listEl, statusEl, questions, 'general')
+            .then(function () { if (btn) refreshGuideDiscussionBadge(btn, null); });
+        }
         if (feedMap) {
           return renderDiscussionList(listEl, statusEl, questions, kind, feedMap)
             .then(function () {
@@ -1480,6 +1611,19 @@
 
     tabByQ.addEventListener('click', function () { showTab('by-question', false); });
     tabCorr.addEventListener('click', function () { showTab('corrections', false); });
+    tabAll.addEventListener('click', function () { showTab('all', false); });
+    sortRecent.addEventListener('click', function () {
+      if (sortMode === 'recent' || !feedMapRef) return;
+      sortMode = 'recent';
+      setActiveSort(sortMode);
+      renderAllDiscussionList(listEl, statusEl, questions, feedMapRef, sortMode);
+    });
+    sortByQ.addEventListener('click', function () {
+      if (sortMode === 'question' || !feedMapRef) return;
+      sortMode = 'question';
+      setActiveSort(sortMode);
+      renderAllDiscussionList(listEl, statusEl, questions, feedMapRef, sortMode);
+    });
     showTab('corrections', true);
   }
 
