@@ -65,20 +65,80 @@
   }
 
   /** giscus stores the OAuth session in localStorage (same key as client.js). */
+  function clearGiscusSession() {
+    try { localStorage.removeItem('giscus-session'); } catch (e) { /* ignore */ }
+  }
+
   function getGiscusSession() {
     try {
       var raw = localStorage.getItem('giscus-session');
-      return raw ? JSON.parse(raw) : '';
+      if (!raw) return '';
+      var parsed = JSON.parse(raw);
+      // Token must be a plain string. Anything else (object / double-encoded junk)
+      // is sent to GitHub as "Bad credentials".
+      if (typeof parsed !== 'string' || !parsed) {
+        clearGiscusSession();
+        return '';
+      }
+      return parsed;
     } catch (e) {
+      clearGiscusSession();
       return '';
     }
   }
 
   function setGiscusSession(session) {
+    if (typeof session !== 'string' || !session) {
+      clearGiscusSession();
+      return;
+    }
     try {
       localStorage.setItem('giscus-session', JSON.stringify(session));
     } catch (e) { /* quota / private mode */ }
   }
+
+  /**
+   * Official client.js clears the session and reloads the widget when GitHub
+   * rejects the token. Without this, a once-expired login keeps showing
+   * "Bad credentials" on every open.
+   */
+  function isGiscusAuthError(message) {
+    if (!message) return false;
+    var m = String(message);
+    return (
+      m.indexOf('Bad credentials') !== -1 ||
+      m.indexOf('Invalid state value') !== -1 ||
+      m.indexOf('State has expired') !== -1
+    );
+  }
+
+  function reloadGiscusFramesWithoutSession() {
+    document.querySelectorAll('iframe.giscus-frame, iframe.giscus-count-probe-frame').forEach(function (iframe) {
+      try {
+        var u = new URL(iframe.src);
+        u.searchParams.set('session', '');
+        iframe.src = u.toString();
+      } catch (e) { /* ignore */ }
+    });
+  }
+
+  window.addEventListener('message', function (e) {
+    if (e.origin !== GISCUS_ORIGIN) return;
+    var data = e.data;
+    if (!data || typeof data !== 'object' || !data.giscus) return;
+
+    if (data.giscus.signOut) {
+      clearGiscusSession();
+      return;
+    }
+    if (isGiscusAuthError(data.giscus.error)) {
+      if (localStorage.getItem('giscus-session') != null) {
+        clearGiscusSession();
+        console.warn('[giscus] Auth error — session cleared:', data.giscus.error);
+        reloadGiscusFramesWithoutSession();
+      }
+    }
+  });
 
   /** Strip scope + `/correction` so we can match `data-discussion-term` on cards. */
   function baseTermFromAny(term) {
@@ -123,6 +183,20 @@
   function consumeGiscusOAuthReturn() {
     var params = new URLSearchParams(location.search);
     var sessionParam = params.get('giscus');
+    var hash = location.hash || '';
+    var hashQueryAt = hash.indexOf('?');
+    // If origin mistakenly included a hash, giscus may redirect as
+    // `#exams?giscus=…` (query stuck inside the fragment). Salvage it.
+    if (!sessionParam && hashQueryAt !== -1) {
+      var hashParams = new URLSearchParams(hash.slice(hashQueryAt + 1));
+      sessionParam = hashParams.get('giscus') || '';
+      if (sessionParam) {
+        hashParams.delete('giscus');
+        var rest = hashParams.toString();
+        hash = hash.slice(0, hashQueryAt) + (rest ? '?' + rest : '');
+      }
+    }
+
     var hadSession = !!sessionParam;
     if (sessionParam) {
       setGiscusSession(sessionParam);
@@ -138,13 +212,12 @@
       saved = JSON.parse(sessionStorage.getItem(GISCUS_RETURN_KEY) || 'null');
     } catch (e) { /* ignore */ }
 
-    var hash = location.hash || '';
     var hashMissing = !hash || hash === '#' || hash === '#home';
     if (hashMissing && saved && saved.hash && saved.hash !== '#home') {
       hash = saved.hash.charAt(0) === '#' ? saved.hash : '#' + saved.hash;
     }
 
-    if (hadSession || (hashMissing && hash)) {
+    if (hadSession || (hashMissing && hash) || hashQueryAt !== -1) {
       var qs = params.toString();
       var next = location.pathname + (qs ? '?' + qs : '') + (hash || '');
       try {
@@ -181,14 +254,11 @@
     var params = new URLSearchParams();
     var originUrl = new URL(location.href);
     originUrl.searchParams.delete('giscus');
-    // Keep the SPA hash (#exams / #exams-p1-qN). Clearing it made GitHub login
-    // drop students on the subject home grid after OAuth.
-    if (!originUrl.hash || originUrl.hash === '#' || originUrl.hash === '#home') {
-      try {
-        var saved = JSON.parse(sessionStorage.getItem(GISCUS_RETURN_KEY) || 'null');
-        if (saved && saved.hash) originUrl.hash = saved.hash;
-      } catch (e) { /* ignore */ }
-    }
+    // Match official client.js: origin must NOT include the SPA hash.
+    // Putting `#exams` in origin makes the OAuth return look like
+    // `#exams?giscus=…`, so the token never lands in search params cleanly.
+    // We restore the route via sessionStorage instead.
+    originUrl.hash = '';
     params.set('origin', originUrl.toString());
     params.set('session', getGiscusSession() || '');
     params.set('theme', giscusTheme());
