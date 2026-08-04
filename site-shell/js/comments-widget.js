@@ -79,6 +79,69 @@
   });
   themeObserver.observe(document.documentElement, { attributes: true });
 
+  function updateDiscussionCountBadges(term, count) {
+    document.querySelectorAll('.guide-discussion-toggle[data-discussion-term="' + CSS.escape(term) + '"]').forEach(function (btn) {
+      var badge = btn.querySelector('.guide-discussion-count');
+      if (!badge) return;
+      badge.textContent = String(count);
+      badge.classList.toggle('hidden', count <= 0);
+    });
+  }
+
+  /**
+   * Quietly loads a hidden, invisible giscus instance just to read the
+   * thread's total comment count via its "emit metadata" message, then
+   * discards it. No server of ours involved — reuses giscus' own widget,
+   * just never shown. If the discussion doesn't exist yet (nobody has
+   * commented), no message ever arrives and the badge simply stays hidden.
+   */
+  function fetchDiscussionCount(term) {
+    var hidden = document.createElement('div');
+    hidden.setAttribute('aria-hidden', 'true');
+    hidden.style.cssText = 'position:absolute;top:-9999px;width:1px;height:1px;overflow:hidden;';
+    document.body.appendChild(hidden);
+
+    function handleMessage(e) {
+      if (e.origin !== 'https://giscus.app') return;
+      var data = e.data;
+      if (!data || typeof data !== 'object' || !data.giscus || !data.giscus.discussion) return;
+      var d = data.giscus.discussion;
+      updateDiscussionCountBadges(term, (d.totalCommentCount || 0) + (d.totalReplyCount || 0));
+      window.removeEventListener('message', handleMessage);
+      hidden.remove();
+    }
+    window.addEventListener('message', handleMessage);
+
+    var script = document.createElement('script');
+    script.src = 'https://giscus.app/client.js';
+    script.setAttribute('data-repo', GISCUS_REPO);
+    script.setAttribute('data-repo-id', GISCUS_REPO_ID);
+    script.setAttribute('data-category', GISCUS_CATEGORY);
+    script.setAttribute('data-category-id', GISCUS_CATEGORY_ID);
+    script.setAttribute('data-mapping', 'specific');
+    script.setAttribute('data-term', term);
+    script.setAttribute('data-strict', '0');
+    script.setAttribute('data-reactions-enabled', '0');
+    script.setAttribute('data-emit-metadata', '1');
+    script.setAttribute('data-input-position', 'top');
+    script.setAttribute('data-theme', giscusTheme());
+    script.setAttribute('data-lang', GISCUS_LANG);
+    script.setAttribute('crossorigin', 'anonymous');
+    script.async = true;
+    hidden.appendChild(script);
+  }
+
+  // Whenever a page-level discussion tab appears (SPA navigation renders it
+  // fresh each time), quietly fetch its count once.
+  function scanForUncountedToggles() {
+    document.querySelectorAll('.guide-discussion-toggle:not([data-count-fetched])').forEach(function (btn) {
+      btn.dataset.countFetched = '1';
+      fetchDiscussionCount(btn.dataset.discussionTerm);
+    });
+  }
+  new MutationObserver(scanForUncountedToggles).observe(document.body, { childList: true, subtree: true });
+  scanForUncountedToggles();
+
   function buildCorrectionText(popup) {
     var qNum = popup.dataset.questionNum || '';
     var select = popup.querySelector('.mcq-correction-answer');
