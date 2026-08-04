@@ -1,7 +1,11 @@
 # Discussion feed Worker
 
-Live JSON API for the DAWRAT **نقاش عام** panel (read-only).  
+Live JSON API for the DAWRAT **تصحيحات ونقاش الإجابات** panel (read-only).  
 Giscus stays only for writing on each question.
+
+Each discussion in the payload may include `reactionGroups`
+(`{ THUMBS_UP: n, HEART: n, … }` — only counts > 0) on the discussion and
+on each comment. Client uses these for card-level 👍 summaries.
 
 ## Deploy
 

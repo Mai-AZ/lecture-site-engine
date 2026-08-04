@@ -120,10 +120,9 @@ function sourceTag(source) {
 }
 
 /** Inline "propose a correction" helper shown inside a question's comment
- * popup — lets a student pick which option they believe is correct and say
- * why, then copies a formatted message for them to paste into the giscus
- * comment box below (we can't inject text into that iframe directly, it's
- * a third-party embed). */
+ * popup — builds a structured correction message, copies it when possible,
+ * then opens the correction Giscus thread with the draft visible above the
+ * iframe (Giscus cannot be true-prefilled cross-origin). */
 function renderCorrectionPicker(q) {
   const optionsHtml = q.options
     .map(opt => `<option value="${esc(opt.key.toUpperCase())}">${esc(opt.key.toUpperCase())} — ${esc(opt.text)}</option>`)
@@ -135,24 +134,42 @@ function renderCorrectionPicker(q) {
     </select>
     <label class="block font-label-md mb-xs">ليش هاد هو الجواب الصحيح؟</label>
     <textarea class="mcq-correction-reason w-full p-sm border border-outline-variant rounded-lg mb-md bg-surface" rows="3" placeholder="اشرح باختصار..."></textarea>
-    <button type="button" class="mcq-correction-copy-btn inline-flex items-center gap-xs px-md py-sm rounded-lg bg-primary text-on-primary font-label-md hover:opacity-90 transition-opacity">
-      ${ms('content_copy', false, 'text-sm')} نسخ النص والمتابعة للتعليق
+    <button type="button" class="mcq-correction-submit-btn inline-flex items-center gap-xs px-md py-sm rounded-lg bg-primary text-on-primary font-label-md hover:opacity-90 transition-opacity">
+      ${ms('send', false, 'text-sm')} اقترح التصحيح
     </button>
-    <p class="mcq-correction-hint hidden mt-sm font-label-sm text-primary">✅ تم النسخ! الصق النص (Ctrl+V) في صندوق التعليق أدناه — التصحيح يظهر في تبويب "التصحيحات المقترحة فقط" داخل نقاش عام حول هذه الدورة.</p>
+    <p class="mcq-correction-hint hidden mt-sm font-label-sm text-primary"></p>
+  </div>
+  <div class="mcq-correction-draft hidden mb-md p-md rounded-lg border border-primary/40 bg-primary/5">
+    <div class="flex items-center justify-between gap-sm mb-sm flex-wrap">
+      <span class="font-label-md text-primary">نص التصحيح جاهز — الصقه في صندوق Giscus أدناه</span>
+      <button type="button" class="mcq-correction-recopy-btn px-sm py-2xs rounded-lg border border-outline-variant font-label-sm hover:bg-surface-variant transition-all">${ms('content_copy', false, 'text-sm')} نسخ</button>
+    </div>
+    <pre class="mcq-correction-draft-text m-0 whitespace-pre-wrap font-body-md text-on-surface bg-surface p-sm rounded-lg border border-outline-variant/60 max-h-40 overflow-y-auto"></pre>
   </div>`;
 }
 
 /** Renders one answerable question as its own card — reused both for a
  * standalone question and for each sub-question inside a Case-2 group. */
 function renderMcqCard(q, cardId, { showSource = true } = {}) {
-  let html = `<article class="mcq-card bg-surface-container-lowest dark:bg-[#161b30] border border-outline-variant dark:border-[#1e40af] rounded-xl p-lg custom-shadow box-animate box-hover scroll-mt-16 anchor-target" id="${cardId}" data-correct="${q.correct}">
+  let html = `<article class="mcq-card bg-surface-container-lowest dark:bg-[#161b30] border border-outline-variant dark:border-[#1e40af] rounded-xl p-lg custom-shadow box-animate box-hover scroll-mt-16 anchor-target" id="${cardId}" data-correct="${q.correct}" data-discussion-term="${esc(cardId)}">
     <div class="flex items-center gap-md mb-md flex-wrap">
       <span class="px-sm py-xs bg-secondary-container text-on-secondary-container rounded-lg font-code-sm text-code-sm">س${q.num}</span>
       ${q.difficulty ? `<span class="font-label-md px-sm py-xs rounded-full ${diffBadgeClass(q.difficulty)}">${esc(q.difficulty)}</span>` : ''}
       ${showSource ? sourceTag(q.source) : ''}
-      <button type="button" class="mcq-comment-btn mr-auto p-xs rounded-full hover:bg-surface-variant transition-all" data-comment-term="${esc(cardId)}" aria-label="نقاش حول هذا السؤال" title="نقاش حول هذا السؤال">
-        ${ms('chat_bubble', false, 'text-on-surface-variant text-sm')}
-      </button>
+      <div class="mcq-card-discuss-actions mr-auto flex items-center gap-xs flex-wrap">
+        <button type="button" class="mcq-correction-chip hidden inline-flex items-center gap-2xs px-sm py-2xs rounded-full bg-tertiary-container text-on-tertiary-container font-label-sm hover:opacity-90 transition-opacity" data-comment-term="${esc(cardId)}" aria-label="فتح التصحيحات المقترحة"></button>
+        <button type="button" class="mcq-react-btn hidden inline-flex items-center gap-2xs px-sm py-2xs rounded-full border border-outline-variant hover:bg-surface-variant transition-all font-label-sm" data-comment-term="${esc(cardId)}" title="افتح النقاش للتفاعل" aria-label="تفاعل مع النقاش">
+          <span aria-hidden="true">👍</span>
+          <span class="mcq-react-count"></span>
+        </button>
+        <button type="button" class="mcq-comment-count-btn hidden inline-flex items-center gap-2xs px-sm py-2xs rounded-full border border-outline-variant hover:bg-surface-variant transition-all font-label-sm" data-comment-term="${esc(cardId)}" title="فتح النقاش" aria-label="تعليقات السؤال">
+          ${ms('chat_bubble', false, 'text-sm')}
+          <span class="mcq-comment-count"></span>
+        </button>
+        <button type="button" class="mcq-comment-btn p-xs rounded-full hover:bg-surface-variant transition-all" data-comment-term="${esc(cardId)}" aria-label="نقاش حول هذا السؤال" title="نقاش حول هذا السؤال">
+          ${ms('chat_bubble', false, 'text-on-surface-variant text-sm')}
+        </button>
+      </div>
     </div>
     ${renderQuestionStem(q.question)}
     <div class="grid grid-cols-1 md:grid-cols-2 gap-md mcq-options">`;

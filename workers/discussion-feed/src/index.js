@@ -5,6 +5,11 @@
  *
  * Secret: GITHUB_TOKEN
  * Vars:   GISCUS_REPO, GISCUS_CATEGORY_ID
+ *
+ * Each discussion value:
+ *   { title, url, totalCount, reactionGroups, comments: [{ author, avatar, body,
+ *     createdAt, reactionGroups, replies }] }
+ * reactionGroups: { THUMBS_UP: n, HEART: n, … } (only counts > 0)
  */
 
 const QUERY = `query($owner:String!,$name:String!,$categoryId:ID!,$cursor:String){
@@ -12,8 +17,10 @@ const QUERY = `query($owner:String!,$name:String!,$categoryId:ID!,$cursor:String
     discussions(first:50,after:$cursor,categoryId:$categoryId,orderBy:{field:UPDATED_AT,direction:DESC}){
       pageInfo{hasNextPage endCursor}
       nodes{title url
+        reactionGroups{content users{totalCount}}
         comments(first:40){totalCount nodes{
           author{login avatarUrl} bodyText createdAt
+          reactionGroups{content users{totalCount}}
           replies(first:15){nodes{author{login avatarUrl} bodyText createdAt}}
         }}
       }
@@ -43,12 +50,23 @@ function corsHeaders(request) {
   };
 }
 
+/** Map GitHub reactionGroups → { CONTENT: count } for counts > 0. */
+function mapReactionGroups(groups) {
+  const out = {};
+  for (const g of groups || []) {
+    const n = (g.users && g.users.totalCount) || 0;
+    if (n > 0 && g.content) out[g.content] = n;
+  }
+  return out;
+}
+
 function mapComment(c) {
   return {
     author: (c.author && c.author.login) || 'مجهول',
     avatar: (c.author && c.author.avatarUrl) || '',
     body: c.bodyText || '',
     createdAt: c.createdAt,
+    reactionGroups: mapReactionGroups(c.reactionGroups),
     replies: ((c.replies && c.replies.nodes) || []).map((r) => ({
       author: (r.author && r.author.login) || 'مجهول',
       avatar: (r.author && r.author.avatarUrl) || '',
@@ -105,6 +123,7 @@ async function buildFeed(env) {
         title: d.title,
         url: d.url,
         totalCount: (d.comments && d.comments.totalCount) || comments.length,
+        reactionGroups: mapReactionGroups(d.reactionGroups),
         comments: comments.map(mapComment),
       };
     }
