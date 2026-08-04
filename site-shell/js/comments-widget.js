@@ -338,7 +338,8 @@
     return promise;
   }
 
-  /** Collect unique per-question threads under a lecture root, ordered by question number. */
+  /** Collect unique per-question threads under a lecture root.
+   * Sort by exam pattern (نمط / year) first, then by question number. */
   function collectQuestionThreads(lectureRoot) {
     if (!lectureRoot) return [];
     var seen = {};
@@ -349,13 +350,39 @@
       seen[term] = true;
       var num = parseInt(popup.dataset.questionNum, 10);
       if (!Number.isFinite(num)) num = 0;
-      items.push({ term: term, num: num, cardId: term });
+      var source = popup.dataset.discussionSource || '';
+      items.push({ term: term, num: num, cardId: term, source: source });
     });
-    items.sort(function (a, b) {
-      if (a.num !== b.num) return a.num - b.num;
-      return a.term < b.term ? -1 : a.term > b.term ? 1 : 0;
-    });
+    items.sort(compareQuestionIdentity);
     return items;
+  }
+
+  /** Strip [brackets] from a المصدر / نمط label for display. */
+  function patternLabel(source) {
+    return String(source || '').replace(/^\[|\]$/g, '').trim();
+  }
+
+  /** Sort key: years found in the pattern ascending, then full label, then num. */
+  function patternSortYears(source) {
+    var years = String(source || '').match(/20\d{2}/g);
+    if (!years || !years.length) return [9999];
+    return years.map(function (y) { return parseInt(y, 10); });
+  }
+
+  function compareQuestionIdentity(a, b) {
+    var ya = patternSortYears(a.source);
+    var yb = patternSortYears(b.source);
+    var n = Math.max(ya.length, yb.length);
+    for (var i = 0; i < n; i++) {
+      var da = ya[i] != null ? ya[i] : 0;
+      var db = yb[i] != null ? yb[i] : 0;
+      if (da !== db) return da - db;
+    }
+    var la = patternLabel(a.source);
+    var lb = patternLabel(b.source);
+    if (la !== lb) return la < lb ? -1 : la > lb ? 1 : 0;
+    if (a.num !== b.num) return a.num - b.num;
+    return a.term < b.term ? -1 : a.term > b.term ? 1 : 0;
   }
 
   function runPool(items, limit, worker) {
@@ -423,6 +450,7 @@
     section.className = 'guide-discussion-q mb-md p-md rounded-xl border border-outline-variant bg-surface-container-lowest dark:bg-transparent';
     section.dataset.questionNum = String(item.num);
     section.dataset.discussionTerm = term;
+    section.dataset.discussionSource = item.source || '';
     section.dataset.discussionKind = kind;
 
     var head = document.createElement('div');
@@ -432,6 +460,14 @@
     title.className = 'font-headline-sm text-headline-sm text-on-surface m-0';
     title.textContent = 'س' + item.num;
     head.appendChild(title);
+
+    var pattern = patternLabel(item.source);
+    if (pattern) {
+      var patEl = document.createElement('span');
+      patEl.className = 'px-sm py-2xs rounded-full bg-outline-variant/40 text-on-surface-variant font-label-sm';
+      patEl.textContent = pattern;
+      head.appendChild(patEl);
+    }
 
     if (kind === 'correction') {
       var tag = document.createElement('span');
@@ -488,6 +524,7 @@
     statusEl.classList.remove('hidden');
 
     var found = 0;
+    var lastPattern = null;
     // Append as probes succeed so the list fills progressively.
     return runPool(questions, 3, function (q) {
       var term = kind === 'correction' ? correctionTermFor(q.term) : q.term;
@@ -497,6 +534,7 @@
           listEl.appendChild(buildQuestionDiscussionSection({
             term: q.term,
             num: q.num,
+            source: q.source,
             count: count,
           }, kind));
         }
@@ -511,12 +549,28 @@
       } else {
         statusEl.classList.add('hidden');
       }
-      // Keep question-number order even if probes finished out of order.
+      // Re-order by pattern then question number (probes finish out of order).
       var sections = Array.prototype.slice.call(listEl.querySelectorAll('.guide-discussion-q'));
       sections.sort(function (a, b) {
-        return (parseInt(a.dataset.questionNum, 10) || 0) - (parseInt(b.dataset.questionNum, 10) || 0);
+        return compareQuestionIdentity(
+          { source: a.dataset.discussionSource || '', num: parseInt(a.dataset.questionNum, 10) || 0, term: a.dataset.discussionTerm || '' },
+          { source: b.dataset.discussionSource || '', num: parseInt(b.dataset.questionNum, 10) || 0, term: b.dataset.discussionTerm || '' },
+        );
       });
-      sections.forEach(function (s) { listEl.appendChild(s); });
+      listEl.innerHTML = '';
+      lastPattern = null;
+      sections.forEach(function (s) {
+        var src = s.dataset.discussionSource || '';
+        var label = patternLabel(src) || 'بدون نمط';
+        if (label !== lastPattern) {
+          lastPattern = label;
+          var h = document.createElement('h3');
+          h.className = 'font-headline-sm text-headline-sm text-primary mt-lg mb-sm first:mt-0';
+          h.textContent = label;
+          listEl.appendChild(h);
+        }
+        listEl.appendChild(s);
+      });
       return found;
     });
   }
@@ -579,8 +633,8 @@
         b.classList.toggle('border-transparent', on);
       });
       intro.textContent = id === 'corrections'
-        ? 'تصحيحات مقترحة فقط — مرتّبة حسب رقم السؤال، للمراجعة السريعة:'
-        : 'نقاشات الأسئلة التي فيها تعليقات — مرتّبة حسب رقم السؤال (مو حسب الوقت):';
+        ? 'تصحيحات مقترحة فقط — مرتّبة حسب النمط ثم رقم السؤال:'
+        : 'نقاشات الأسئلة التي فيها تعليقات — مرتّبة حسب النمط (مثل 2022-2023) ثم رقم السؤال:';
     }
 
     function showTab(id) {
@@ -603,11 +657,13 @@
 
   function buildCorrectionText(popup) {
     var qNum = popup.dataset.questionNum || '';
+    var pattern = patternLabel(popup.dataset.discussionSource || '');
     var select = popup.querySelector('.mcq-correction-answer');
     var reason = popup.querySelector('.mcq-correction-reason');
     var answer = select ? select.value : '';
     var why = reason ? reason.value.trim() : '';
-    return '🔧 تصحيح مقترح — السؤال س' + qNum + '\n' +
+    return '🔧 تصحيح مقترح — السؤال س' + qNum +
+      (pattern ? ' · ' + pattern : '') + '\n' +
       'الإجابة الصحيحة برأيي: ' + answer + '\n' +
       (why ? 'السبب: ' + why : '');
   }

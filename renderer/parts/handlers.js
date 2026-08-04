@@ -173,11 +173,11 @@ function renderMcqCard(q, cardId, { showSource = true } = {}) {
     <button type="button" data-mcq-reset class="mcq-reset-btn hidden mt-md inline-flex items-center gap-xs px-md py-sm rounded-lg border border-outline-variant bg-surface-container-high text-on-surface font-label-md hover:bg-surface-variant transition-all" aria-label="إعادة تعيين الإجابة">
       ${ms('restart_alt', false, 'text-sm')} إعادة تعيين الإجابة
     </button>
-    <div class="mcq-comment-popup hidden fixed inset-0 z-50 items-center justify-center p-md" data-question-num="${esc(String(q.num))}" data-discussion-term="${esc(cardId)}">
+    <div class="mcq-comment-popup hidden fixed inset-0 z-50 items-center justify-center p-md" data-question-num="${esc(String(q.num))}" data-discussion-source="${esc(q.source || '')}" data-discussion-term="${esc(cardId)}">
       <div class="mcq-comment-backdrop absolute inset-0 bg-black/50 backdrop-blur-sm"></div>
       <div class="mcq-comment-dialog relative bg-surface dark:bg-[#161b30] rounded-2xl shadow-2xl max-w-2xl w-full max-h-[92vh] overflow-y-auto p-lg" role="dialog" aria-label="نقاش السؤال">
         <div class="flex items-center justify-between mb-lg">
-          <h4 class="font-headline-sm text-headline-sm text-on-surface">نقاش السؤال س${esc(String(q.num))}</h4>
+          <h4 class="font-headline-sm text-headline-sm text-on-surface">نقاش السؤال س${esc(String(q.num))}${q.source ? ` <span class="font-label-md text-on-surface-variant">· ${esc(String(q.source).replace(/^\[|\]$/g, ''))}</span>` : ''}</h4>
           <button type="button" class="mcq-comment-close p-xs rounded-full hover:bg-surface-variant transition-all" aria-label="إغلاق">
             ${ms('close', false, 'text-on-surface-variant')}
           </button>
@@ -208,7 +208,12 @@ function renderMcqGroup(q, partId) {
     <div class="space-y-md mt-lg">`;
 
   q.questions.forEach(sub => {
-    html += renderMcqCard(sub, mcqCardDomId(partId, q, sub.num), { showSource: false });
+    const subQ = {
+      ...sub,
+      source: sub.source || q.source || '',
+      section: sub.section || q.section || '',
+    };
+    html += renderMcqCard(subQ, mcqCardDomId(partId, subQ), { showSource: false });
   });
 
   return html + '</div></section>';

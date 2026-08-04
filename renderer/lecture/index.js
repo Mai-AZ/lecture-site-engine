@@ -37,7 +37,13 @@ export function renderAnswerCorrections(guide) {
       const ref = esc(g.ref || section);
       const links = g.questions
         .map((n) => {
-          const id = mcqCardDomId(partId, { num: n, section });
+          // Prefer explicit source/pattern; many DAWRAT banks use the نمط
+          // sitting as the ## section label itself.
+          const id = mcqCardDomId(partId, {
+            num: n,
+            section: g.section,
+            source: g.source || g.section,
+          });
           return `<a href="#${esc(id)}" class="answer-corrections__q">${esc(String(n))}</a>`;
         })
         .join('');
