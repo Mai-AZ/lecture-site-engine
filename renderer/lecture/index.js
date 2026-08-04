@@ -144,17 +144,16 @@ export function renderCodeGuide(guide, deps, badgeLabel = '💻 أكواد ال�
 
   html += renderAnswerCorrections(guide);
 
-  // Its own thread, independent of any single question — each question's
-  // comment modal (see renderMcqCard) has its own separate thread instead,
-  // so opening one question's discussion never shows comments about others.
-  const discussionTerm = `${guide.id}-discussion`;
-
+  // Aggregates per-question threads (see renderMcqCard) ordered by question
+  // number — not a single chronological giscus thread. comments-widget.js
+  // probes which questions already have comments and mounts each below a
+  // "سN" heading when this panel is opened.
   html += `<div class="guide-discussion mb-xl">
-    <button type="button" class="guide-discussion-toggle inline-flex items-center gap-sm px-lg py-md bg-secondary-container text-on-secondary-container rounded-full font-label-md hover:opacity-90 transition-opacity" data-discussion-term="${esc(discussionTerm)}">
+    <button type="button" class="guide-discussion-toggle inline-flex items-center gap-sm px-lg py-md bg-secondary-container text-on-secondary-container rounded-full font-label-md hover:opacity-90 transition-opacity" data-discussion-mode="by-question">
       ${ms('forum', false, 'text-lg')} نقاش عام حول هذه الدورة
       <span class="guide-discussion-count hidden px-sm py-2xs bg-surface/60 rounded-full font-label-sm"></span>
     </button>
-    <div class="guide-discussion-panel hidden mt-lg" data-discussion-term="${esc(discussionTerm)}"></div>
+    <div class="guide-discussion-panel hidden mt-lg" data-discussion-mode="by-question"></div>
   </div>`;
 
   html += `<div class="lecture-body">`;
