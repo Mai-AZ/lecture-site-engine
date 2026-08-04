@@ -54,6 +54,11 @@
    */
   function mountGiscusThread(container, term) {
     if (!container || !term) return;
+    // giscus' client.js does document.querySelector('.giscus') and reuses the
+    // first match — so any still-running count probe must be torn down first,
+    // otherwise the real thread's iframe lands in the hidden probe (or gets
+    // removed with it) and this panel stays empty until the load-error UI.
+    abortDiscussionCountProbes();
     container.innerHTML = '';
     delete container.dataset.mounted;
 
@@ -106,7 +111,7 @@
         settleObserver.disconnect();
       }
     });
-    settleObserver.observe(container, { childList: true });
+    settleObserver.observe(container, { childList: true, subtree: true });
 
     container.appendChild(script);
     container.dataset.giscusTerm = term;
@@ -164,6 +169,13 @@
   // the same discussion competing for the same request.
   var discussionCountCache = {};
   var discussionCountInFlight = {};
+  var discussionCountCleanups = {};
+
+  function abortDiscussionCountProbes() {
+    Object.keys(discussionCountCleanups).forEach(function (t) {
+      discussionCountCleanups[t]();
+    });
+  }
 
   /**
    * Quietly loads a hidden, invisible giscus instance just to read the
@@ -171,21 +183,37 @@
    * discards it. No server of ours involved — reuses giscus' own widget,
    * just never shown. If the discussion doesn't exist yet (nobody has
    * commented), no message ever arrives and the badge simply stays hidden.
+   *
+   * Important: giscus client.js always does document.querySelector('.giscus')
+   * and reuses the first match. After the probe script runs we immediately
+   * rename that class so a later real mount doesn't get hijacked into this
+   * hidden node (and then wiped when the probe cleans up).
    */
   function fetchDiscussionCount(term) {
+    if (!term) return;
+    if (discussionCountCache[term] !== undefined) return;
     if (discussionCountInFlight[term]) return;
+    // A real mount owns `.giscus`. Probing now would make client.js reuse it
+    // and replace the visible iframe.
+    if (document.querySelector('.giscus')) return;
     discussionCountInFlight[term] = true;
 
     var hidden = document.createElement('div');
+    hidden.className = 'giscus-count-probe-root';
     hidden.setAttribute('aria-hidden', 'true');
     hidden.style.cssText = 'position:absolute;top:-9999px;width:1px;height:1px;overflow:hidden;';
     document.body.appendChild(hidden);
 
+    var giveUpId = 0;
     function cleanup() {
+      if (!discussionCountInFlight[term] && !discussionCountCleanups[term]) return;
       delete discussionCountInFlight[term];
+      delete discussionCountCleanups[term];
+      clearTimeout(giveUpId);
       window.removeEventListener('message', handleMessage);
       hidden.remove();
     }
+    discussionCountCleanups[term] = cleanup;
 
     function handleMessage(e) {
       if (e.origin !== 'https://giscus.app') return;
@@ -199,7 +227,7 @@
     }
     window.addEventListener('message', handleMessage);
     // Give up after a while so a flaky load doesn't leak the listener/div forever.
-    setTimeout(cleanup, 10000);
+    giveUpId = setTimeout(cleanup, 10000);
 
     var script = document.createElement('script');
     script.src = 'https://giscus.app/client.js';
@@ -217,6 +245,15 @@
     script.setAttribute('data-lang', GISCUS_LANG);
     script.setAttribute('crossorigin', 'anonymous');
     script.async = true;
+    // client.js runs before the load event — rename so the next real mount
+    // does not reuse this probe via querySelector('.giscus').
+    script.addEventListener('load', function () {
+      var g = hidden.querySelector('.giscus');
+      if (g) {
+        g.classList.remove('giscus');
+        g.classList.add('giscus-count-probe');
+      }
+    });
     hidden.appendChild(script);
   }
 
