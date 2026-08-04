@@ -131,6 +131,7 @@
    */
   function mountGiscusThread(container, term) {
     if (!container || !term) return Promise.resolve(false);
+    var scoped = scopedDiscussionTerm(term);
 
     container.innerHTML = '';
     delete container.dataset.mounted;
@@ -160,7 +161,7 @@
           loading.remove();
           iframe.style.opacity = '1';
           container.dataset.mounted = '1';
-          container.dataset.giscusTerm = term;
+          container.dataset.giscusTerm = scoped;
           resolve(true);
         } else {
           container.innerHTML = '';
@@ -259,11 +260,12 @@
    */
   function probeDiscussionCount(term) {
     if (!term) return Promise.resolve(0);
-    if (discussionCountCache[term] !== undefined) {
-      return Promise.resolve(discussionCountCache[term]);
+    var scoped = scopedDiscussionTerm(term);
+    if (discussionCountCache[scoped] !== undefined) {
+      return Promise.resolve(discussionCountCache[scoped]);
     }
-    if (discussionCountInFlight[term]) {
-      return discussionCountInFlight[term];
+    if (discussionCountInFlight[scoped]) {
+      return discussionCountInFlight[scoped];
     }
 
     var promise = new Promise(function (resolve) {
@@ -275,23 +277,23 @@
 
       var giveUpId = 0;
       function cleanup() {
-        delete discussionCountInFlight[term];
-        delete discussionCountCleanups[term];
+        delete discussionCountInFlight[scoped];
+        delete discussionCountCleanups[scoped];
         clearTimeout(giveUpId);
         window.removeEventListener('message', onMessage);
         iframe.remove();
       }
-      discussionCountCleanups[term] = function () {
+      discussionCountCleanups[scoped] = function () {
         cleanup();
-        resolve(discussionCountCache[term] || 0);
+        resolve(discussionCountCache[scoped] || 0);
       };
 
       function settle(count) {
-        if (discussionCountCache[term] === undefined) {
-          discussionCountCache[term] = count;
+        if (discussionCountCache[scoped] === undefined) {
+          discussionCountCache[scoped] = count;
         }
         cleanup();
-        resolve(discussionCountCache[term]);
+        resolve(discussionCountCache[scoped]);
       }
 
       function onMessage(e) {
@@ -313,7 +315,7 @@
       document.body.appendChild(iframe);
     });
 
-    discussionCountInFlight[term] = promise;
+    discussionCountInFlight[scoped] = promise;
     return promise;
   }
 
