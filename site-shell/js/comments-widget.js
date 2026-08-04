@@ -64,6 +64,16 @@
     return document.documentElement.classList.contains('dark') ? 'noborder_dark' : 'noborder_light';
   }
 
+  /** Force the iframe's color-scheme to match the site — not the OS clock. */
+  function giscusColorScheme() {
+    return document.documentElement.classList.contains('dark') ? 'dark' : 'light';
+  }
+
+  function applyGiscusFrameChrome(iframe) {
+    if (!iframe) return;
+    iframe.style.colorScheme = giscusColorScheme();
+  }
+
   /** giscus stores the OAuth session in localStorage (same key as client.js). */
   function clearGiscusSession() {
     try { localStorage.removeItem('giscus-session'); } catch (e) { /* ignore */ }
@@ -336,10 +346,8 @@
     iframe.title = 'Comments';
     iframe.scrolling = 'no';
     iframe.allow = 'clipboard-write';
-    // Tall enough to fit reactions + the write box before the first
-    // resizeHeight ping arrives. giscus uses scrolling=no, so a short
-    // iframe literally clips the comment composer.
-    iframe.style.cssText = 'width:100%;border:0;min-height:24rem;color-scheme:none';
+    iframe.style.cssText = 'width:100%;border:0;min-height:24rem';
+    applyGiscusFrameChrome(iframe);
     iframe.src = buildGiscusSrc(term, { reactionsEnabled: '1', emitMetadata: '0' });
 
     return new Promise(function (resolve) {
@@ -427,6 +435,7 @@
   function broadcastThemeToAll() {
     var theme = giscusTheme();
     document.querySelectorAll('iframe.giscus-frame').forEach(function (iframe) {
+      applyGiscusFrameChrome(iframe);
       try {
         iframe.contentWindow.postMessage({ giscus: { setConfig: { theme: theme } } }, GISCUS_ORIGIN);
       } catch (e) { /* ignore cross-origin races during teardown */ }
