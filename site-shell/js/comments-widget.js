@@ -9,6 +9,9 @@
   var GISCUS_CATEGORY_ID  = 'DIC_kwDOTL05VM4DCod2';
   var GISCUS_LANG         = 'ar';
   var GISCUS_ORIGIN       = 'https://giscus.app';
+  // Remember where the student was before GitHub OAuth (hash SPA routes).
+  var GISCUS_RETURN_KEY   = 'giscus-return-v1:' + GISCUS_REPO;
+
 
   /**
    * Live read-only feed Worker (Cloudflare). Giscus stays write-only on each
@@ -71,6 +74,97 @@
     }
   }
 
+  function setGiscusSession(session) {
+    try {
+      localStorage.setItem('giscus-session', JSON.stringify(session));
+    } catch (e) { /* quota / private mode */ }
+  }
+
+  /** Strip scope + `/correction` so we can match `data-discussion-term` on cards. */
+  function baseTermFromAny(term) {
+    if (!term) return '';
+    var t = String(term);
+    if (t.length > 11 && t.slice(-11) === '/correction') t = t.slice(0, -11);
+    var scope = giscusTermScope();
+    if (scope && t.indexOf(scope + '/') === 0) t = t.slice(scope.length + 1);
+    return t;
+  }
+
+  /**
+   * Persist hash (+ optional question term) before Giscus GitHub login.
+   * OAuth redirects cannot reliably keep `#exams…`, so without this the SPA
+   * boots on the subject home and feels like “auth kicked me out”.
+   */
+  function rememberGiscusReturnContext(extra) {
+    extra = extra || {};
+    try {
+      var prev = null;
+      try { prev = JSON.parse(sessionStorage.getItem(GISCUS_RETURN_KEY) || 'null'); } catch (e) { /* ignore */ }
+      var hash = location.hash || '';
+      if ((!hash || hash === '#' || hash === '#home') && prev && prev.hash) {
+        hash = prev.hash;
+      }
+      var term = baseTermFromAny(extra.term || (prev && prev.term) || '');
+      sessionStorage.setItem(GISCUS_RETURN_KEY, JSON.stringify({
+        hash: hash,
+        path: location.pathname,
+        term: term,
+        mode: extra.mode || (prev && prev.mode) || 'general',
+        at: Date.now(),
+      }));
+    } catch (e) { /* ignore */ }
+  }
+
+  /**
+   * After GitHub → giscus OAuth, the browser lands on origin?giscus=… (often
+   * without the SPA hash). Save the session and restore the saved hash.
+   * Must run before app.js finishes first routing when possible.
+   */
+  function consumeGiscusOAuthReturn() {
+    var params = new URLSearchParams(location.search);
+    var sessionParam = params.get('giscus');
+    var hadSession = !!sessionParam;
+    if (sessionParam) {
+      setGiscusSession(sessionParam);
+      params.delete('giscus');
+    }
+    // Clean leftover oauth noise if present.
+    ['error', 'error_description', 'error_uri'].forEach(function (k) {
+      if (params.has(k)) params.delete(k);
+    });
+
+    var saved = null;
+    try {
+      saved = JSON.parse(sessionStorage.getItem(GISCUS_RETURN_KEY) || 'null');
+    } catch (e) { /* ignore */ }
+
+    var hash = location.hash || '';
+    var hashMissing = !hash || hash === '#' || hash === '#home';
+    if (hashMissing && saved && saved.hash && saved.hash !== '#home') {
+      hash = saved.hash.charAt(0) === '#' ? saved.hash : '#' + saved.hash;
+    }
+
+    if (hadSession || (hashMissing && hash)) {
+      var qs = params.toString();
+      var next = location.pathname + (qs ? '?' + qs : '') + (hash || '');
+      try {
+        history.replaceState(null, '', next);
+      } catch (e) {
+        location.replace(next);
+      }
+    }
+
+    if (saved && saved.term && Date.now() - (saved.at || 0) < 45 * 60 * 1000) {
+      window.__GISCUS_REOPEN__ = {
+        term: saved.term,
+        mode: saved.mode || 'general',
+      };
+    }
+    return hadSession;
+  }
+
+  consumeGiscusOAuthReturn();
+
   /**
    * Build a direct widget iframe URL. Using the widget iframe (instead of
    * injecting client.js) lets us host many threads on one page — client.js
@@ -78,10 +172,23 @@
    */
   function buildGiscusSrc(term, opts) {
     opts = opts || {};
+    var isCorrection = String(term || '').indexOf('/correction') !== -1;
+    rememberGiscusReturnContext({
+      term: term,
+      mode: opts.returnMode || (isCorrection ? 'correction' : 'general'),
+    });
+
     var params = new URLSearchParams();
     var originUrl = new URL(location.href);
     originUrl.searchParams.delete('giscus');
-    originUrl.hash = '';
+    // Keep the SPA hash (#exams / #exams-p1-qN). Clearing it made GitHub login
+    // drop students on the subject home grid after OAuth.
+    if (!originUrl.hash || originUrl.hash === '#' || originUrl.hash === '#home') {
+      try {
+        var saved = JSON.parse(sessionStorage.getItem(GISCUS_RETURN_KEY) || 'null');
+        if (saved && saved.hash) originUrl.hash = saved.hash;
+      } catch (e) { /* ignore */ }
+    }
     params.set('origin', originUrl.toString());
     params.set('session', getGiscusSession() || '');
     params.set('theme', giscusTheme());
@@ -1384,6 +1491,7 @@
     var term = popup.dataset.discussionTerm;
     var thread = popup.querySelector('.mcq-comment-thread');
     var mode = opts.mode || 'general';
+    if (term) rememberGiscusReturnContext({ term: term, mode: mode });
 
     if (mode === 'correction') {
       var picker = popup.querySelector('.mcq-comment-mode-picker');
@@ -1510,6 +1618,30 @@
   }
 
   var bootstrapTimer = null;
+  /** After OAuth return, reopen the question modal once exam cards exist. */
+  var reopenAuthAttempts = 0;
+  function maybeReopenAfterAuth() {
+    var saved = window.__GISCUS_REOPEN__;
+    if (!saved || !saved.term) return;
+    var base = baseTermFromAny(saved.term);
+    if (!base) {
+      delete window.__GISCUS_REOPEN__;
+      return;
+    }
+    var popup = null;
+    document.querySelectorAll('.mcq-comment-popup[data-discussion-term]').forEach(function (el) {
+      if (el.getAttribute('data-discussion-term') === base) popup = el;
+    });
+    if (!popup) {
+      if (reopenAuthAttempts++ < 40) setTimeout(maybeReopenAfterAuth, 300);
+      return;
+    }
+    delete window.__GISCUS_REOPEN__;
+    reopenAuthAttempts = 0;
+    try { sessionStorage.removeItem(GISCUS_RETURN_KEY); } catch (e) { /* ignore */ }
+    openQuestionModal(popup, { mode: saved.mode || 'general' });
+  }
+
   function bootstrapFeedUi() {
     loadDiscussionFeed(false).then(function (feedMap) {
       if (!feedMap) return;
@@ -1517,6 +1649,7 @@
         refreshGuideDiscussionBadge(btn, feedMap);
       });
       enrichMcqCardsFromFeed(feedMap);
+      maybeReopenAfterAuth();
     });
   }
 
@@ -1527,6 +1660,7 @@
       bootstrapTimer = null;
       if (!document.querySelector('.mcq-card')) return;
       bootstrapFeedUi();
+      maybeReopenAfterAuth();
     }, 250);
   }
 
