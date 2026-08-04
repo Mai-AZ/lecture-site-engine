@@ -25,5 +25,8 @@
   },
   "engines": {
     "node": ">=18"
+  },
+  "devDependencies": {
+    "live-server": "^1.2.2"
   }
 }
