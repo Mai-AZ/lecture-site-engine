@@ -158,13 +158,13 @@ function renderMcqCard(q, cardId, { showSource = true } = {}) {
       ${showSource ? sourceTag(q.source) : ''}
       <div class="mcq-card-discuss-actions mr-auto flex items-center gap-xs flex-wrap">
         <button type="button" class="mcq-correction-chip hidden inline-flex items-center gap-2xs px-sm py-2xs rounded-full bg-tertiary-container text-on-tertiary-container font-label-sm hover:opacity-90 transition-opacity" data-comment-term="${esc(cardId)}" aria-label="فتح التصحيحات المقترحة"></button>
-        <button type="button" class="mcq-react-btn hidden inline-flex items-center gap-2xs px-sm py-2xs rounded-full border border-outline-variant hover:bg-surface-variant transition-all font-label-sm" data-comment-term="${esc(cardId)}" title="افتح النقاش للتفاعل" aria-label="تفاعل مع النقاش">
-          <span aria-hidden="true">👍</span>
-          <span class="mcq-react-count"></span>
-        </button>
-        <button type="button" class="mcq-comment-count-btn hidden inline-flex items-center gap-2xs px-sm py-2xs rounded-full border border-outline-variant hover:bg-surface-variant transition-all font-label-sm" data-comment-term="${esc(cardId)}" title="فتح النقاش" aria-label="تعليقات السؤال">
+        <button type="button" class="mcq-comment-count-btn hidden inline-flex items-center gap-2xs px-sm py-2xs rounded-full bg-secondary-container text-on-secondary-container font-label-sm hover:opacity-90 transition-opacity" data-comment-term="${esc(cardId)}" title="فتح النقاش" aria-label="تعليقات السؤال">
           ${ms('chat_bubble', false, 'text-sm')}
           <span class="mcq-comment-count"></span>
+        </button>
+        <button type="button" class="mcq-react-btn inline-flex items-center gap-2xs px-sm py-2xs rounded-full border border-outline-variant hover:bg-surface-variant transition-all font-label-sm" data-comment-term="${esc(cardId)}" title="تفاعل 👍 — يفتح النقاش" aria-label="تفاعل مع النقاش">
+          <span aria-hidden="true">👍</span>
+          <span class="mcq-react-count"></span>
         </button>
         <button type="button" class="mcq-comment-btn p-xs rounded-full hover:bg-surface-variant transition-all" data-comment-term="${esc(cardId)}" aria-label="نقاش حول هذا السؤال" title="نقاش حول هذا السؤال">
           ${ms('chat_bubble', false, 'text-on-surface-variant text-sm')}

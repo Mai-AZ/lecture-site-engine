@@ -653,42 +653,94 @@
     openQuestionModal(popup, opts || {});
   }
 
+  function truncateText(s, max) {
+    var t = String(s || '').replace(/\s+/g, ' ').trim();
+    if (!t) return '';
+    if (t.length <= max) return t;
+    return t.slice(0, Math.max(0, max - 1)).trim() + '…';
+  }
+
+  /** Pull stem + options from the live MCQ card on the page (same term). */
+  function extractMcqPreview(term) {
+    if (!term) return null;
+    var card = document.getElementById(term);
+    if (!card) {
+      var popup = null;
+      document.querySelectorAll('.mcq-comment-popup[data-discussion-term]').forEach(function (el) {
+        if (el.getAttribute('data-discussion-term') === term) popup = el;
+      });
+      card = popup && popup.closest('.mcq-card');
+    }
+    if (!card) return null;
+
+    var optionsRoot = card.querySelector('.mcq-options');
+    var stem = '';
+    if (optionsRoot) {
+      var prev = optionsRoot.previousElementSibling;
+      while (prev) {
+        if (prev.matches && (prev.matches('p') || prev.classList.contains('mb-lg'))) {
+          stem = (prev.innerText || '').trim();
+          break;
+        }
+        prev = prev.previousElementSibling;
+      }
+    }
+    if (!stem) {
+      var stemEl = card.querySelector(':scope > p, :scope > .mb-lg p, :scope > .mb-lg');
+      if (stemEl) stem = (stemEl.innerText || '').trim();
+    }
+
+    var options = [];
+    card.querySelectorAll('.mcq-options .mcq-opt').forEach(function (btn) {
+      var key = String(btn.getAttribute('data-key') || '').toUpperCase();
+      var textEl = btn.querySelector('.opt-text');
+      options.push({
+        key: key,
+        text: truncateText(textEl ? textEl.innerText : btn.innerText, 72),
+      });
+    });
+
+    return {
+      stem: truncateText(stem, 140),
+      options: options,
+      siteAnswer: String(card.getAttribute('data-correct') || '').toUpperCase(),
+    };
+  }
+
   function renderCommentBubble(c, isReply) {
     var wrap = document.createElement('div');
-    wrap.className = (isReply
-      ? 'mr-lg border-r-2 border-primary/30 pr-md '
-      : '') +
-      'mb-sm px-md py-sm rounded-2xl bg-surface-container-high/90 dark:bg-surface-container/50';
+    wrap.className = (isReply ? 'mr-md border-r border-primary/25 pr-sm ' : '') +
+      'mb-xs px-sm py-xs rounded-xl bg-surface-container-high/70 dark:bg-surface-container/40';
 
     var meta = document.createElement('div');
-    meta.className = 'flex items-center gap-sm mb-xs';
+    meta.className = 'flex items-center gap-xs mb-2xs';
 
     if (c.avatar) {
       var img = document.createElement('img');
       img.src = c.avatar;
       img.alt = '';
-      img.width = 24;
-      img.height = 24;
+      img.width = 18;
+      img.height = 18;
       img.loading = 'lazy';
-      img.className = 'rounded-full shrink-0 ring-1 ring-outline-variant';
+      img.className = 'rounded-full shrink-0';
       meta.appendChild(img);
     }
 
     var who = document.createElement('span');
-    who.className = 'font-label-md text-on-surface font-medium';
+    who.className = 'font-label-sm text-on-surface';
     who.textContent = '@' + c.author;
     meta.appendChild(who);
 
     var when = document.createElement('span');
-    when.className = 'font-label-sm text-on-surface-variant mr-auto';
+    when.className = 'font-label-sm text-on-surface-variant mr-auto opacity-80';
     when.textContent = formatRelativeTime(c.createdAt);
     meta.appendChild(when);
 
     wrap.appendChild(meta);
 
     var body = document.createElement('p');
-    body.className = 'font-body-md text-on-surface whitespace-pre-wrap m-0 leading-relaxed';
-    body.textContent = c.body;
+    body.className = 'font-label-md text-on-surface whitespace-pre-wrap m-0 leading-snug';
+    body.textContent = truncateText(c.body, 220);
     wrap.appendChild(body);
     return wrap;
   }
@@ -701,131 +753,172 @@
     }).join(' · ');
   }
 
+  /** Compact question + options so the overview is readable without jumping away. */
+  function appendMcqPreview(section, item, highlightLetters) {
+    var preview = extractMcqPreview(item.term);
+    if (!preview || (!preview.stem && !(preview.options && preview.options.length))) return;
+
+    var hl = {};
+    Object.keys(highlightLetters || {}).forEach(function (k) {
+      hl[String(k).toUpperCase()] = true;
+    });
+
+    var box = document.createElement('div');
+    box.className = 'guide-discussion-q-preview mb-xs px-sm py-xs rounded-lg bg-surface/60 border border-outline-variant/40';
+
+    if (preview.stem) {
+      var stem = document.createElement('p');
+      stem.className = 'font-label-md text-on-surface m-0 mb-xs leading-snug';
+      stem.textContent = preview.stem;
+      box.appendChild(stem);
+    }
+
+    if (preview.options && preview.options.length) {
+      var list = document.createElement('ul');
+      list.className = 'm-0 p-0 list-none flex flex-col gap-2xs';
+      preview.options.forEach(function (opt) {
+        var li = document.createElement('li');
+        var hot = !!hl[opt.key];
+        var isSite = preview.siteAnswer && opt.key === preview.siteAnswer;
+        li.className = 'font-label-sm m-0 leading-snug flex gap-xs items-start ' +
+          (hot ? 'text-primary' : 'text-on-surface-variant');
+        var keySpan = document.createElement('span');
+        keySpan.className = 'shrink-0 inline-flex items-center justify-center min-w-[1.25rem] h-5 px-2xs rounded-md font-label-sm ' +
+          (hot
+            ? 'bg-primary text-on-primary'
+            : 'bg-outline-variant/50 text-on-surface-variant');
+        keySpan.textContent = opt.key;
+        li.appendChild(keySpan);
+        var txt = document.createElement('span');
+        txt.className = 'min-w-0';
+        txt.textContent = opt.text + (isSite && !hot ? ' · بالموقع' : '') + (hot ? ' · مقترح' : '');
+        li.appendChild(txt);
+        list.appendChild(li);
+      });
+      box.appendChild(list);
+    }
+
+    section.appendChild(box);
+  }
+
   function buildQuestionFeedCard(item, kind, discussion) {
     var term = kind === 'correction' ? correctionTermFor(item.term) : item.term;
     var section = document.createElement('article');
-    section.className = 'guide-discussion-q mb-md p-md rounded-2xl border border-outline-variant/80 bg-surface-container-lowest/80 dark:bg-transparent';
+    section.className = 'guide-discussion-q mb-sm px-sm py-sm rounded-xl border border-outline-variant/60 bg-surface-container-lowest/70 dark:bg-transparent';
     section.dataset.questionNum = String(item.num);
     section.dataset.discussionTerm = term;
     section.dataset.discussionSource = item.source || '';
     section.dataset.discussionKind = kind;
 
     var head = document.createElement('div');
-    head.className = 'flex items-center gap-sm flex-wrap mb-sm';
+    head.className = 'flex items-center gap-xs flex-wrap mb-xs';
+
+    var title = document.createElement('h4');
+    title.className = 'font-label-md text-on-surface m-0';
+    title.textContent = 'س' + item.num;
+    head.appendChild(title);
 
     var pattern = patternLabel(item.source);
     if (pattern) {
       var patEl = document.createElement('span');
-      patEl.className = 'px-sm py-2xs rounded-full bg-outline-variant/40 text-on-surface-variant font-label-sm';
-      patEl.textContent = pattern;
+      patEl.className = 'px-xs py-2xs rounded-full bg-outline-variant/35 text-on-surface-variant font-label-sm';
+      patEl.textContent = truncateText(pattern, 28);
       head.appendChild(patEl);
     }
 
-    var title = document.createElement('h4');
-    title.className = 'font-headline-sm text-headline-sm text-on-surface m-0';
-    title.textContent = 'س' + item.num;
-    head.appendChild(title);
-
     if (kind === 'correction') {
       var peer = document.createElement('span');
-      peer.className = 'px-sm py-2xs bg-tertiary-container text-on-tertiary-container rounded-full font-label-sm';
-      peer.textContent = 'مقترح من طلاب';
+      peer.className = 'px-xs py-2xs bg-tertiary-container text-on-tertiary-container rounded-full font-label-sm';
+      peer.textContent = 'طلاب';
       head.appendChild(peer);
     }
 
     var count = (discussion && discussion.totalCount) || item.count || 0;
     var countEl = document.createElement('span');
-    countEl.className = 'px-sm py-2xs bg-secondary-container text-on-secondary-container rounded-full font-label-sm';
-    countEl.textContent = count + (count === 1 ? ' تعليق' : ' تعليقات');
+    countEl.className = 'px-xs py-2xs bg-secondary-container text-on-secondary-container rounded-full font-label-sm mr-auto';
+    countEl.textContent = String(count);
+    countEl.title = count + (count === 1 ? ' تعليق' : ' تعليقات');
     head.appendChild(countEl);
 
     section.appendChild(head);
 
+    var summary = kind === 'correction' && discussion
+      ? summarizeCorrections(discussion)
+      : { letters: {}, reasons: [] };
+
+    appendMcqPreview(section, item, summary.letters);
+
     var feed = document.createElement('div');
-    feed.className = 'guide-discussion-q-feed mb-sm';
+    feed.className = 'guide-discussion-q-feed mb-xs';
 
     if (kind === 'correction' && discussion) {
-      var summary = summarizeCorrections(discussion);
       var letterLine = lettersSummaryText(summary.letters);
       if (letterLine) {
         var proposed = document.createElement('p');
-        proposed.className = 'font-headline-sm text-headline-sm text-primary m-0 mb-sm';
-        proposed.textContent = 'الإجابات المقترحة: ' + letterLine;
+        proposed.className = 'font-label-md text-primary m-0 mb-xs';
+        proposed.textContent = 'مقترح: ' + letterLine;
         feed.appendChild(proposed);
       }
 
       if (summary.reasons.length) {
-        summary.reasons.forEach(function (r) {
+        summary.reasons.slice(0, 3).forEach(function (r) {
           var row = document.createElement('p');
-          row.className = 'font-body-md text-on-surface m-0 mb-xs leading-relaxed';
-          var prefix = (r.answer ? '[' + r.answer + '] ' : '') + '@' + r.author + ': ';
-          row.textContent = prefix + r.reason;
+          row.className = 'font-label-sm text-on-surface m-0 mb-2xs leading-snug';
+          row.textContent = truncateText(
+            (r.answer ? r.answer + ' · ' : '') + '@' + r.author + ': ' + r.reason,
+            160,
+          );
           feed.appendChild(row);
         });
       } else if (discussion.comments && discussion.comments.length) {
-        // Fallback: show truncated raw chat when template didn't match.
-        var rawNote = document.createElement('p');
-        rawNote.className = 'font-label-sm text-on-surface-variant m-0 mb-xs';
-        rawNote.textContent = 'نقاش إضافي (نص حر):';
-        feed.appendChild(rawNote);
         discussion.comments.slice(0, 2).forEach(function (c) {
           feed.appendChild(renderCommentBubble(c, false));
         });
       } else {
         var missCorr = document.createElement('p');
-        missCorr.className = 'font-label-md text-on-surface-variant m-0';
-        missCorr.textContent = 'ما قدرنا نعرض نص التصحيحات هنا — افتح السؤال لقراءتها.';
+        missCorr.className = 'font-label-sm text-on-surface-variant m-0';
+        missCorr.textContent = 'افتح السؤال لقراءة التصحيح.';
         feed.appendChild(missCorr);
       }
     } else if (discussion && discussion.comments && discussion.comments.length) {
-      discussion.comments.forEach(function (c) {
+      discussion.comments.slice(0, 4).forEach(function (c) {
         feed.appendChild(renderCommentBubble(c, false));
-        (c.replies || []).forEach(function (r) {
+        (c.replies || []).slice(0, 2).forEach(function (r) {
           feed.appendChild(renderCommentBubble(r, true));
         });
       });
     } else {
       var miss = document.createElement('p');
-      miss.className = 'font-label-md text-on-surface-variant m-0';
-      miss.textContent = 'ما قدرنا نعرض نص التعليقات هنا — افتح السؤال لقراءتها.';
+      miss.className = 'font-label-sm text-on-surface-variant m-0';
+      miss.textContent = 'افتح السؤال لقراءة التعليقات.';
       feed.appendChild(miss);
     }
     section.appendChild(feed);
 
     var actions = document.createElement('div');
-    actions.className = 'flex items-center gap-sm flex-wrap pt-xs';
+    actions.className = 'flex items-center gap-sm flex-wrap';
 
     var jump = document.createElement('a');
     jump.href = '#' + encodeURIComponent(item.term);
     jump.className = 'font-label-sm text-primary underline';
-    jump.textContent = 'اذهب للسؤال';
+    jump.textContent = 'السؤال';
     actions.appendChild(jump);
 
     var commentBtn = document.createElement('button');
     commentBtn.type = 'button';
-    commentBtn.className = 'px-md py-sm rounded-lg bg-primary text-on-primary font-label-md hover:opacity-90 transition-opacity';
+    commentBtn.className = 'px-sm py-2xs rounded-lg bg-primary text-on-primary font-label-sm hover:opacity-90 transition-opacity';
     if (kind === 'correction') {
       commentBtn.textContent = 'اقترح تصحيحاً';
       commentBtn.addEventListener('click', function () {
         openQuestionCommentByTerm(item.term, { mode: 'correction' });
       });
     } else {
-      commentBtn.textContent = 'أضف تعليقاً';
+      commentBtn.textContent = 'علّق';
       commentBtn.addEventListener('click', function () {
         openQuestionCommentByTerm(item.term, { mode: 'general' });
       });
     }
     actions.appendChild(commentBtn);
-
-    if (discussion && discussion.url) {
-      var gh = document.createElement('a');
-      gh.href = discussion.url;
-      gh.target = '_blank';
-      gh.rel = 'noopener';
-      gh.className = 'font-label-sm text-on-surface-variant underline';
-      gh.textContent = 'على GitHub';
-      actions.appendChild(gh);
-    }
 
     section.appendChild(actions);
     return section;
@@ -961,7 +1054,7 @@
         if (label !== lastPattern) {
           lastPattern = label;
           var h = document.createElement('h3');
-          h.className = 'font-headline-sm text-headline-sm text-primary mt-lg mb-sm first:mt-0 sticky top-0 bg-surface/95 backdrop-blur-sm py-xs z-[1]';
+          h.className = 'font-label-md text-primary mt-sm mb-xs first:mt-0 sticky top-0 bg-surface/95 backdrop-blur-sm py-2xs z-[1]';
           h.textContent = label;
           listEl.appendChild(h);
         }
@@ -1012,7 +1105,7 @@
           if (label !== lastPattern) {
             lastPattern = label;
             var h = document.createElement('h3');
-            h.className = 'font-headline-sm text-headline-sm text-primary mt-lg mb-sm first:mt-0';
+            h.className = 'font-label-md text-primary mt-sm mb-xs first:mt-0';
             h.textContent = label;
             listEl.appendChild(h);
           }
@@ -1066,16 +1159,16 @@
     panel.appendChild(tabs);
 
     var intro = document.createElement('p');
-    intro.className = 'mb-md font-label-md text-on-surface-variant';
+    intro.className = 'mb-sm font-label-sm text-on-surface-variant';
     panel.appendChild(intro);
 
     var statusEl = document.createElement('div');
-    statusEl.className = 'p-md text-center font-label-md text-on-surface-variant';
-    statusEl.textContent = 'جارِ تحميل التعليقات…';
+    statusEl.className = 'py-sm text-center font-label-sm text-on-surface-variant';
+    statusEl.textContent = 'جارِ التحميل…';
     panel.appendChild(statusEl);
 
     var scroller = document.createElement('div');
-    scroller.className = 'guide-discussion-scroller max-h-[min(70vh,36rem)] overflow-y-auto overscroll-contain pe-sm rounded-xl border border-outline-variant/50 bg-surface/40 px-sm py-sm';
+    scroller.className = 'guide-discussion-scroller max-h-[min(72vh,40rem)] overflow-y-auto overscroll-contain pe-xs rounded-xl';
     panel.appendChild(scroller);
 
     var listEl = document.createElement('div');
@@ -1092,14 +1185,14 @@
         b.classList.toggle('border-transparent', on);
       });
       intro.textContent = id === 'corrections'
-        ? 'مقترحات طلاب لتصحيح الإجابات (مش تصحيح رسمي) — الأعلى تفاعلاً أولاً. للكتابة: "اقترح تصحيحاً".'
-        : 'تعليقات الأسئلة مرتّبة حسب النمط ثم الرقم — اسحب داخل الصندوق للقراءة. للكتابة: "أضف تعليقاً".';
+        ? 'تصحيحات طلاب — اقرأ السؤال والخيارات هنا، بدون قفز بعيد.'
+        : 'نقاش الأسئلة — اسحب بسرعة؛ الكتابة من زر علّق.';
     }
 
     function showTab(id, forceFeed) {
       setActiveTab(id);
       var kind = id === 'corrections' ? 'correction' : 'general';
-      statusEl.textContent = 'جارِ تحميل التعليقات…';
+      statusEl.textContent = 'جارِ التحميل…';
       statusEl.classList.remove('hidden');
       listEl.innerHTML = '';
 
@@ -1279,26 +1372,27 @@
   }
 
   /**
-   * Enrich MCQ card headers with Worker-backed chips:
-   * correction count, comment count, thumbs-up summary.
+   * Enrich MCQ card headers with Worker-backed chips outside the modal:
+   * clear comment counts ("٣ تعليقات"), corrections, thumbs-up.
    */
   function enrichMcqCardsFromFeed(feedMap) {
     if (!feedMap) return;
-    document.querySelectorAll('.mcq-card[data-discussion-term], .mcq-card .mcq-comment-popup[data-discussion-term]').forEach(function (el) {
-      var card = el.classList.contains('mcq-card') ? el : el.closest('.mcq-card');
-      if (!card) return;
+    document.querySelectorAll('.mcq-card').forEach(function (card) {
       var popup = card.querySelector('.mcq-comment-popup[data-discussion-term]');
       var term = (popup && popup.dataset.discussionTerm) || card.dataset.discussionTerm;
       if (!term) return;
 
       var general = lookupDiscussion(feedMap, term);
       var corr = lookupDiscussion(feedMap, correctionTermFor(term));
+      var gCount = (general && general.totalCount) || 0;
+      var corrCount = (corr && corr.totalCount) || 0;
+      var totalComments = gCount + corrCount;
+      var thumbs = thumbsUpCount(general) + thumbsUpCount(corr);
 
       var corrChip = card.querySelector('.mcq-correction-chip');
       if (corrChip) {
-        var corrCount = (corr && corr.totalCount) || 0;
         if (corrCount > 0) {
-          corrChip.textContent = 'تصحيح مقترح (' + corrCount + ')';
+          corrChip.textContent = 'تصحيح مقترح · ' + corrCount;
           corrChip.classList.remove('hidden');
         } else {
           corrChip.classList.add('hidden');
@@ -1307,11 +1401,12 @@
 
       var commentBtn = card.querySelector('.mcq-comment-count-btn');
       var commentCountEl = card.querySelector('.mcq-comment-count');
-      var gCount = (general && general.totalCount) || 0;
       if (commentBtn && commentCountEl) {
-        if (gCount > 0) {
-          commentCountEl.textContent = String(gCount);
+        if (totalComments > 0) {
+          commentCountEl.textContent =
+            totalComments === 1 ? 'تعليق واحد' : totalComments + ' تعليقات';
           commentBtn.classList.remove('hidden');
+          commentBtn.title = 'افتح النقاش — ' + totalComments + ' تعليق';
         } else {
           commentBtn.classList.add('hidden');
         }
@@ -1319,33 +1414,39 @@
 
       var reactBtn = card.querySelector('.mcq-react-btn');
       var reactCountEl = card.querySelector('.mcq-react-count');
-      var thumbs = thumbsUpCount(general) + thumbsUpCount(corr);
       if (reactBtn && reactCountEl) {
-        // Always show react affordance when there is a thread, or always as entry.
+        // Always offer a card-level react entry; show count when Worker has it.
+        reactBtn.classList.remove('hidden');
         if (thumbs > 0) {
           reactCountEl.textContent = String(thumbs);
-          reactBtn.classList.remove('hidden');
-        } else if (gCount > 0 || (corr && corr.totalCount)) {
-          reactCountEl.textContent = '';
-          reactBtn.classList.remove('hidden');
-          reactBtn.title = 'افتح النقاش للتفاعل (👍)';
+          reactBtn.title = 'تفاعل (' + thumbs + ') — يفتح النقاش';
         } else {
-          // Still expose a light entry so reacting isn't buried only in Giscus.
           reactCountEl.textContent = '';
-          reactBtn.classList.remove('hidden');
-          reactBtn.title = 'افتح النقاش للتفاعل (👍)';
+          reactBtn.title = 'تفاعل 👍 — يفتح النقاش';
         }
       }
     });
   }
 
+  var bootstrapTimer = null;
   function bootstrapFeedUi() {
     loadDiscussionFeed(false).then(function (feedMap) {
+      if (!feedMap) return;
       document.querySelectorAll('.guide-discussion-toggle').forEach(function (btn) {
         refreshGuideDiscussionBadge(btn, feedMap);
       });
       enrichMcqCardsFromFeed(feedMap);
     });
+  }
+
+  /** DAWRAT/lectures inject MCQ cards after DOMContentLoaded — re-enrich then. */
+  function scheduleBootstrapFeedUi() {
+    if (bootstrapTimer) clearTimeout(bootstrapTimer);
+    bootstrapTimer = setTimeout(function () {
+      bootstrapTimer = null;
+      if (!document.querySelector('.mcq-card')) return;
+      bootstrapFeedUi();
+    }, 250);
   }
 
   document.addEventListener('click', function (e) {
@@ -1457,11 +1558,38 @@
   });
 
   if (document.readyState === 'loading') {
-    document.addEventListener('DOMContentLoaded', bootstrapFeedUi);
+    document.addEventListener('DOMContentLoaded', scheduleBootstrapFeedUi);
   } else {
-    bootstrapFeedUi();
+    scheduleBootstrapFeedUi();
   }
+
+  window.addEventListener('hashchange', scheduleBootstrapFeedUi);
+
+  // Exams/lectures inject .mcq-card after first paint — watch #content (or body).
+  try {
+    var observeRoot = document.getElementById('content') || document.body;
+    if (observeRoot && typeof MutationObserver !== 'undefined') {
+      var mo = new MutationObserver(function (mutations) {
+        for (var i = 0; i < mutations.length; i++) {
+          var nodes = mutations[i].addedNodes;
+          for (var j = 0; j < nodes.length; j++) {
+            var n = nodes[j];
+            if (n.nodeType !== 1) continue;
+            if (
+              (n.classList && n.classList.contains('mcq-card')) ||
+              (n.querySelector && n.querySelector('.mcq-card'))
+            ) {
+              scheduleBootstrapFeedUi();
+              return;
+            }
+          }
+        }
+      });
+      mo.observe(observeRoot, { childList: true, subtree: true });
+    }
+  } catch (e) { /* ignore */ }
 
   window.mountGiscusThread = mountGiscusThread;
   window.setGiscusTerm = setGiscusTerm;
+  window.refreshDiscussionCardBadges = scheduleBootstrapFeedUi;
 })();
