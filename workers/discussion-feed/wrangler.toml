@@ -1,0 +1,17 @@
+# Live read-only discussion feed for نقاش عام (Giscus stays write-only).
+#
+# Deploy:
+#   npx wrangler deploy -c workers/discussion-feed/wrangler.toml
+# Secret (GitHub PAT with public_repo / discussions read):
+#   npx wrangler secret put GITHUB_TOKEN -c workers/discussion-feed/wrangler.toml
+#
+# Then paste the printed workers.dev URL into
+# site-shell/js/comments-widget.js → DISCUSSION_FEED_API
+
+name = "homs-uni-discussion-feed"
+main = "src/index.js"
+compatibility_date = "2024-11-01"
+
+[vars]
+GISCUS_REPO = "homs-uni/lecture-site-engine"
+GISCUS_CATEGORY_ID = "DIC_kwDOTL05VM4DCod2"
