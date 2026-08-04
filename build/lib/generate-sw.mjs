@@ -157,6 +157,11 @@ self.addEventListener('fetch', (event) => {
     return;
   }
 
+  if (url.pathname.endsWith('/data/discussion-feed.json')) {
+    event.respondWith(networkFirst(request, SHELL_CACHE));
+    return;
+  }
+
   if (isLectureJson(url)) {
     event.respondWith(networkFirst(request, LECTURES_CACHE));
     return;

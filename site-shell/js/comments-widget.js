@@ -419,12 +419,24 @@
     return baseTerm ? baseTerm + '/correction' : baseTerm;
   }
 
-  function escText(s) {
-    return String(s || '')
-      .replace(/&/g, '&amp;')
-      .replace(/</g, '&lt;')
-      .replace(/>/g, '&gt;')
-      .replace(/"/g, '&quot;');
+  /**
+   * Resolve a discussion in the feed map. Tries the exact scoped term, then
+   * drops a redundant `-pat-…-` segment (older threads / duplicated ids).
+   */
+  function lookupDiscussion(feedMap, term) {
+    if (!feedMap || !term) return null;
+    var scoped = scopedDiscussionTerm(term);
+    if (feedMap[scoped]) return feedMap[scoped];
+    var noPat = scoped.replace(/-pat-.+?-(q\d+(?:-\d+)?(?:\/correction)?)$/u, '-$1');
+    if (noPat !== scoped && feedMap[noPat]) return feedMap[noPat];
+
+    var found = null;
+    Object.keys(feedMap).forEach(function (key) {
+      if (found) return;
+      var keyNoPat = key.replace(/-pat-.+?-(q\d+(?:-\d+)?(?:\/correction)?)$/u, '-$1');
+      if (keyNoPat === scoped || keyNoPat === noPat) found = feedMap[key];
+    });
+    return found;
   }
 
   function formatRelativeTime(iso) {
@@ -441,31 +453,56 @@
     return new Date(t).toLocaleDateString('ar');
   }
 
-  // title (scoped term) -> { title, url, comments: [{author, avatar, body, createdAt, replies:[]}] }
+  // title (scoped term) -> { title, url, comments: [...] }
   var discussionFeedCache = null;
   var discussionFeedPromise = null;
 
-  /**
-   * Load all exam-category discussions once (with comment bodies) via GitHub
-   * GraphQL. Cached for the page session. Used to render a read-only feed
-   * without embedding giscus (no expand / no comment box in the overview).
-   */
-  function loadDiscussionFeed() {
-    if (discussionFeedCache) return Promise.resolve(discussionFeedCache);
-    if (discussionFeedPromise) return discussionFeedPromise;
-
-    var cacheKey = 'giscus-feed-v1:' + GISCUS_REPO + ':' + GISCUS_CATEGORY_ID;
+  function discussionFeedJsonUrl() {
+    var base = document.querySelector('base[href]');
     try {
-      var raw = sessionStorage.getItem(cacheKey);
-      if (raw) {
-        var parsed = JSON.parse(raw);
-        if (parsed && parsed.at && Date.now() - parsed.at < 10 * 60 * 1000 && parsed.map) {
-          discussionFeedCache = parsed.map;
-          return Promise.resolve(discussionFeedCache);
-        }
-      }
-    } catch (e) { /* ignore */ }
+      return new URL('data/discussion-feed.json', base ? base.href : location.href).href;
+    } catch (e) {
+      return 'data/discussion-feed.json';
+    }
+  }
 
+  function normalizeFeedMap(payload) {
+    if (!payload) return null;
+    if (payload.discussions && typeof payload.discussions === 'object') return payload.discussions;
+    if (typeof payload === 'object' && !payload.generatedAt) return payload;
+    return null;
+  }
+
+  function rememberFeed(map) {
+    discussionFeedCache = map;
+    try {
+      sessionStorage.setItem(
+        'giscus-feed-v2:' + GISCUS_REPO,
+        JSON.stringify({ at: Date.now(), map: map }),
+      );
+    } catch (e) { /* quota */ }
+    return map;
+  }
+
+  /** Same-origin JSON written at build/sync (avoids browser GitHub rate limits). */
+  function loadStaticDiscussionFeed() {
+    return fetch(discussionFeedJsonUrl(), { cache: 'no-cache' })
+      .then(function (res) {
+        if (!res.ok) throw new Error('feed json ' + res.status);
+        return res.json();
+      })
+      .then(function (payload) {
+        var map = normalizeFeedMap(payload);
+        if (!map || !Object.keys(map).length) throw new Error('empty feed json');
+        return rememberFeed(map);
+      });
+  }
+
+  /**
+   * Live GraphQL fallback (often rate-limited unauthenticated). Prefer the
+   * static feed from sync-shell / deploy.
+   */
+  function loadLiveDiscussionFeed() {
     var query =
       'query($owner:String!,$name:String!,$categoryId:ID!,$cursor:String){' +
       'repository(owner:$owner,name:$name){' +
@@ -532,17 +569,35 @@
         if (conn.pageInfo && conn.pageInfo.hasNextPage) {
           return page(conn.pageInfo.endCursor);
         }
-        return map;
+        return rememberFeed(map);
       });
     }
 
-    discussionFeedPromise = page(null)
-      .then(function (m) {
-        discussionFeedCache = m;
-        try {
-          sessionStorage.setItem(cacheKey, JSON.stringify({ at: Date.now(), map: m }));
-        } catch (e) { /* quota */ }
-        return m;
+    return page(null);
+  }
+
+  /**
+   * Load comment bodies for the read-only general discussion panel.
+   * No giscus expand / no comment box here — writing stays on the question modal.
+   */
+  function loadDiscussionFeed() {
+    if (discussionFeedCache) return Promise.resolve(discussionFeedCache);
+    if (discussionFeedPromise) return discussionFeedPromise;
+
+    try {
+      var raw = sessionStorage.getItem('giscus-feed-v2:' + GISCUS_REPO);
+      if (raw) {
+        var parsed = JSON.parse(raw);
+        if (parsed && parsed.at && Date.now() - parsed.at < 10 * 60 * 1000 && parsed.map) {
+          discussionFeedCache = parsed.map;
+          return Promise.resolve(discussionFeedCache);
+        }
+      }
+    } catch (e) { /* ignore */ }
+
+    discussionFeedPromise = loadStaticDiscussionFeed()
+      .catch(function () {
+        return loadLiveDiscussionFeed();
       })
       .catch(function (err) {
         discussionFeedPromise = null;
@@ -554,7 +609,10 @@
   }
 
   function openQuestionCommentByTerm(baseTerm) {
-    var popup = document.querySelector('.mcq-comment-popup[data-discussion-term="' + CSS.escape(baseTerm) + '"]');
+    var popup = null;
+    document.querySelectorAll('.mcq-comment-popup[data-discussion-term]').forEach(function (el) {
+      if (el.getAttribute('data-discussion-term') === baseTerm) popup = el;
+    });
     if (!popup) return;
     var card = popup.closest('article');
     if (card) card.scrollIntoView({ behavior: 'smooth', block: 'center' });
@@ -563,8 +621,10 @@
 
   function renderCommentBubble(c, isReply) {
     var wrap = document.createElement('div');
-    wrap.className = (isReply ? 'mr-xl ' : '') +
-      'mb-sm p-md rounded-xl bg-surface-container/80 border border-outline-variant/60';
+    wrap.className = (isReply
+      ? 'mr-lg border-r-2 border-primary/30 pr-md '
+      : '') +
+      'mb-sm px-md py-sm rounded-2xl bg-surface-container-high/90 dark:bg-surface-container/50';
 
     var meta = document.createElement('div');
     meta.className = 'flex items-center gap-sm mb-xs';
@@ -573,14 +633,15 @@
       var img = document.createElement('img');
       img.src = c.avatar;
       img.alt = '';
-      img.width = 22;
-      img.height = 22;
-      img.className = 'rounded-full shrink-0';
+      img.width = 24;
+      img.height = 24;
+      img.loading = 'lazy';
+      img.className = 'rounded-full shrink-0 ring-1 ring-outline-variant';
       meta.appendChild(img);
     }
 
     var who = document.createElement('span');
-    who.className = 'font-label-md text-on-surface';
+    who.className = 'font-label-md text-on-surface font-medium';
     who.textContent = '@' + c.author;
     meta.appendChild(who);
 
@@ -600,16 +661,15 @@
 
   function buildQuestionFeedCard(item, kind, discussion) {
     var term = kind === 'correction' ? correctionTermFor(item.term) : item.term;
-    var scoped = scopedDiscussionTerm(term);
     var section = document.createElement('article');
-    section.className = 'guide-discussion-q mb-md p-md rounded-2xl border border-outline-variant bg-surface-container-lowest dark:bg-transparent';
+    section.className = 'guide-discussion-q mb-md p-md rounded-2xl border border-outline-variant/80 bg-surface-container-lowest/80 dark:bg-transparent';
     section.dataset.questionNum = String(item.num);
     section.dataset.discussionTerm = term;
     section.dataset.discussionSource = item.source || '';
     section.dataset.discussionKind = kind;
 
     var head = document.createElement('div');
-    head.className = 'flex items-center gap-sm flex-wrap mb-md';
+    head.className = 'flex items-center gap-sm flex-wrap mb-sm';
 
     var title = document.createElement('h4');
     title.className = 'font-headline-sm text-headline-sm text-on-surface m-0';
@@ -640,7 +700,7 @@
     section.appendChild(head);
 
     var feed = document.createElement('div');
-    feed.className = 'guide-discussion-q-feed space-y-sm mb-md';
+    feed.className = 'guide-discussion-q-feed mb-sm';
 
     if (discussion && discussion.comments && discussion.comments.length) {
       discussion.comments.forEach(function (c) {
@@ -658,7 +718,7 @@
     section.appendChild(feed);
 
     var actions = document.createElement('div');
-    actions.className = 'flex items-center gap-sm flex-wrap';
+    actions.className = 'flex items-center gap-sm flex-wrap pt-xs';
 
     var jump = document.createElement('a');
     jump.href = '#' + encodeURIComponent(item.term);
@@ -700,8 +760,8 @@
     if (feedMap) {
       var total = 0;
       questions.forEach(function (q) {
-        var g = feedMap[scopedDiscussionTerm(q.term)];
-        var c = feedMap[scopedDiscussionTerm(correctionTermFor(q.term))];
+        var g = lookupDiscussion(feedMap, q.term);
+        var c = lookupDiscussion(feedMap, correctionTermFor(q.term));
         total += (g && g.totalCount) || 0;
         total += (c && c.totalCount) || 0;
       });
@@ -731,8 +791,7 @@
     var matched = [];
     questions.forEach(function (q) {
       var term = kind === 'correction' ? correctionTermFor(q.term) : q.term;
-      var scoped = scopedDiscussionTerm(term);
-      var discussion = feedMap && feedMap[scoped];
+      var discussion = lookupDiscussion(feedMap, term);
       var count = discussion ? discussion.totalCount : 0;
       if (count > 0) {
         matched.push({ q: q, discussion: discussion, count: count });
@@ -864,7 +923,7 @@
     panel.appendChild(statusEl);
 
     var scroller = document.createElement('div');
-    scroller.className = 'guide-discussion-scroller max-h-[70vh] overflow-y-auto overscroll-contain pr-xs rounded-xl';
+    scroller.className = 'guide-discussion-scroller max-h-[min(70vh,36rem)] overflow-y-auto overscroll-contain pe-sm rounded-xl border border-outline-variant/50 bg-surface/40 px-sm py-sm';
     panel.appendChild(scroller);
 
     var listEl = document.createElement('div');
@@ -881,8 +940,8 @@
         b.classList.toggle('border-transparent', on);
       });
       intro.textContent = id === 'corrections'
-        ? 'تصحيحات مقترحة فقط — مرتّبة حسب النمط ثم رقم السؤال. للقراءة السريعة (التعليق من صفحة السؤال):'
-        : 'تعليقات الأسئلة — مرتّبة حسب النمط ثم رقم السؤال. اسحب للأسفل للقراءة؛ للكتابة اضغط "أضف تعليقاً":';
+        ? 'تصحيحات مقترحة فقط — مرتّبة حسب النمط ثم رقم السؤال. للقراءة فقط؛ الكتابة من صفحة السؤال.'
+        : 'تعليقات الأسئلة مرتّبة حسب النمط ثم الرقم — اسحب داخل الصندوق للقراءة. للكتابة: "أضف تعليقاً".';
     }
 
     function showTab(id) {

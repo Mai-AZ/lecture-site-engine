@@ -10,6 +10,7 @@ import { patchSubjectIndexHtml, patchSubjectStoragePrefix } from './patch-subjec
 import { patchAnalyticsInDir } from './patch-analytics.mjs';
 import { patchBuildMeta } from './patch-build-meta.mjs';
 import { generateServiceWorker } from './generate-sw.mjs';
+import { writeDiscussionFeed } from './fetch-discussion-feed.mjs';
 
 /** Fresh cache version after shell copy so SW does not serve stale assets. */
 async function bumpShellCache(outDir) {
@@ -81,6 +82,9 @@ async function syncOne(subjectRel) {
 }
 
 export async function syncSiteShellToAllDist() {
+  // Refresh read-only discussion bodies before copying shell assets.
+  await writeDiscussionFeed();
+
   const subjects = await listBuiltSubjects();
   if (!subjects.length) {
     console.log('No built subjects in dist/ — skip site-shell sync.');

@@ -36,6 +36,8 @@ export function mcqPatternSlug(source) {
 /**
  * DOM id for an MCQ card. Identity is pattern (نمط / year sitting) + question
  * number, plus the lecture section when present so deep-links stay unique.
+ * When section text and المصدر/نمط are the same, only `sec-…` is kept (no
+ * redundant `pat-…`) so giscus terms stay stable.
  */
 export function mcqCardDomId(partId, qOrNum, subNum) {
   const num = typeof qOrNum === 'object' && qOrNum != null ? qOrNum.num : qOrNum;
@@ -48,8 +50,14 @@ export function mcqCardDomId(partId, qOrNum, subNum) {
       ? qOrNum.source
       : '';
   const sec = section ? `${mcqSectionAnchor(section)}-` : '';
+  const sectionSlug = section ? slugify(section) : '';
   const pat = mcqPatternSlug(source);
-  const patPart = pat ? `pat-${pat}-` : '';
+  const patRedundant =
+    !pat ||
+    pat === sectionSlug ||
+    pat === sectionSlug.slice(0, 48) ||
+    (sectionSlug && sectionSlug.startsWith(pat));
+  const patPart = pat && !patRedundant ? `pat-${pat}-` : '';
   const base = `${partId}-${sec}${patPart}q${num}`;
   return subNum != null && subNum !== '' ? `${base}-${subNum}` : base;
 }
