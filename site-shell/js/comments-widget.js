@@ -146,30 +146,30 @@
     iframe.title = 'Comments';
     iframe.scrolling = 'no';
     iframe.allow = 'clipboard-write';
-    // Keep the iframe visible while loading — opacity:0 + a flaky settle
-    // signal was making empty/new threads look like a hard failure.
-    iframe.style.cssText = 'width:100%;border:0;min-height:12rem;color-scheme:none';
+    // Tall enough to fit reactions + the write box before the first
+    // resizeHeight ping arrives. giscus uses scrolling=no, so a short
+    // iframe literally clips the comment composer.
+    iframe.style.cssText = 'width:100%;border:0;min-height:24rem;color-scheme:none';
     iframe.src = buildGiscusSrc(term, { reactionsEnabled: '1', emitMetadata: '0' });
 
     return new Promise(function (resolve) {
       var settled = false;
 
-      function finish(ok) {
+      function markReady(ok) {
         if (settled) return;
         settled = true;
-        clearTimeout(timeoutId);
-        window.removeEventListener('message', onMessage);
+        clearTimeout(readyTimeoutId);
         if (ok) {
           if (loading.parentNode) loading.remove();
           container.dataset.mounted = '1';
           container.dataset.giscusTerm = scoped;
           resolve(true);
         } else if (!container.querySelector('iframe.giscus-frame')) {
+          window.removeEventListener('message', onMessage);
           container.innerHTML = '';
           container.appendChild(buildLoadErrorEl(container, term));
           resolve(false);
         } else {
-          // Iframe is present — keep it even if settle signals were late.
           if (loading.parentNode) loading.remove();
           container.dataset.mounted = '1';
           container.dataset.giscusTerm = scoped;
@@ -177,14 +177,17 @@
         }
       }
 
-      var timeoutId = setTimeout(function () { finish(true); }, 12000);
+      var readyTimeoutId = setTimeout(function () { markReady(true); }, 12000);
 
       iframe.addEventListener('load', function () {
-        // Widget shell loaded; show it even before the first resize ping.
-        finish(true);
+        markReady(true);
       });
-      iframe.addEventListener('error', function () { finish(false); });
+      iframe.addEventListener('error', function () { markReady(false); });
 
+      // IMPORTANT: keep this listener for the life of the iframe.
+      // giscus sends resizeHeight *after* the iframe load event; if we
+      // detach here on settle, the frame stays at min-height and the
+      // comment box is clipped out of view (scrolling is disabled).
       function onMessage(e) {
         if (e.origin !== GISCUS_ORIGIN) return;
         if (e.source !== iframe.contentWindow) return;
@@ -193,12 +196,12 @@
 
         if (data.giscus.resizeHeight) {
           iframe.style.height = data.giscus.resizeHeight + 'px';
-          finish(true);
+          markReady(true);
         }
         if (data.giscus.error) {
           // "Discussion not found" is normal for a new question thread —
           // giscus still renders the composer so students can start one.
-          finish(true);
+          markReady(true);
         }
       }
       window.addEventListener('message', onMessage);
