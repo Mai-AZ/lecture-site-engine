@@ -127,7 +127,7 @@
    * Each unique term gets its own Discussion thread. Safe to call for many
    * containers on the same page (direct widget iframe, not client.js).
    *
-   * Returns a Promise that resolves once the iframe has resized (or failed).
+   * Returns a Promise that resolves once the iframe has loaded (or failed).
    */
   function mountGiscusThread(container, term) {
     if (!container || !term) return Promise.resolve(false);
@@ -146,7 +146,9 @@
     iframe.title = 'Comments';
     iframe.scrolling = 'no';
     iframe.allow = 'clipboard-write';
-    iframe.style.cssText = 'width:100%;border:0;min-height:12rem;opacity:0;color-scheme:none';
+    // Keep the iframe visible while loading — opacity:0 + a flaky settle
+    // signal was making empty/new threads look like a hard failure.
+    iframe.style.cssText = 'width:100%;border:0;min-height:12rem;color-scheme:none';
     iframe.src = buildGiscusSrc(term, { reactionsEnabled: '1', emitMetadata: '0' });
 
     return new Promise(function (resolve) {
@@ -158,20 +160,29 @@
         clearTimeout(timeoutId);
         window.removeEventListener('message', onMessage);
         if (ok) {
-          loading.remove();
-          iframe.style.opacity = '1';
+          if (loading.parentNode) loading.remove();
           container.dataset.mounted = '1';
           container.dataset.giscusTerm = scoped;
           resolve(true);
-        } else {
+        } else if (!container.querySelector('iframe.giscus-frame')) {
           container.innerHTML = '';
           container.appendChild(buildLoadErrorEl(container, term));
           resolve(false);
+        } else {
+          // Iframe is present — keep it even if settle signals were late.
+          if (loading.parentNode) loading.remove();
+          container.dataset.mounted = '1';
+          container.dataset.giscusTerm = scoped;
+          resolve(true);
         }
       }
 
-      var timeoutId = setTimeout(function () { finish(false); }, 10000);
+      var timeoutId = setTimeout(function () { finish(true); }, 12000);
 
+      iframe.addEventListener('load', function () {
+        // Widget shell loaded; show it even before the first resize ping.
+        finish(true);
+      });
       iframe.addEventListener('error', function () { finish(false); });
 
       function onMessage(e) {
@@ -184,15 +195,15 @@
           iframe.style.height = data.giscus.resizeHeight + 'px';
           finish(true);
         }
-        if (data.giscus.error && String(data.giscus.error).indexOf('Discussion not found') !== -1) {
-          // Empty thread is still a valid embed — giscus will offer "start discussion".
+        if (data.giscus.error) {
+          // "Discussion not found" is normal for a new question thread —
+          // giscus still renders the composer so students can start one.
           finish(true);
         }
       }
       window.addEventListener('message', onMessage);
 
       container.appendChild(iframe);
-      // Keep theme broadcast working; nothing else should look for `.giscus`.
       demoteGiscusContainer(container);
     });
   }
@@ -371,6 +382,7 @@
   /**
    * Probe every question on this lecture and update the guide badge with the
    * total comment count across questions that already have a thread.
+   * Kept gentle (concurrency 2) — DAWRAT banks often have 100+ questions.
    */
   function refreshGuideDiscussionBadge(btn) {
     var lecture = btn.closest('.lecture') || document;
@@ -379,7 +391,7 @@
       updateGuideDiscussionBadge(btn, 0);
       return Promise.resolve(0);
     }
-    return runPool(questions, 6, function (q) {
+    return runPool(questions, 2, function (q) {
       return probeDiscussionCount(q.term);
     }).then(function (counts) {
       var total = 0;
@@ -389,101 +401,101 @@
     });
   }
 
+  function updateQuestionSectionCount(section, count) {
+    var badge = section.querySelector('.guide-discussion-q-count');
+    if (!badge) return;
+    if (count > 0) {
+      badge.textContent = count + (count === 1 ? ' تعليق' : ' تعليقات');
+      badge.classList.remove('hidden');
+    } else {
+      badge.textContent = '';
+      badge.classList.add('hidden');
+    }
+  }
+
   /**
-   * General DAWRAT discussion panel: list only questions that already have
-   * comments, ordered by question number (not by comment time), each with its
-   * own thread underneath.
+   * General DAWRAT discussion panel: every question gets a slot, ordered by
+   * question number. Threads mount on demand (expand) so we don't open
+   * hundreds of giscus iframes at once.
    */
   function mountGuideDiscussionByQuestion(panel, btn) {
     var lecture = (btn && btn.closest('.lecture')) || panel.closest('.lecture') || document;
     var questions = collectQuestionThreads(lecture);
 
     panel.innerHTML = '';
-    var status = document.createElement('div');
-    status.className = 'p-md text-center font-label-md text-on-surface-variant';
-    status.textContent = 'جارِ جمع نقاشات الأسئلة وترتيبها حسب رقم السؤال…';
-    panel.appendChild(status);
     panel.dataset.mounted = '1';
 
     if (!questions.length) {
-      status.textContent = 'ما في أسئلة على هذه الصفحة لعرض نقاشاتها.';
+      var empty = document.createElement('div');
+      empty.className = 'p-md text-center font-label-md text-on-surface-variant';
+      empty.textContent = 'ما في أسئلة على هذه الصفحة لعرض نقاشاتها.';
+      panel.appendChild(empty);
       return;
     }
 
-    runPool(questions, 6, function (q) {
-      return probeDiscussionCount(q.term).then(function (count) {
-        return { term: q.term, num: q.num, count: count };
-      });
-    }).then(function (results) {
-      var withTalk = results.filter(function (r) { return r && r.count > 0; });
-      // Keep question-number order from the original sorted list.
-      withTalk.sort(function (a, b) {
-        if (a.num !== b.num) return a.num - b.num;
-        return a.term < b.term ? -1 : a.term > b.term ? 1 : 0;
-      });
+    var intro = document.createElement('p');
+    intro.className = 'mb-lg font-label-md text-on-surface-variant';
+    intro.textContent = 'كل سؤال له نقاش مستقل، مرتّب حسب رقم السؤال. اضغط "عرض النقاش" لفتحه:';
+    panel.appendChild(intro);
 
-      var total = withTalk.reduce(function (sum, r) { return sum + r.count; }, 0);
-      updateGuideDiscussionBadge(btn, total);
+    questions.forEach(function (item) {
+      var section = document.createElement('section');
+      section.className = 'guide-discussion-q mb-md p-md rounded-xl border border-outline-variant bg-surface-container-lowest dark:bg-transparent';
+      section.dataset.questionNum = String(item.num);
+      section.dataset.discussionTerm = item.term;
 
-      panel.innerHTML = '';
-      if (!withTalk.length) {
-        var empty = document.createElement('div');
-        empty.className = 'p-md text-center font-label-md text-on-surface-variant';
-        empty.textContent = 'ما في نقاشات على الأسئلة بعد — افتح أي سؤال من أيقونة النقاش وابدأ التعليق.';
-        panel.appendChild(empty);
-        return;
-      }
+      var head = document.createElement('div');
+      head.className = 'flex items-center gap-sm flex-wrap';
 
-      var intro = document.createElement('p');
-      intro.className = 'mb-lg font-label-md text-on-surface-variant';
-      intro.textContent = 'النقاشات مرتّبة حسب رقم السؤال (مو حسب وقت التعليق):';
-      panel.appendChild(intro);
+      var title = document.createElement('h4');
+      title.className = 'font-headline-sm text-headline-sm text-on-surface m-0';
+      title.textContent = 'س' + item.num;
+      head.appendChild(title);
 
-      withTalk.forEach(function (item) {
-        var section = document.createElement('section');
-        section.className = 'guide-discussion-q mb-xl p-md rounded-xl border border-outline-variant bg-surface-container-lowest dark:bg-transparent';
-        section.dataset.questionNum = String(item.num);
-        section.dataset.discussionTerm = item.term;
+      var countEl = document.createElement('span');
+      countEl.className = 'guide-discussion-q-count hidden px-sm py-2xs bg-secondary-container text-on-secondary-container rounded-full font-label-sm';
+      head.appendChild(countEl);
 
-        var head = document.createElement('div');
-        head.className = 'flex items-center gap-sm mb-md flex-wrap';
+      var jump = document.createElement('a');
+      jump.href = '#' + encodeURIComponent(item.term);
+      jump.className = 'font-label-sm text-primary underline';
+      jump.textContent = 'اذهب للسؤال';
+      head.appendChild(jump);
 
-        var title = document.createElement('h4');
-        title.className = 'font-headline-sm text-headline-sm text-on-surface m-0';
-        title.textContent = 'س' + item.num;
-        head.appendChild(title);
+      var toggle = document.createElement('button');
+      toggle.type = 'button';
+      toggle.className = 'guide-discussion-q-toggle mr-auto px-md py-sm rounded-lg border border-outline-variant hover:bg-surface-variant transition-all font-label-md';
+      toggle.textContent = 'عرض النقاش';
+      head.appendChild(toggle);
 
-        var countEl = document.createElement('span');
-        countEl.className = 'px-sm py-2xs bg-secondary-container text-on-secondary-container rounded-full font-label-sm';
-        countEl.textContent = item.count + (item.count === 1 ? ' تعليق' : ' تعليقات');
-        head.appendChild(countEl);
+      section.appendChild(head);
 
-        var jump = document.createElement('a');
-        jump.href = '#' + encodeURIComponent(item.term);
-        jump.className = 'mr-auto font-label-sm text-primary underline';
-        jump.textContent = 'اذهب للسؤال';
-        head.appendChild(jump);
+      var thread = document.createElement('div');
+      thread.className = 'guide-discussion-q-thread hidden mt-md';
+      section.appendChild(thread);
+      panel.appendChild(section);
 
-        section.appendChild(head);
-
-        var thread = document.createElement('div');
-        thread.className = 'guide-discussion-q-thread';
-        section.appendChild(thread);
-        panel.appendChild(section);
-
-        mountGiscusThread(thread, item.term);
+      toggle.addEventListener('click', function () {
+        var open = !thread.classList.contains('hidden');
+        if (open) {
+          thread.classList.add('hidden');
+          toggle.textContent = 'عرض النقاش';
+          return;
+        }
+        thread.classList.remove('hidden');
+        toggle.textContent = 'إخفاء النقاش';
+        if (!thread.dataset.mounted) {
+          mountGiscusThread(thread, item.term);
+        }
       });
     });
   }
 
   function scanForUncountedToggles() {
-    document.querySelectorAll('.guide-discussion-toggle').forEach(function (btn) {
-      // Small delay so this doesn't race a user who opens the panel immediately.
-      setTimeout(function () { refreshGuideDiscussionBadge(btn); }, 1200);
-    });
+    // Badge is filled when the user opens the panel / expands threads —
+    // probing every question on hashchange floods the page with iframes.
   }
   window.addEventListener('hashchange', scanForUncountedToggles);
-  scanForUncountedToggles();
 
   function buildCorrectionText(popup) {
     var qNum = popup.dataset.questionNum || '';
