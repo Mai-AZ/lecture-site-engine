@@ -739,6 +739,18 @@
     return new Date(t).toLocaleDateString('ar');
   }
 
+  /** Side stamp for overview comments — minutes / hours only. */
+  function formatCommentAge(iso) {
+    var t = Date.parse(iso);
+    if (!Number.isFinite(t)) return '';
+    var sec = Math.max(0, Math.round((Date.now() - t) / 1000));
+    if (sec < 60) return 'الآن';
+    var min = Math.round(sec / 60);
+    if (min < 60) return min + ' د';
+    var hr = Math.max(1, Math.round(min / 60));
+    return hr + ' س';
+  }
+
   // title (scoped term) -> { title, url, comments: [...] }
   var discussionFeedCache = null;
   var discussionFeedCacheAt = 0;
@@ -1025,32 +1037,50 @@
 
     rows.forEach(function (r) {
       var row = document.createElement('div');
-      row.className = 'flex items-start gap-xs flex-wrap' + (r.isReply ? ' ps-md border-s-2 border-outline-variant/50 ms-xs' : '');
+      row.className = 'flex items-start gap-sm' + (r.isReply ? ' ps-md border-s-2 border-outline-variant/50 ms-xs' : '');
+
+      // Main stack (RTL: sits on the right). Time is a sibling so it parks on the left.
+      var main = document.createElement('div');
+      main.className = 'min-w-0 flex-1 flex flex-col gap-2xs';
+
+      var meta = document.createElement('div');
+      meta.className = 'flex items-center gap-xs flex-wrap';
 
       if (r.isReply) {
         var replyMark = document.createElement('span');
         replyMark.className = 'shrink-0 font-label-sm text-on-surface-variant';
         replyMark.textContent = r.parentAuthor ? '↩ @' + r.parentAuthor : '↩ رد';
-        row.appendChild(replyMark);
+        meta.appendChild(replyMark);
       }
 
       var who = document.createElement('span');
       who.className = 'font-label-sm text-on-surface font-bold shrink-0';
       who.textContent = '@' + r.author;
-      row.appendChild(who);
+      meta.appendChild(who);
 
       if (r.answer) {
         var chip = document.createElement('span');
         chip.className = optionLetterChipClass(r.answer, letterCounts, siteAnswer);
         chip.textContent = r.answer;
         chip.title = 'اختيار: ' + r.answer;
-        row.appendChild(chip);
+        meta.appendChild(chip);
       }
 
-      var when = formatRelativeTime(r.createdAt);
+      main.appendChild(meta);
+
+      if (r.text) {
+        var body = document.createElement('p');
+        body.className = 'font-label-sm text-on-surface-variant m-0 min-w-0 leading-snug';
+        body.textContent = truncateText(r.text, 120);
+        main.appendChild(body);
+      }
+
+      row.appendChild(main);
+
+      var when = formatCommentAge(r.createdAt);
       if (when) {
         var timeEl = document.createElement('time');
-        timeEl.className = 'shrink-0 font-label-sm text-on-surface-variant/80 tabular-nums';
+        timeEl.className = 'shrink-0 font-label-sm text-on-surface-variant tabular-nums whitespace-nowrap pt-2xs text-start';
         timeEl.dateTime = r.createdAt || '';
         timeEl.textContent = when;
         try {
@@ -1060,13 +1090,6 @@
           }
         } catch (e) { /* ignore */ }
         row.appendChild(timeEl);
-      }
-
-      if (r.text) {
-        var body = document.createElement('span');
-        body.className = 'font-label-sm text-on-surface-variant min-w-0 leading-snug';
-        body.textContent = truncateText(r.text, 120);
-        row.appendChild(body);
       }
 
       list.appendChild(row);
