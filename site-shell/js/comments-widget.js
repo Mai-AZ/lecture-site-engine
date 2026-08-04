@@ -707,17 +707,26 @@
     };
   }
 
+
   function renderCommentBubble(c, isReply) {
     var wrap = document.createElement('div');
-    wrap.className = (isReply ? 'mr-md opacity-90 ' : '') + 'mb-2xs';
+    wrap.className = (isReply ? 'mr-lg ' : '') +
+      'mb-xs px-sm py-xs rounded-xl bg-surface/60';
 
-    var line = document.createElement('p');
-    line.className = 'font-label-sm text-on-surface-variant m-0 leading-snug';
-    line.textContent = truncateText(
-      '@' + c.author + (c.body ? ': ' + c.body : ''),
-      140,
-    );
-    wrap.appendChild(line);
+    var row = document.createElement('div');
+    row.className = 'flex items-start gap-xs flex-wrap';
+
+    var who = document.createElement('span');
+    who.className = 'font-label-sm text-on-surface font-bold shrink-0';
+    who.textContent = '@' + c.author;
+    row.appendChild(who);
+
+    var body = document.createElement('span');
+    body.className = 'font-label-sm text-on-surface-variant min-w-0 leading-snug';
+    body.textContent = truncateText(c.body || '', 140);
+    row.appendChild(body);
+
+    wrap.appendChild(row);
     return wrap;
   }
 
@@ -737,9 +746,68 @@
     return max;
   }
 
+  /** Match option-letter chip colors used in the preview list. */
+  function optionLetterChipClass(letter, letterCounts, siteAnswer) {
+    var key = String(letter || '').toUpperCase();
+    var counts = letterCounts || {};
+    var n = counts[key] || 0;
+    var top = maxLetterCount(counts);
+    var isLead = n > 0 && n === top;
+    var isSite = siteAnswer && key === siteAnswer;
+    return 'shrink-0 inline-flex items-center justify-center w-5 h-5 rounded-md font-label-sm ' +
+      (isLead
+        ? 'bg-primary text-on-primary'
+        : isSite
+          ? 'bg-secondary-container text-on-secondary-container'
+          : 'bg-outline-variant/60 text-on-surface-variant');
+  }
+
+  function appendCommentsSection(parent, rows, letterCounts, siteAnswer) {
+    if (!rows || !rows.length) return;
+
+    var box = document.createElement('div');
+    box.className = 'rounded-xl bg-surface-container/70 border border-outline-variant/50 px-sm py-sm mb-md';
+
+    var heading = document.createElement('p');
+    heading.className = 'font-label-sm text-on-surface-variant m-0 mb-sm';
+    heading.textContent = 'تعليقات';
+    box.appendChild(heading);
+
+    var list = document.createElement('div');
+    list.className = 'flex flex-col gap-xs';
+
+    rows.forEach(function (r) {
+      var row = document.createElement('div');
+      row.className = 'flex items-start gap-xs flex-wrap';
+
+      if (r.answer) {
+        var chip = document.createElement('span');
+        chip.className = optionLetterChipClass(r.answer, letterCounts, siteAnswer);
+        chip.textContent = r.answer;
+        row.appendChild(chip);
+      }
+
+      var who = document.createElement('span');
+      who.className = 'font-label-sm text-on-surface font-bold shrink-0';
+      who.textContent = '@' + r.author;
+      row.appendChild(who);
+
+      if (r.text) {
+        var body = document.createElement('span');
+        body.className = 'font-label-sm text-on-surface-variant min-w-0 leading-snug';
+        body.textContent = truncateText(r.text, 120);
+        row.appendChild(body);
+      }
+
+      list.appendChild(row);
+    });
+
+    box.appendChild(list);
+    parent.appendChild(box);
+  }
+
   /**
-   * Minimal question preview: stem + options with ×N suggestion counts
-   * so reviewers can scan who suggested what in one glance.
+   * Themed question + options: site answer badge, numeric student vote tags.
    */
   function appendMcqPreview(section, item, letterCounts) {
     var preview = extractMcqPreview(item.term);
@@ -750,7 +818,7 @@
 
     if (preview.stem) {
       var stem = document.createElement('p');
-      stem.className = 'font-body-md text-on-surface m-0 mb-sm leading-snug';
+      stem.className = 'font-label-md text-on-surface m-0 mb-sm leading-snug';
       stem.textContent = preview.stem;
       section.appendChild(stem);
     }
@@ -758,36 +826,54 @@
     if (!(preview.options && preview.options.length)) return;
 
     var list = document.createElement('ul');
-    list.className = 'm-0 p-0 list-none flex flex-col gap-xs mb-sm';
+    list.className = 'm-0 p-0 list-none flex flex-col gap-2xs mb-sm';
 
     preview.options.forEach(function (opt) {
       var n = counts[opt.key] || 0;
       var isLead = n > 0 && n === top;
+      var isSite = preview.siteAnswer && opt.key === preview.siteAnswer;
+
       var li = document.createElement('li');
-      li.className = 'm-0 flex items-baseline gap-sm leading-snug';
+      li.className = 'm-0 flex items-center gap-xs flex-wrap px-sm py-xs rounded-lg border ' +
+        (isLead
+          ? 'border-primary/35 bg-primary/5'
+          : isSite
+            ? 'border-secondary-container bg-secondary-container/25'
+            : 'border-outline-variant/50 bg-surface-container/40');
 
       var keySpan = document.createElement('span');
-      keySpan.className = 'shrink-0 font-label-sm w-4 ' +
-        (isLead ? 'text-primary' : 'text-on-surface-variant');
+      keySpan.className = optionLetterChipClass(opt.key, counts, preview.siteAnswer)
+        .replace('w-5 h-5', 'w-6 h-6');
       keySpan.textContent = opt.key;
       li.appendChild(keySpan);
 
       var txt = document.createElement('span');
-      txt.className = 'min-w-0 flex-1 font-label-sm ' +
-        (isLead ? 'text-on-surface' : 'text-on-surface-variant');
+      txt.className = 'min-w-0 flex-1 font-label-sm text-on-surface leading-snug';
       txt.textContent = opt.text;
       li.appendChild(txt);
 
-      if (n > 0) {
-        var badge = document.createElement('span');
-        badge.className = 'shrink-0 font-label-sm tabular-nums ' +
-          (isLead ? 'text-primary' : 'text-on-surface-variant');
-        badge.style.fontSize = '0.75em';
-        badge.textContent = '×' + n;
-        badge.title = n === 1 ? 'اقتراح طالب واحد' : n + ' اقتراحات طلاب';
-        li.appendChild(badge);
+      var tags = document.createElement('span');
+      tags.className = 'shrink-0 inline-flex items-center gap-xs flex-wrap';
+
+      if (isSite) {
+        var siteTag = document.createElement('span');
+        siteTag.className = 'inline-flex items-center px-sm py-2xs rounded-full bg-secondary-container text-on-secondary-container font-label-sm';
+        siteTag.textContent = 'جواب الموقع';
+        tags.appendChild(siteTag);
       }
 
+      if (n > 0) {
+        var voteTag = document.createElement('span');
+        voteTag.className = 'inline-flex items-center px-sm py-2xs rounded-full font-label-sm tabular-nums ' +
+          (isLead
+            ? 'bg-primary text-on-primary'
+            : 'bg-tertiary-container text-on-tertiary-container');
+        voteTag.textContent = '×' + n;
+        voteTag.title = 'اقتراح طلاب: ' + opt.key + ' ×' + n;
+        tags.appendChild(voteTag);
+      }
+
+      if (tags.childNodes.length) li.appendChild(tags);
       list.appendChild(li);
     });
 
@@ -797,7 +883,7 @@
   function buildQuestionFeedCard(item, kind, discussion) {
     var term = kind === 'correction' ? correctionTermFor(item.term) : item.term;
     var section = document.createElement('article');
-    section.className = 'guide-discussion-q mb-md py-md border-b border-outline-variant/40 last:border-0';
+    section.className = 'guide-discussion-q mb-md p-md rounded-2xl border border-outline-variant bg-surface-container-lowest dark:bg-surface-container/30 custom-shadow';
     section.dataset.questionNum = String(item.num);
     section.dataset.discussionTerm = term;
     section.dataset.discussionSource = item.source || '';
@@ -808,81 +894,90 @@
       : { letters: {}, reasons: [] };
 
     var count = (discussion && discussion.totalCount) || item.count || 0;
+    var preview = extractMcqPreview(item.term);
+    var siteAnswer = preview && preview.siteAnswer ? preview.siteAnswer : '';
+    var letterCounts = kind === 'correction' ? summary.letters : {};
 
     var head = document.createElement('div');
-    head.className = 'flex items-baseline gap-sm flex-wrap mb-sm';
+    head.className = 'flex items-center gap-sm flex-wrap mb-sm';
 
-    var title = document.createElement('h4');
-    title.className = 'font-label-md text-on-surface m-0';
+    var title = document.createElement('span');
+    title.className = 'inline-flex items-center px-sm py-xs rounded-lg bg-secondary-container text-on-secondary-container font-code-sm text-code-sm';
     title.textContent = 'س' + item.num;
     head.appendChild(title);
 
-    if (count > 0) {
-      var countEl = document.createElement('span');
-      countEl.className = 'font-label-sm text-on-surface-variant m-0';
-      countEl.style.fontSize = '0.75em';
-      countEl.textContent = count === 1 ? 'تعليق واحد' : count + ' تعليقات';
-      head.appendChild(countEl);
-    }
-
     if (kind === 'correction') {
       var peer = document.createElement('span');
-      peer.className = 'font-label-sm text-on-surface-variant mr-auto m-0';
-      peer.style.fontSize = '0.75em';
+      peer.className = 'inline-flex items-center px-sm py-2xs rounded-full bg-tertiary-container text-on-tertiary-container font-label-sm';
       peer.textContent = 'اقتراح طلاب';
       head.appendChild(peer);
     }
 
+    if (siteAnswer) {
+      var siteHead = document.createElement('span');
+      siteHead.className = 'inline-flex items-center px-sm py-2xs rounded-full bg-secondary-container/80 text-on-secondary-container font-label-sm';
+      siteHead.textContent = 'الموقع: ' + siteAnswer;
+      head.appendChild(siteHead);
+    }
+
+    if (count > 0) {
+      var countEl = document.createElement('span');
+      countEl.className = 'inline-flex items-center px-sm py-2xs rounded-full bg-surface-container-high text-on-surface-variant font-label-sm mr-auto';
+      countEl.textContent = count === 1 ? 'تعليق واحد' : count + ' تعليقات';
+      head.appendChild(countEl);
+    }
+
     var pattern = patternLabel(item.source);
-    if (pattern && kind !== 'correction') {
+    if (pattern) {
       var patEl = document.createElement('span');
-      patEl.className = 'font-label-sm text-on-surface-variant mr-auto m-0';
-      patEl.style.fontSize = '0.75em';
-      patEl.textContent = truncateText(pattern, 32);
+      patEl.className = 'font-label-sm text-on-surface-variant';
+      patEl.textContent = truncateText(pattern, 36);
+      if (count <= 0) patEl.className += ' mr-auto';
       head.appendChild(patEl);
     }
 
     section.appendChild(head);
 
-    appendMcqPreview(
-      section,
-      item,
-      kind === 'correction' ? summary.letters : {},
-    );
+    appendMcqPreview(section, item, letterCounts);
 
-    var feed = document.createElement('div');
-    feed.className = 'guide-discussion-q-feed mb-sm';
-
+    var commentRows = [];
     if (kind === 'correction' && discussion) {
       if (summary.reasons.length) {
-        summary.reasons.slice(0, 3).forEach(function (r) {
-          var row = document.createElement('p');
-          row.className = 'font-label-sm text-on-surface-variant m-0 mb-2xs leading-snug';
-          row.textContent = truncateText(
-            '@' + r.author + (r.answer ? ' · ' + r.answer : '') +
-              (r.reason ? ': ' + r.reason : ''),
-            120,
-          );
-          feed.appendChild(row);
+        summary.reasons.slice(0, 4).forEach(function (r) {
+          commentRows.push({
+            author: r.author,
+            answer: r.answer,
+            text: r.reason,
+          });
         });
       } else if (discussion.comments && discussion.comments.length) {
-        discussion.comments.slice(0, 2).forEach(function (c) {
-          feed.appendChild(renderCommentBubble(c, false));
+        discussion.comments.slice(0, 3).forEach(function (c) {
+          var parsed = parseCorrectionBody(c.body);
+          commentRows.push({
+            author: c.author,
+            answer: parsed && parsed.answer,
+            text: (parsed && parsed.reason) || c.body,
+          });
         });
       }
     } else if (discussion && discussion.comments && discussion.comments.length) {
       discussion.comments.slice(0, 3).forEach(function (c) {
-        feed.appendChild(renderCommentBubble(c, false));
+        var parsed = parseCorrectionBody(c.body);
+        commentRows.push({
+          author: c.author,
+          answer: parsed && parsed.answer,
+          text: (parsed && parsed.reason) || c.body,
+        });
       });
     }
-    if (feed.childNodes.length) section.appendChild(feed);
+    appendCommentsSection(section, commentRows, letterCounts, siteAnswer);
 
     var actions = document.createElement('div');
-    actions.className = 'flex items-center gap-md flex-wrap';
+    actions.className = 'flex items-center gap-sm flex-wrap pt-xs border-t border-outline-variant/40';
 
     var commentBtn = document.createElement('button');
     commentBtn.type = 'button';
-    commentBtn.className = 'font-label-sm text-primary hover:opacity-80 transition-opacity bg-transparent border-0 p-0 cursor-pointer';
+    commentBtn.className = 'px-md py-sm rounded-lg bg-primary text-on-primary font-label-md hover:opacity-90 transition-opacity';
     if (kind === 'correction') {
       commentBtn.textContent = 'اقترح تصحيحاً';
       commentBtn.addEventListener('click', function () {
@@ -898,8 +993,7 @@
 
     var jump = document.createElement('a');
     jump.href = '#' + encodeURIComponent(item.term);
-    jump.className = 'font-label-sm text-on-surface-variant hover:text-primary transition-colors';
-    jump.style.fontSize = '0.75em';
+    jump.className = 'px-md py-sm rounded-lg font-label-md text-on-surface-variant hover:bg-surface-variant transition-colors';
     jump.textContent = 'السؤال';
     actions.appendChild(jump);
 
@@ -1123,13 +1217,13 @@
     }
 
     var tabs = document.createElement('div');
-    tabs.className = 'flex gap-md mb-sm flex-wrap items-baseline';
+    tabs.className = 'flex gap-sm mb-md flex-wrap';
 
     function makeTab(id, label) {
       var b = document.createElement('button');
       b.type = 'button';
       b.dataset.tab = id;
-      b.className = 'guide-discussion-tab font-label-md bg-transparent border-0 p-0 cursor-pointer text-on-surface-variant hover:text-primary transition-colors';
+      b.className = 'guide-discussion-tab px-md py-sm rounded-full border border-outline-variant font-label-md hover:bg-surface-variant transition-all';
       b.textContent = label;
       return b;
     }
@@ -1142,8 +1236,7 @@
     panel.appendChild(tabs);
 
     var intro = document.createElement('p');
-    intro.className = 'mb-sm font-label-sm text-on-surface-variant';
-    intro.style.fontSize = '0.8em';
+    intro.className = 'mb-md font-label-md text-on-surface-variant';
     panel.appendChild(intro);
 
     var statusEl = document.createElement('div');
@@ -1152,7 +1245,7 @@
     panel.appendChild(statusEl);
 
     var scroller = document.createElement('div');
-    scroller.className = 'guide-discussion-scroller max-h-[min(72vh,40rem)] overflow-y-auto overscroll-contain';
+    scroller.className = 'guide-discussion-scroller max-h-[min(72vh,42rem)] overflow-y-auto overscroll-contain pe-xs rounded-2xl border border-outline-variant/60 bg-surface-container/30 p-sm';
     panel.appendChild(scroller);
 
     var listEl = document.createElement('div');
@@ -1164,12 +1257,13 @@
     function setActiveTab(id) {
       [tabByQ, tabCorr].forEach(function (b) {
         var on = b.dataset.tab === id;
-        b.classList.toggle('text-primary', on);
-        b.classList.toggle('text-on-surface-variant', !on);
+        b.classList.toggle('bg-secondary-container', on);
+        b.classList.toggle('text-on-secondary-container', on);
+        b.classList.toggle('border-transparent', on);
       });
       intro.textContent = id === 'corrections'
-        ? 'اقتراحات الطلاب على الإجابات — العدد بجانب كل خيار.'
-        : 'نقاش الأسئلة — اسحب بسرعة.';
+        ? 'اقتراحات الطلاب بجانب كل خيار — وشارة "جواب الموقع" توضّح اختيار الدليل.'
+        : 'نقاش الأسئلة — اسحب داخل الصندوق للقراءة.';
     }
 
     function showTab(id, forceFeed) {
