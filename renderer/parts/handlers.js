@@ -104,11 +104,11 @@ function renderMcqExplain(explain) {
  * segments. ```mermaid becomes a live Mermaid diagram; other fences stay <pre>. */
 function renderQuestionStem(text) {
   if (!text.includes('```')) {
-    return `<p class="font-headline-sm text-headline-sm mb-lg">${inlineMd(text)}</p>`;
+    return `<p class="font-headline-md text-headline-md leading-snug mb-xl">${inlineMd(text)}</p>`;
   }
   return renderFencedSegments(text, {
-    plainClass: 'font-headline-sm text-headline-sm mb-md',
-    wrapClass: 'mb-lg',
+    plainClass: 'font-headline-md text-headline-md leading-snug mb-md',
+    wrapClass: 'mb-xl',
   });
 }
 
@@ -158,31 +158,31 @@ function renderMcqCard(q, cardId, { showSource = true } = {}) {
       ${showSource ? sourceTag(q.source) : ''}
       <div class="mcq-card-discuss-actions mr-auto flex items-center">
         <button type="button"
-          class="mcq-discuss-summary inline-flex items-center gap-sm font-label-sm text-on-surface-variant hover:text-primary transition-colors bg-transparent border-0 p-0 shadow-none rounded-none cursor-pointer"
+          class="mcq-discuss-summary inline-flex items-center gap-sm text-on-surface-variant hover:text-primary transition-colors bg-transparent border-0 p-0 shadow-none rounded-none cursor-pointer"
           data-comment-term="${esc(cardId)}"
           aria-label="نقاش وتصحيحات هذا السؤال"
           title="نقاش السؤال">
           <span class="inline-flex items-center gap-2xs" data-part="comments">
             ${ms('chat_bubble', false, 'text-sm leading-none')}
-            <span class="mcq-discuss-comments tabular-nums">0</span>
+            <span class="mcq-discuss-comments tabular-nums leading-none opacity-80" style="font-size:0.7em">0</span>
           </span>
           <span class="mcq-discuss-corr-wrap hidden inline-flex items-center gap-2xs" data-part="corrections">
             ${ms('build', false, 'text-sm leading-none')}
-            <span class="mcq-discuss-corr tabular-nums">0</span>
+            <span class="mcq-discuss-corr tabular-nums leading-none opacity-80" style="font-size:0.7em">0</span>
           </span>
           <span class="mcq-discuss-react-wrap hidden inline-flex items-center gap-2xs" data-part="react">
             ${ms('thumb_up', false, 'text-sm leading-none')}
-            <span class="mcq-discuss-react tabular-nums">0</span>
+            <span class="mcq-discuss-react tabular-nums leading-none opacity-80" style="font-size:0.7em">0</span>
           </span>
         </button>
       </div>
     </div>
     ${renderQuestionStem(q.question)}
-    <div class="grid grid-cols-1 md:grid-cols-2 gap-md mcq-options">`;
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-xs mcq-options">`;
 
   q.options.forEach(opt => {
-    html += `<button type="button" class="mcq-opt w-full text-right p-md border border-outline-variant rounded-lg hover:bg-surface-variant hover:border-primary transition-all font-body-md flex items-center gap-md" data-key="${opt.key}" data-correct="${q.correct}">
-      <span class="w-8 h-8 rounded-lg bg-secondary-fixed text-secondary flex items-center justify-center font-bold shrink-0">${opt.key.toUpperCase()}</span>
+    html += `<button type="button" class="mcq-opt w-full text-right py-xs px-sm border border-outline-variant/70 rounded-lg hover:bg-surface-variant hover:border-primary transition-all font-label-md flex items-center gap-sm" data-key="${opt.key}" data-correct="${q.correct}">
+      <span class="mcq-opt-key w-5 h-5 rounded-md bg-secondary-fixed text-secondary flex items-center justify-center text-xs font-bold shrink-0">${opt.key.toUpperCase()}</span>
       <span class="opt-text flex-1">${inlineMd(opt.text)}</span>
     </button>`;
   });
