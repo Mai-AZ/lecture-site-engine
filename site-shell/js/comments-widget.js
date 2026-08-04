@@ -10,6 +10,40 @@
   var GISCUS_LANG         = 'ar';
   var GISCUS_ORIGIN       = 'https://giscus.app';
 
+  /**
+   * Globally unique subject key for giscus terms. DOM ids reuse short stems
+   * like `exams-p1-q14` across every DAWRAT page, so without this prefix
+   * comments from different subjects collide in the same GitHub Discussion.
+   * Prefer `<base href="…/year-N/subject-id/">`, fall back to storagePrefix.
+   */
+  function giscusTermScope() {
+    var base = document.querySelector('base[href]');
+    if (base) {
+      try {
+        var pathname = new URL(base.href, location.origin).pathname
+          .replace(/\/+$/, '')
+          .split('/')
+          .filter(Boolean);
+        for (var i = 0; i < pathname.length - 1; i++) {
+          if (/^year-\d+$/i.test(pathname[i])) {
+            return pathname[i] + '/' + pathname[i + 1];
+          }
+        }
+        if (pathname.length) return pathname[pathname.length - 1];
+      } catch (e) { /* ignore */ }
+    }
+    return document.documentElement.getAttribute('data-storage-prefix') || 'study-guide';
+  }
+
+  /** Prefix a local card/guide term so it is unique across the whole repo. */
+  function scopedDiscussionTerm(term) {
+    if (!term) return term;
+    var scope = giscusTermScope();
+    if (!scope) return term;
+    if (term === scope || term.indexOf(scope + '/') === 0) return term;
+    return scope + '/' + term;
+  }
+
   function giscusTheme() {
     return document.documentElement.classList.contains('dark') ? 'noborder_dark' : 'noborder_light';
   }
@@ -45,8 +79,10 @@
     params.set('repoId', GISCUS_REPO_ID);
     params.set('category', GISCUS_CATEGORY);
     params.set('categoryId', GISCUS_CATEGORY_ID);
-    params.set('strict', '0');
-    params.set('term', term);
+    // Strict title match — fuzzy search was attaching wrong threads across
+    // subjects when many discussions shared similar titles (exams-p1-qN).
+    params.set('strict', '1');
+    params.set('term', scopedDiscussionTerm(term));
     return GISCUS_ORIGIN + '/' + GISCUS_LANG + '/widget?' + params.toString();
   }
 
@@ -167,14 +203,15 @@
    */
   function setGiscusTerm(container, term) {
     if (!container || !term) return;
+    var scoped = scopedDiscussionTerm(term);
     var iframe = container.querySelector('iframe.giscus-frame');
     if (!iframe) {
       mountGiscusThread(container, term);
       return;
     }
-    if (container.dataset.giscusTerm === term) return;
-    container.dataset.giscusTerm = term;
-    iframe.contentWindow.postMessage({ giscus: { setConfig: { term: term } } }, GISCUS_ORIGIN);
+    if (container.dataset.giscusTerm === scoped) return;
+    container.dataset.giscusTerm = scoped;
+    iframe.contentWindow.postMessage({ giscus: { setConfig: { term: scoped } } }, GISCUS_ORIGIN);
   }
 
   function broadcastThemeToAll() {
