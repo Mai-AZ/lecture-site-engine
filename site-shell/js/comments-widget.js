@@ -90,15 +90,29 @@
       (why ? 'السبب: ' + why : '');
   }
 
+  function openQuestionModal(popup) {
+    popup.classList.remove('hidden');
+    popup.style.display = 'flex';
+    document.body.style.overflow = 'hidden';
+  }
+
+  function closeQuestionModal(popup) {
+    popup.classList.add('hidden');
+    popup.style.display = '';
+    document.body.style.overflow = '';
+  }
+
   // Content is injected dynamically by the SPA router, so all handling here
   // is delegated on `document` instead of bound to elements that may not
   // exist yet.
   document.addEventListener('click', function (e) {
-    // Page-level "general discussion" tab — no mode picker, mounts directly.
+    // Page-level "general discussion" tab — stays inline (not a modal),
+    // it's meant for browsing everything at once, not anchored to one
+    // question.
     var guideBtn = e.target.closest('.guide-discussion-toggle');
     if (guideBtn) {
-      var term = guideBtn.dataset.commentTerm;
-      var panel = guideBtn.parentElement?.querySelector('.guide-discussion-panel[data-comment-term="' + CSS.escape(term) + '"]');
+      var term = guideBtn.dataset.discussionTerm;
+      var panel = guideBtn.parentElement?.querySelector('.guide-discussion-panel');
       if (!panel) return;
       panel.classList.toggle('hidden');
       if (!panel.classList.contains('hidden') && !panel.dataset.mounted) {
@@ -108,17 +122,32 @@
       return;
     }
 
-    // Per-question comment icon — just reveals the popup (mode picker inside
-    // decides whether/what to mount).
+    // Per-question comment icon — opens the modal (mode picker inside
+    // decides whether/what to mount). It's a fixed overlay, so no scrolling.
+    // Each question card has exactly one popup, so no term-matching needed.
     var qBtn = e.target.closest('.mcq-comment-btn');
     if (qBtn) {
-      var qTerm = qBtn.dataset.commentTerm;
-      var qPopup = qBtn.closest('article')?.querySelector('.mcq-comment-popup[data-comment-term="' + CSS.escape(qTerm) + '"]');
-      qPopup?.classList.toggle('hidden');
+      var qPopup = qBtn.closest('article')?.querySelector('.mcq-comment-popup');
+      if (qPopup) openQuestionModal(qPopup);
       return;
     }
 
-    // "تعليق عام" / "اقتراح تصحيح" mode buttons inside a question's popup.
+    // Close button or backdrop click closes the modal.
+    var closeBtn = e.target.closest('.mcq-comment-close');
+    var backdrop = e.target.closest('.mcq-comment-backdrop');
+    if (closeBtn || backdrop) {
+      var closePopup = e.target.closest('.mcq-comment-popup');
+      if (closePopup) closeQuestionModal(closePopup);
+      return;
+    }
+
+    // "تعليق عام" / "اقتراح تصحيح" mode buttons inside the modal. Both modes
+    // ultimately post into the SAME shared discussion term as the page-level
+    // tab (data-discussion-term) — there is no separate private
+    // per-question thread. "تعليق عام" just skips the answer/reason form and
+    // mounts the thread right away; "اقتراح تصحيح" shows the form first so
+    // the copied text is tagged with the question number and a structured
+    // answer/reason.
     var modeBtn = e.target.closest('.mcq-comment-mode-btn');
     if (modeBtn) {
       var mPopup = modeBtn.closest('.mcq-comment-popup');
@@ -128,7 +157,7 @@
       if (modeBtn.dataset.mode === 'correction') {
         mPopup.querySelector('.mcq-correction-form')?.classList.remove('hidden');
       } else {
-        var mTerm = mPopup.dataset.commentTerm;
+        var mTerm = mPopup.dataset.discussionTerm;
         var mThread = mPopup.querySelector('.mcq-comment-thread');
         if (mThread && !mThread.dataset.mounted) {
           mountGiscusThread(mThread, mTerm);
@@ -138,7 +167,8 @@
       return;
     }
 
-    // "نسخ النص والمتابعة للتعليق" inside the correction form.
+    // "نسخ النص والمتابعة للتعليق" inside the correction form. Mounts the
+    // same shared thread, right here in the modal — no navigating away.
     var copyBtn = e.target.closest('.mcq-correction-copy-btn');
     if (copyBtn) {
       var cPopup = copyBtn.closest('.mcq-comment-popup');
@@ -151,14 +181,23 @@
       ).catch(function () { /* clipboard unavailable — hint still shows, they can select/copy manually */ })
       .finally(function () {
         cPopup.querySelector('.mcq-correction-hint')?.classList.remove('hidden');
-        var cTerm = cPopup.dataset.commentTerm;
+        cPopup.querySelector('.mcq-correction-form')?.classList.add('hidden');
+
+        var discussionTerm = cPopup.dataset.discussionTerm;
         var cThread = cPopup.querySelector('.mcq-comment-thread');
         if (cThread && !cThread.dataset.mounted) {
-          mountGiscusThread(cThread, cTerm);
+          mountGiscusThread(cThread, discussionTerm);
           cThread.dataset.mounted = '1';
         }
       });
     }
+  });
+
+  // Escape key closes whichever question modal is open.
+  document.addEventListener('keydown', function (e) {
+    if (e.key !== 'Escape') return;
+    var open = document.querySelector('.mcq-comment-popup:not(.hidden)');
+    if (open) closeQuestionModal(open);
   });
 
   window.mountGiscusThread = mountGiscusThread;

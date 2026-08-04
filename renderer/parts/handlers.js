@@ -138,13 +138,13 @@ function renderCorrectionPicker(q) {
     <button type="button" class="mcq-correction-copy-btn inline-flex items-center gap-xs px-md py-sm rounded-lg bg-primary text-on-primary font-label-md hover:opacity-90 transition-opacity">
       ${ms('content_copy', false, 'text-sm')} نسخ النص والمتابعة للتعليق
     </button>
-    <p class="mcq-correction-hint hidden mt-sm font-label-sm text-primary">✅ تم النسخ! الصق النص (Ctrl+V) في صندوق التعليق أدناه.</p>
+    <p class="mcq-correction-hint hidden mt-sm font-label-sm text-primary">✅ تم النسخ! الصق النص (Ctrl+V) في صندوق التعليق أدناه — كل التصحيحات المقترحة على هذه الدورة تظهر مع بعض في "نقاش عام حول هذه الدورة".</p>
   </div>`;
 }
 
 /** Renders one answerable question as its own card — reused both for a
  * standalone question and for each sub-question inside a Case-2 group. */
-function renderMcqCard(q, cardId, { showSource = true } = {}) {
+function renderMcqCard(q, cardId, { showSource = true, discussionTerm = null } = {}) {
   let html = `<article class="mcq-card bg-surface-container-lowest dark:bg-[#161b30] border border-outline-variant dark:border-[#1e40af] rounded-xl p-lg custom-shadow box-animate box-hover scroll-mt-16 anchor-target" id="${cardId}" data-correct="${q.correct}">
     <div class="flex items-center gap-md mb-md flex-wrap">
       <span class="px-sm py-xs bg-secondary-container text-on-secondary-container rounded-lg font-code-sm text-code-sm">س${q.num}</span>
@@ -173,13 +173,22 @@ function renderMcqCard(q, cardId, { showSource = true } = {}) {
     <button type="button" data-mcq-reset class="mcq-reset-btn hidden mt-md inline-flex items-center gap-xs px-md py-sm rounded-lg border border-outline-variant bg-surface-container-high text-on-surface font-label-md hover:bg-surface-variant transition-all" aria-label="إعادة تعيين الإجابة">
       ${ms('restart_alt', false, 'text-sm')} إعادة تعيين الإجابة
     </button>
-    <div class="mcq-comment-popup hidden mt-md pt-md border-t border-outline-variant" data-comment-term="${esc(cardId)}" data-question-num="${esc(String(q.num))}">
-      <div class="mcq-comment-mode-picker flex gap-sm mb-md">
-        <button type="button" class="mcq-comment-mode-btn px-md py-sm rounded-lg border border-outline-variant hover:bg-surface-variant transition-all font-label-md" data-mode="general">${ms('chat_bubble', false, 'text-sm')} تعليق عام</button>
-        <button type="button" class="mcq-comment-mode-btn px-md py-sm rounded-lg border border-outline-variant hover:bg-surface-variant transition-all font-label-md" data-mode="correction">${ms('build', false, 'text-sm')} اقتراح تصحيح</button>
+    <div class="mcq-comment-popup hidden fixed inset-0 z-50 items-center justify-center p-md" data-question-num="${esc(String(q.num))}" data-discussion-term="${esc(discussionTerm || cardId)}">
+      <div class="mcq-comment-backdrop absolute inset-0 bg-black/50 backdrop-blur-sm"></div>
+      <div class="mcq-comment-dialog relative bg-surface dark:bg-[#161b30] rounded-2xl shadow-2xl max-w-lg w-full max-h-[85vh] overflow-y-auto p-lg" role="dialog" aria-label="نقاش السؤال">
+        <div class="flex items-center justify-between mb-lg">
+          <h4 class="font-headline-sm text-headline-sm text-on-surface">نقاش السؤال س${esc(String(q.num))}</h4>
+          <button type="button" class="mcq-comment-close p-xs rounded-full hover:bg-surface-variant transition-all" aria-label="إغلاق">
+            ${ms('close', false, 'text-on-surface-variant')}
+          </button>
+        </div>
+        <div class="mcq-comment-mode-picker flex gap-sm mb-md">
+          <button type="button" class="mcq-comment-mode-btn px-md py-sm rounded-lg border border-outline-variant hover:bg-surface-variant transition-all font-label-md" data-mode="general">${ms('chat_bubble', false, 'text-sm')} تعليق عام</button>
+          <button type="button" class="mcq-comment-mode-btn px-md py-sm rounded-lg border border-outline-variant hover:bg-surface-variant transition-all font-label-md" data-mode="correction">${ms('build', false, 'text-sm')} اقتراح تصحيح</button>
+        </div>
+        ${renderCorrectionPicker(q)}
+        <div class="mcq-comment-thread"></div>
       </div>
-      ${renderCorrectionPicker(q)}
-      <div class="mcq-comment-thread"></div>
     </div>
   </article>`;
   return html;
@@ -188,7 +197,7 @@ function renderMcqCard(q, cardId, { showSource = true } = {}) {
 /** Renders a Case-2 group (shared stimulus + several sub-questions) as ONE
  * wrapping block, so the stimulus and all its questions stay together and
  * scroll/move as a unit instead of reading as unrelated separate cards. */
-function renderMcqGroup(q, partId) {
+function renderMcqGroup(q, partId, discussionTerm) {
   let html = `<section class="mcq-group bg-surface-container-low dark:bg-[#12162a] border-2 border-primary/30 dark:border-[#2b3a8f] rounded-2xl p-lg custom-shadow box-animate box-hover">
     <div class="flex items-center gap-md mb-md flex-wrap">
       <span class="px-sm py-xs bg-primary text-on-primary rounded-lg font-code-sm text-code-sm">${ms('link', true, 'text-sm')} س${q.num}${q.questions.length > 1 ? `–${q.questions[q.questions.length - 1].num}` : ''}</span>
@@ -199,13 +208,13 @@ function renderMcqGroup(q, partId) {
     <div class="space-y-md mt-lg">`;
 
   q.questions.forEach(sub => {
-    html += renderMcqCard(sub, mcqCardDomId(partId, q, sub.num), { showSource: false });
+    html += renderMcqCard(sub, mcqCardDomId(partId, q, sub.num), { showSource: false, discussionTerm });
   });
 
   return html + '</div></section>';
 }
 
-export function renderMCQ(questions, partId) {
+export function renderMCQ(questions, partId, discussionTerm = null) {
   const totalCount = questions.reduce((n, q) => n + (q.type === 'group' ? q.questions.length : 1), 0);
 
   let html = `<div class="mcq-progress sticky top-16 z-10 bg-surface-container-lowest dark:bg-[#10121f]/90 border border-outline-variant dark:border-[#1e40af] rounded-xl p-md mb-lg custom-shadow box-animate box-hover backdrop-blur-sm" data-part="${partId}" data-total="${totalCount}">
@@ -244,10 +253,10 @@ export function renderMCQ(questions, partId) {
     lastSection = sectionKey || lastSection;
 
     if (q.type === 'group') {
-      html += renderMcqGroup(q, partId);
+      html += renderMcqGroup(q, partId, discussionTerm);
       return;
     }
-    html += renderMcqCard(q, mcqCardDomId(partId, q));
+    html += renderMcqCard(q, mcqCardDomId(partId, q), { discussionTerm });
   });
 
   return html + '</div>';
@@ -402,7 +411,7 @@ export function renderDesign(questions, partId, ctx) {
 export function createDefaultPartHandlers(extraHandlers = []) {
   return [
     ...extraHandlers,
-    { type: 'mcq', render: (part, ctx) => renderMCQ(part.questions, ctx.partId) },
+    { type: 'mcq', render: (part, ctx) => renderMCQ(part.questions, ctx.partId, ctx.discussionTerm) },
     { type: 'debug', render: (part, ctx) => renderDebug(part.questions, ctx.partId, ctx) },
     { type: 'exercise', render: (part, ctx) => renderExercise(part.questions, ctx.partId, ctx) },
     { type: 'theory', render: (part, ctx) => renderTheory(part.questions, ctx.partId) },
