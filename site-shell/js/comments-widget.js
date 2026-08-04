@@ -696,12 +696,12 @@
       var textEl = btn.querySelector('.opt-text');
       options.push({
         key: key,
-        text: truncateText(textEl ? textEl.innerText : btn.innerText, 72),
+        text: truncateText(textEl ? textEl.innerText : btn.innerText, 90),
       });
     });
 
     return {
-      stem: truncateText(stem, 140),
+      stem: truncateText(stem, 180),
       options: options,
       siteAnswer: String(card.getAttribute('data-correct') || '').toUpperCase(),
     };
@@ -709,39 +709,15 @@
 
   function renderCommentBubble(c, isReply) {
     var wrap = document.createElement('div');
-    wrap.className = (isReply ? 'mr-md border-r border-primary/25 pr-sm ' : '') +
-      'mb-xs px-sm py-xs rounded-xl bg-surface-container-high/70 dark:bg-surface-container/40';
+    wrap.className = (isReply ? 'mr-md opacity-90 ' : '') + 'mb-2xs';
 
-    var meta = document.createElement('div');
-    meta.className = 'flex items-center gap-xs mb-2xs';
-
-    if (c.avatar) {
-      var img = document.createElement('img');
-      img.src = c.avatar;
-      img.alt = '';
-      img.width = 18;
-      img.height = 18;
-      img.loading = 'lazy';
-      img.className = 'rounded-full shrink-0';
-      meta.appendChild(img);
-    }
-
-    var who = document.createElement('span');
-    who.className = 'font-label-sm text-on-surface';
-    who.textContent = '@' + c.author;
-    meta.appendChild(who);
-
-    var when = document.createElement('span');
-    when.className = 'font-label-sm text-on-surface-variant mr-auto opacity-80';
-    when.textContent = formatRelativeTime(c.createdAt);
-    meta.appendChild(when);
-
-    wrap.appendChild(meta);
-
-    var body = document.createElement('p');
-    body.className = 'font-label-md text-on-surface whitespace-pre-wrap m-0 leading-snug';
-    body.textContent = truncateText(c.body, 220);
-    wrap.appendChild(body);
+    var line = document.createElement('p');
+    line.className = 'font-label-sm text-on-surface-variant m-0 leading-snug';
+    line.textContent = truncateText(
+      '@' + c.author + (c.body ? ': ' + c.body : ''),
+      140,
+    );
+    wrap.appendChild(line);
     return wrap;
   }
 
@@ -749,124 +725,143 @@
     var keys = Object.keys(letters || {}).sort();
     if (!keys.length) return '';
     return keys.map(function (k) {
-      return k + (letters[k] > 1 ? '×' + letters[k] : '');
+      return k + '×' + letters[k];
     }).join(' · ');
   }
 
-  /** Compact question + options so the overview is readable without jumping away. */
-  function appendMcqPreview(section, item, highlightLetters) {
+  function maxLetterCount(letters) {
+    var max = 0;
+    Object.keys(letters || {}).forEach(function (k) {
+      if (letters[k] > max) max = letters[k];
+    });
+    return max;
+  }
+
+  /**
+   * Minimal question preview: stem + options with ×N suggestion counts
+   * so reviewers can scan who suggested what in one glance.
+   */
+  function appendMcqPreview(section, item, letterCounts) {
     var preview = extractMcqPreview(item.term);
     if (!preview || (!preview.stem && !(preview.options && preview.options.length))) return;
 
-    var hl = {};
-    Object.keys(highlightLetters || {}).forEach(function (k) {
-      hl[String(k).toUpperCase()] = true;
-    });
-
-    var box = document.createElement('div');
-    box.className = 'guide-discussion-q-preview mb-xs px-sm py-xs rounded-lg bg-surface/60 border border-outline-variant/40';
+    var counts = letterCounts || {};
+    var top = maxLetterCount(counts);
 
     if (preview.stem) {
       var stem = document.createElement('p');
-      stem.className = 'font-label-md text-on-surface m-0 mb-xs leading-snug';
+      stem.className = 'font-body-md text-on-surface m-0 mb-sm leading-snug';
       stem.textContent = preview.stem;
-      box.appendChild(stem);
+      section.appendChild(stem);
     }
 
-    if (preview.options && preview.options.length) {
-      var list = document.createElement('ul');
-      list.className = 'm-0 p-0 list-none flex flex-col gap-2xs';
-      preview.options.forEach(function (opt) {
-        var li = document.createElement('li');
-        var hot = !!hl[opt.key];
-        var isSite = preview.siteAnswer && opt.key === preview.siteAnswer;
-        li.className = 'font-label-sm m-0 leading-snug flex gap-xs items-start ' +
-          (hot ? 'text-primary' : 'text-on-surface-variant');
-        var keySpan = document.createElement('span');
-        keySpan.className = 'shrink-0 inline-flex items-center justify-center min-w-[1.25rem] h-5 px-2xs rounded-md font-label-sm ' +
-          (hot
-            ? 'bg-primary text-on-primary'
-            : 'bg-outline-variant/50 text-on-surface-variant');
-        keySpan.textContent = opt.key;
-        li.appendChild(keySpan);
-        var txt = document.createElement('span');
-        txt.className = 'min-w-0';
-        txt.textContent = opt.text + (isSite && !hot ? ' · بالموقع' : '') + (hot ? ' · مقترح' : '');
-        li.appendChild(txt);
-        list.appendChild(li);
-      });
-      box.appendChild(list);
-    }
+    if (!(preview.options && preview.options.length)) return;
 
-    section.appendChild(box);
+    var list = document.createElement('ul');
+    list.className = 'm-0 p-0 list-none flex flex-col gap-xs mb-sm';
+
+    preview.options.forEach(function (opt) {
+      var n = counts[opt.key] || 0;
+      var isLead = n > 0 && n === top;
+      var li = document.createElement('li');
+      li.className = 'm-0 flex items-baseline gap-sm leading-snug';
+
+      var keySpan = document.createElement('span');
+      keySpan.className = 'shrink-0 font-label-sm w-4 ' +
+        (isLead ? 'text-primary' : 'text-on-surface-variant');
+      keySpan.textContent = opt.key;
+      li.appendChild(keySpan);
+
+      var txt = document.createElement('span');
+      txt.className = 'min-w-0 flex-1 font-label-sm ' +
+        (isLead ? 'text-on-surface' : 'text-on-surface-variant');
+      txt.textContent = opt.text;
+      li.appendChild(txt);
+
+      if (n > 0) {
+        var badge = document.createElement('span');
+        badge.className = 'shrink-0 font-label-sm tabular-nums ' +
+          (isLead ? 'text-primary' : 'text-on-surface-variant');
+        badge.style.fontSize = '0.75em';
+        badge.textContent = '×' + n;
+        badge.title = n === 1 ? 'اقتراح طالب واحد' : n + ' اقتراحات طلاب';
+        li.appendChild(badge);
+      }
+
+      list.appendChild(li);
+    });
+
+    section.appendChild(list);
   }
 
   function buildQuestionFeedCard(item, kind, discussion) {
     var term = kind === 'correction' ? correctionTermFor(item.term) : item.term;
     var section = document.createElement('article');
-    section.className = 'guide-discussion-q mb-sm px-sm py-sm rounded-xl border border-outline-variant/60 bg-surface-container-lowest/70 dark:bg-transparent';
+    section.className = 'guide-discussion-q mb-md py-md border-b border-outline-variant/40 last:border-0';
     section.dataset.questionNum = String(item.num);
     section.dataset.discussionTerm = term;
     section.dataset.discussionSource = item.source || '';
     section.dataset.discussionKind = kind;
 
+    var summary = kind === 'correction' && discussion
+      ? summarizeCorrections(discussion)
+      : { letters: {}, reasons: [] };
+
+    var count = (discussion && discussion.totalCount) || item.count || 0;
+
     var head = document.createElement('div');
-    head.className = 'flex items-center gap-xs flex-wrap mb-xs';
+    head.className = 'flex items-baseline gap-sm flex-wrap mb-sm';
 
     var title = document.createElement('h4');
     title.className = 'font-label-md text-on-surface m-0';
     title.textContent = 'س' + item.num;
     head.appendChild(title);
 
-    var pattern = patternLabel(item.source);
-    if (pattern) {
-      var patEl = document.createElement('span');
-      patEl.className = 'px-xs py-2xs rounded-full bg-outline-variant/35 text-on-surface-variant font-label-sm';
-      patEl.textContent = truncateText(pattern, 28);
-      head.appendChild(patEl);
+    if (count > 0) {
+      var countEl = document.createElement('span');
+      countEl.className = 'font-label-sm text-on-surface-variant m-0';
+      countEl.style.fontSize = '0.75em';
+      countEl.textContent = count === 1 ? 'تعليق واحد' : count + ' تعليقات';
+      head.appendChild(countEl);
     }
 
     if (kind === 'correction') {
       var peer = document.createElement('span');
-      peer.className = 'px-xs py-2xs bg-tertiary-container text-on-tertiary-container rounded-full font-label-sm';
-      peer.textContent = 'طلاب';
+      peer.className = 'font-label-sm text-on-surface-variant mr-auto m-0';
+      peer.style.fontSize = '0.75em';
+      peer.textContent = 'اقتراح طلاب';
       head.appendChild(peer);
     }
 
-    var count = (discussion && discussion.totalCount) || item.count || 0;
-    var countEl = document.createElement('span');
-    countEl.className = 'px-xs py-2xs bg-secondary-container text-on-secondary-container rounded-full font-label-sm mr-auto';
-    countEl.textContent = String(count);
-    countEl.title = count + (count === 1 ? ' تعليق' : ' تعليقات');
-    head.appendChild(countEl);
+    var pattern = patternLabel(item.source);
+    if (pattern && kind !== 'correction') {
+      var patEl = document.createElement('span');
+      patEl.className = 'font-label-sm text-on-surface-variant mr-auto m-0';
+      patEl.style.fontSize = '0.75em';
+      patEl.textContent = truncateText(pattern, 32);
+      head.appendChild(patEl);
+    }
 
     section.appendChild(head);
 
-    var summary = kind === 'correction' && discussion
-      ? summarizeCorrections(discussion)
-      : { letters: {}, reasons: [] };
-
-    appendMcqPreview(section, item, summary.letters);
+    appendMcqPreview(
+      section,
+      item,
+      kind === 'correction' ? summary.letters : {},
+    );
 
     var feed = document.createElement('div');
-    feed.className = 'guide-discussion-q-feed mb-xs';
+    feed.className = 'guide-discussion-q-feed mb-sm';
 
     if (kind === 'correction' && discussion) {
-      var letterLine = lettersSummaryText(summary.letters);
-      if (letterLine) {
-        var proposed = document.createElement('p');
-        proposed.className = 'font-label-md text-primary m-0 mb-xs';
-        proposed.textContent = 'مقترح: ' + letterLine;
-        feed.appendChild(proposed);
-      }
-
       if (summary.reasons.length) {
         summary.reasons.slice(0, 3).forEach(function (r) {
           var row = document.createElement('p');
-          row.className = 'font-label-sm text-on-surface m-0 mb-2xs leading-snug';
+          row.className = 'font-label-sm text-on-surface-variant m-0 mb-2xs leading-snug';
           row.textContent = truncateText(
-            (r.answer ? r.answer + ' · ' : '') + '@' + r.author + ': ' + r.reason,
-            160,
+            '@' + r.author + (r.answer ? ' · ' + r.answer : '') +
+              (r.reason ? ': ' + r.reason : ''),
+            120,
           );
           feed.appendChild(row);
         });
@@ -874,39 +869,20 @@
         discussion.comments.slice(0, 2).forEach(function (c) {
           feed.appendChild(renderCommentBubble(c, false));
         });
-      } else {
-        var missCorr = document.createElement('p');
-        missCorr.className = 'font-label-sm text-on-surface-variant m-0';
-        missCorr.textContent = 'افتح السؤال لقراءة التصحيح.';
-        feed.appendChild(missCorr);
       }
     } else if (discussion && discussion.comments && discussion.comments.length) {
-      discussion.comments.slice(0, 4).forEach(function (c) {
+      discussion.comments.slice(0, 3).forEach(function (c) {
         feed.appendChild(renderCommentBubble(c, false));
-        (c.replies || []).slice(0, 2).forEach(function (r) {
-          feed.appendChild(renderCommentBubble(r, true));
-        });
       });
-    } else {
-      var miss = document.createElement('p');
-      miss.className = 'font-label-sm text-on-surface-variant m-0';
-      miss.textContent = 'افتح السؤال لقراءة التعليقات.';
-      feed.appendChild(miss);
     }
-    section.appendChild(feed);
+    if (feed.childNodes.length) section.appendChild(feed);
 
     var actions = document.createElement('div');
-    actions.className = 'flex items-center gap-sm flex-wrap';
-
-    var jump = document.createElement('a');
-    jump.href = '#' + encodeURIComponent(item.term);
-    jump.className = 'font-label-sm text-primary underline';
-    jump.textContent = 'السؤال';
-    actions.appendChild(jump);
+    actions.className = 'flex items-center gap-md flex-wrap';
 
     var commentBtn = document.createElement('button');
     commentBtn.type = 'button';
-    commentBtn.className = 'px-sm py-2xs rounded-lg bg-primary text-on-primary font-label-sm hover:opacity-90 transition-opacity';
+    commentBtn.className = 'font-label-sm text-primary hover:opacity-80 transition-opacity bg-transparent border-0 p-0 cursor-pointer';
     if (kind === 'correction') {
       commentBtn.textContent = 'اقترح تصحيحاً';
       commentBtn.addEventListener('click', function () {
@@ -919,6 +895,13 @@
       });
     }
     actions.appendChild(commentBtn);
+
+    var jump = document.createElement('a');
+    jump.href = '#' + encodeURIComponent(item.term);
+    jump.className = 'font-label-sm text-on-surface-variant hover:text-primary transition-colors';
+    jump.style.fontSize = '0.75em';
+    jump.textContent = 'السؤال';
+    actions.appendChild(jump);
 
     section.appendChild(actions);
     return section;
@@ -1140,13 +1123,13 @@
     }
 
     var tabs = document.createElement('div');
-    tabs.className = 'flex gap-sm mb-md flex-wrap';
+    tabs.className = 'flex gap-md mb-sm flex-wrap items-baseline';
 
     function makeTab(id, label) {
       var b = document.createElement('button');
       b.type = 'button';
       b.dataset.tab = id;
-      b.className = 'guide-discussion-tab px-md py-sm rounded-full border border-outline-variant font-label-md hover:bg-surface-variant transition-all';
+      b.className = 'guide-discussion-tab font-label-md bg-transparent border-0 p-0 cursor-pointer text-on-surface-variant hover:text-primary transition-colors';
       b.textContent = label;
       return b;
     }
@@ -1160,6 +1143,7 @@
 
     var intro = document.createElement('p');
     intro.className = 'mb-sm font-label-sm text-on-surface-variant';
+    intro.style.fontSize = '0.8em';
     panel.appendChild(intro);
 
     var statusEl = document.createElement('div');
@@ -1168,7 +1152,7 @@
     panel.appendChild(statusEl);
 
     var scroller = document.createElement('div');
-    scroller.className = 'guide-discussion-scroller max-h-[min(72vh,40rem)] overflow-y-auto overscroll-contain pe-xs rounded-xl';
+    scroller.className = 'guide-discussion-scroller max-h-[min(72vh,40rem)] overflow-y-auto overscroll-contain';
     panel.appendChild(scroller);
 
     var listEl = document.createElement('div');
@@ -1180,13 +1164,12 @@
     function setActiveTab(id) {
       [tabByQ, tabCorr].forEach(function (b) {
         var on = b.dataset.tab === id;
-        b.classList.toggle('bg-secondary-container', on);
-        b.classList.toggle('text-on-secondary-container', on);
-        b.classList.toggle('border-transparent', on);
+        b.classList.toggle('text-primary', on);
+        b.classList.toggle('text-on-surface-variant', !on);
       });
       intro.textContent = id === 'corrections'
-        ? 'تصحيحات طلاب — اقرأ السؤال والخيارات هنا، بدون قفز بعيد.'
-        : 'نقاش الأسئلة — اسحب بسرعة؛ الكتابة من زر علّق.';
+        ? 'اقتراحات الطلاب على الإجابات — العدد بجانب كل خيار.'
+        : 'نقاش الأسئلة — اسحب بسرعة.';
     }
 
     function showTab(id, forceFeed) {
