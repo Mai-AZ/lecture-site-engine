@@ -54,6 +54,8 @@ export async function generateServiceWorker(outDir, { buildId, cachePrefix }) {
     './js/quiz-stats.js',
     './js/search.js',
     './js/mermaid-render.js',
+    './js/comments-widget.js',
+    './js/chat-widget.js',
     './css/styles.css',
     './css/tailwind-config.js',
     './themes/apply-theme.js',
@@ -161,6 +163,13 @@ self.addEventListener('fetch', (event) => {
   }
 
   if (request.mode === 'navigate') {
+    event.respondWith(networkFirst(request, SHELL_CACHE));
+    return;
+  }
+
+  // Shell JS/CSS: prefer network so deploys show up without "refresh 100 times".
+  // Fall back to cache when offline.
+  if (/\\/(js|css)\\//.test(url.pathname) || /\\/themes\\/.*\\.(js|css)$/.test(url.pathname)) {
     event.respondWith(networkFirst(request, SHELL_CACHE));
     return;
   }

@@ -175,7 +175,7 @@ function renderMcqCard(q, cardId, { showSource = true } = {}) {
     </button>
     <div class="mcq-comment-popup hidden fixed inset-0 z-50 items-center justify-center p-md" data-question-num="${esc(String(q.num))}" data-discussion-term="${esc(cardId)}">
       <div class="mcq-comment-backdrop absolute inset-0 bg-black/50 backdrop-blur-sm"></div>
-      <div class="mcq-comment-dialog relative bg-surface dark:bg-[#161b30] rounded-2xl shadow-2xl max-w-lg w-full max-h-[85vh] overflow-y-auto p-lg" role="dialog" aria-label="نقاش السؤال">
+      <div class="mcq-comment-dialog relative bg-surface dark:bg-[#161b30] rounded-2xl shadow-2xl max-w-2xl w-full max-h-[92vh] overflow-y-auto p-lg" role="dialog" aria-label="نقاش السؤال">
         <div class="flex items-center justify-between mb-lg">
           <h4 class="font-headline-sm text-headline-sm text-on-surface">نقاش السؤال س${esc(String(q.num))}</h4>
           <button type="button" class="mcq-comment-close p-xs rounded-full hover:bg-surface-variant transition-all" aria-label="إغلاق">
@@ -187,7 +187,7 @@ function renderMcqCard(q, cardId, { showSource = true } = {}) {
           <button type="button" class="mcq-comment-mode-btn px-md py-sm rounded-lg border border-outline-variant hover:bg-surface-variant transition-all font-label-md" data-mode="correction">${ms('build', false, 'text-sm')} اقتراح تصحيح</button>
         </div>
         ${renderCorrectionPicker(q)}
-        <div class="mcq-comment-thread"></div>
+        <div class="mcq-comment-thread min-h-[24rem]"></div>
       </div>
     </div>
   </article>`;

@@ -197,6 +197,11 @@
         if (data.giscus.resizeHeight) {
           iframe.style.height = data.giscus.resizeHeight + 'px';
           markReady(true);
+          // Keep the modal scrolled so the composer stays in view after resize.
+          var dialog = container.closest('.mcq-comment-dialog');
+          if (dialog) {
+            dialog.scrollTop = Math.max(0, dialog.scrollHeight - dialog.clientHeight);
+          }
         }
         if (data.giscus.error) {
           // "Discussion not found" is normal for a new question thread —
@@ -515,6 +520,26 @@
     popup.classList.remove('hidden');
     popup.style.display = 'flex';
     document.body.style.overflow = 'hidden';
+
+    // Mount the thread immediately — don't make students click "تعليق عام"
+    // first just to see the comment box.
+    var term = popup.dataset.discussionTerm;
+    var thread = popup.querySelector('.mcq-comment-thread');
+    if (thread && term && !thread.dataset.mounted) {
+      mountGiscusThread(thread, term).then(function () {
+        // After giscus sizes itself, scroll the dialog so the write box
+        // isn't stuck below the modal's visible fold.
+        var dialog = popup.querySelector('.mcq-comment-dialog');
+        var iframe = thread.querySelector('iframe.giscus-frame');
+        if (dialog && iframe) {
+          setTimeout(function () {
+            iframe.scrollIntoView({ block: 'nearest', behavior: 'smooth' });
+            // Prefer showing the lower part of the widget (composer).
+            dialog.scrollTop = Math.max(0, dialog.scrollHeight - dialog.clientHeight);
+          }, 300);
+        }
+      });
+    }
   }
 
   function closeQuestionModal(popup) {
@@ -552,7 +577,8 @@
       return;
     }
 
-    // Per-question modal modes — each question keeps its own thread.
+    // Mode buttons: correction shows the form above the already-mounted thread.
+    // General is a no-op for mounting (thread already loads on modal open).
     var modeBtn = e.target.closest('.mcq-comment-mode-btn');
     if (modeBtn) {
       var mPopup = modeBtn.closest('.mcq-comment-popup');
