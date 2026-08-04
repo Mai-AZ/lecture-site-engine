@@ -156,18 +156,24 @@ function renderMcqCard(q, cardId, { showSource = true } = {}) {
       <span class="px-sm py-xs bg-secondary-container text-on-secondary-container rounded-lg font-code-sm text-code-sm">س${q.num}</span>
       ${q.difficulty ? `<span class="font-label-md px-sm py-xs rounded-full ${diffBadgeClass(q.difficulty)}">${esc(q.difficulty)}</span>` : ''}
       ${showSource ? sourceTag(q.source) : ''}
-      <div class="mcq-card-discuss-actions mr-auto flex items-center gap-xs flex-wrap">
-        <button type="button" class="mcq-correction-chip hidden inline-flex items-center gap-2xs px-sm py-2xs rounded-full bg-tertiary-container text-on-tertiary-container font-label-sm hover:opacity-90 transition-opacity" data-comment-term="${esc(cardId)}" aria-label="فتح التصحيحات المقترحة"></button>
-        <button type="button" class="mcq-comment-count-btn hidden inline-flex items-center gap-2xs px-sm py-2xs rounded-full bg-secondary-container text-on-secondary-container font-label-sm hover:opacity-90 transition-opacity" data-comment-term="${esc(cardId)}" title="فتح النقاش" aria-label="تعليقات السؤال">
-          ${ms('chat_bubble', false, 'text-sm')}
-          <span class="mcq-comment-count"></span>
-        </button>
-        <button type="button" class="mcq-react-btn inline-flex items-center gap-2xs px-sm py-2xs rounded-full border border-outline-variant hover:bg-surface-variant transition-all font-label-sm" data-comment-term="${esc(cardId)}" title="تفاعل 👍 — يفتح النقاش" aria-label="تفاعل مع النقاش">
-          <span aria-hidden="true">👍</span>
-          <span class="mcq-react-count"></span>
-        </button>
-        <button type="button" class="mcq-comment-btn p-xs rounded-full hover:bg-surface-variant transition-all" data-comment-term="${esc(cardId)}" aria-label="نقاش حول هذا السؤال" title="نقاش حول هذا السؤال">
-          ${ms('chat_bubble', false, 'text-on-surface-variant text-sm')}
+      <div class="mcq-card-discuss-actions mr-auto flex items-center">
+        <button type="button"
+          class="mcq-discuss-summary inline-flex items-center gap-sm font-label-sm text-on-surface-variant hover:text-primary transition-colors bg-transparent border-0 p-0 shadow-none rounded-none cursor-pointer"
+          data-comment-term="${esc(cardId)}"
+          aria-label="نقاش وتصحيحات هذا السؤال"
+          title="نقاش السؤال">
+          <span class="inline-flex items-center gap-2xs" data-part="comments">
+            ${ms('chat_bubble', false, 'text-sm leading-none')}
+            <span class="mcq-discuss-comments tabular-nums">0</span>
+          </span>
+          <span class="mcq-discuss-corr-wrap hidden inline-flex items-center gap-2xs" data-part="corrections">
+            ${ms('build', false, 'text-sm leading-none')}
+            <span class="mcq-discuss-corr tabular-nums">0</span>
+          </span>
+          <span class="mcq-discuss-react-wrap hidden inline-flex items-center gap-2xs" data-part="react">
+            ${ms('thumb_up', false, 'text-sm leading-none')}
+            <span class="mcq-discuss-react tabular-nums">0</span>
+          </span>
         </button>
       </div>
     </div>

@@ -1372,8 +1372,8 @@
   }
 
   /**
-   * Enrich MCQ card headers with Worker-backed chips outside the modal:
-   * clear comment counts ("٣ تعليقات"), corrections, thumbs-up.
+   * One minimal outline summary on the card: chat N · build N · thumb N.
+   * No pills/circles — just outline icons + numbers.
    */
   function enrichMcqCardsFromFeed(feedMap) {
     if (!feedMap) return;
@@ -1389,41 +1389,45 @@
       var totalComments = gCount + corrCount;
       var thumbs = thumbsUpCount(general) + thumbsUpCount(corr);
 
-      var corrChip = card.querySelector('.mcq-correction-chip');
-      if (corrChip) {
+      var summary = card.querySelector('.mcq-discuss-summary');
+      if (!summary) return;
+
+      var commentsEl = summary.querySelector('.mcq-discuss-comments');
+      if (commentsEl) commentsEl.textContent = String(totalComments);
+
+      var corrWrap = summary.querySelector('.mcq-discuss-corr-wrap');
+      var corrEl = summary.querySelector('.mcq-discuss-corr');
+      if (corrWrap && corrEl) {
         if (corrCount > 0) {
-          corrChip.textContent = 'تصحيح مقترح · ' + corrCount;
-          corrChip.classList.remove('hidden');
+          corrEl.textContent = String(corrCount);
+          corrWrap.classList.remove('hidden');
         } else {
-          corrChip.classList.add('hidden');
+          corrWrap.classList.add('hidden');
         }
       }
 
-      var commentBtn = card.querySelector('.mcq-comment-count-btn');
-      var commentCountEl = card.querySelector('.mcq-comment-count');
-      if (commentBtn && commentCountEl) {
-        if (totalComments > 0) {
-          commentCountEl.textContent =
-            totalComments === 1 ? 'تعليق واحد' : totalComments + ' تعليقات';
-          commentBtn.classList.remove('hidden');
-          commentBtn.title = 'افتح النقاش — ' + totalComments + ' تعليق';
-        } else {
-          commentBtn.classList.add('hidden');
-        }
-      }
-
-      var reactBtn = card.querySelector('.mcq-react-btn');
-      var reactCountEl = card.querySelector('.mcq-react-count');
-      if (reactBtn && reactCountEl) {
-        // Always offer a card-level react entry; show count when Worker has it.
-        reactBtn.classList.remove('hidden');
+      var reactWrap = summary.querySelector('.mcq-discuss-react-wrap');
+      var reactEl = summary.querySelector('.mcq-discuss-react');
+      if (reactWrap && reactEl) {
         if (thumbs > 0) {
-          reactCountEl.textContent = String(thumbs);
-          reactBtn.title = 'تفاعل (' + thumbs + ') — يفتح النقاش';
+          reactEl.textContent = String(thumbs);
+          reactWrap.classList.remove('hidden');
         } else {
-          reactCountEl.textContent = '';
-          reactBtn.title = 'تفاعل 👍 — يفتح النقاش';
+          reactWrap.classList.add('hidden');
         }
+      }
+
+      summary.dataset.hasCorrections = corrCount > 0 ? '1' : '0';
+      summary.title =
+        (totalComments ? totalComments + ' تعليق' : 'لا تعليقات بعد') +
+        (corrCount ? ' · ' + corrCount + ' تصحيح' : '') +
+        (thumbs ? ' · ' + thumbs + ' إعجاب' : '');
+      if (totalComments > 0) {
+        summary.classList.add('text-on-surface');
+        summary.classList.remove('text-on-surface-variant');
+      } else {
+        summary.classList.add('text-on-surface-variant');
+        summary.classList.remove('text-on-surface');
       }
     });
   }
@@ -1463,31 +1467,32 @@
       return;
     }
 
-    var corrChip = e.target.closest('.mcq-correction-chip');
-    if (corrChip) {
-      var chipPopup = corrChip.closest('article') && corrChip.closest('article').querySelector('.mcq-comment-popup');
-      if (chipPopup) openQuestionModal(chipPopup, { mode: 'correction' });
+    var discussSummary = e.target.closest('.mcq-discuss-summary');
+    if (discussSummary) {
+      var sPopup = discussSummary.closest('article') &&
+        discussSummary.closest('article').querySelector('.mcq-comment-popup');
+      if (sPopup) {
+        var mode = discussSummary.dataset.hasCorrections === '1' ? 'correction' : 'general';
+        openQuestionModal(sPopup, { mode: mode });
+      }
       return;
     }
 
-    var reactBtn = e.target.closest('.mcq-react-btn');
-    if (reactBtn) {
-      var rPopup = reactBtn.closest('article') && reactBtn.closest('article').querySelector('.mcq-comment-popup');
-      if (rPopup) openQuestionModal(rPopup, { mode: 'react' });
-      return;
-    }
-
-    var countBtn = e.target.closest('.mcq-comment-count-btn');
-    if (countBtn) {
-      var cPopup = countBtn.closest('article') && countBtn.closest('article').querySelector('.mcq-comment-popup');
-      if (cPopup) openQuestionModal(cPopup, { mode: 'general' });
-      return;
-    }
-
-    var qBtn = e.target.closest('.mcq-comment-btn');
-    if (qBtn) {
-      var qPopup = qBtn.closest('article') && qBtn.closest('article').querySelector('.mcq-comment-popup');
-      if (qPopup) openQuestionModal(qPopup, { mode: 'general' });
+    // Legacy single buttons (older cached HTML) — still open the modal.
+    var legacyDiscuss = e.target.closest(
+      '.mcq-comment-btn, .mcq-comment-count-btn, .mcq-react-btn, .mcq-correction-chip',
+    );
+    if (legacyDiscuss) {
+      var lPopup = legacyDiscuss.closest('article') &&
+        legacyDiscuss.closest('article').querySelector('.mcq-comment-popup');
+      if (!lPopup) return;
+      if (legacyDiscuss.classList.contains('mcq-correction-chip')) {
+        openQuestionModal(lPopup, { mode: 'correction' });
+      } else if (legacyDiscuss.classList.contains('mcq-react-btn')) {
+        openQuestionModal(lPopup, { mode: 'react' });
+      } else {
+        openQuestionModal(lPopup, { mode: 'general' });
+      }
       return;
     }
 
