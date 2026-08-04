@@ -13,15 +13,54 @@
     return document.documentElement.classList.contains('dark') ? 'noborder_dark' : 'noborder_light';
   }
 
+  function buildLoadErrorEl(container, term) {
+    var wrap = document.createElement('div');
+    wrap.className = 'mcq-comment-load-error p-md text-center font-label-md text-on-surface-variant';
+
+    var msg = document.createElement('p');
+    msg.className = 'mb-md';
+    msg.textContent = 'تعذّر تحميل التعليقات حالياً.';
+    wrap.appendChild(msg);
+
+    var retryBtn = document.createElement('button');
+    retryBtn.type = 'button';
+    retryBtn.className = 'px-md py-sm rounded-lg border border-outline-variant hover:bg-surface-variant transition-all';
+    retryBtn.textContent = 'إعادة المحاولة';
+    retryBtn.addEventListener('click', function () { mountGiscusThread(container, term); });
+    wrap.appendChild(retryBtn);
+
+    var catSlug = GISCUS_CATEGORY.trim().toLowerCase().replace(/\s+/g, '-');
+    var link = document.createElement('a');
+    link.href = 'https://github.com/' + GISCUS_REPO + '/discussions/categories/' + encodeURIComponent(catSlug);
+    link.target = '_blank';
+    link.rel = 'noopener';
+    link.className = 'block mt-sm text-primary underline';
+    link.textContent = 'أو افتح النقاش مباشرة على GitHub';
+    wrap.appendChild(link);
+
+    return wrap;
+  }
+
   /**
    * Mounts a giscus comment thread into `container`, keyed by `term`.
    * Each unique term gets its own Discussion thread (see data-mapping="specific").
    * Safe to call multiple times on different containers with different terms
    * (e.g. one call for a page-level "Discussion" tab, one per flagged question).
+   *
+   * Shows a loading state immediately, and if the widget hasn't actually
+   * appeared within a few seconds (giscus occasionally fails to load —
+   * flaky network, ad blockers, etc.), swaps in a retry button + a direct
+   * link to the discussion on GitHub, instead of leaving a silent empty box.
    */
   function mountGiscusThread(container, term) {
     if (!container || !term) return;
     container.innerHTML = '';
+    delete container.dataset.mounted;
+
+    var loading = document.createElement('div');
+    loading.className = 'mcq-comment-loading p-md text-center font-label-md text-on-surface-variant';
+    loading.textContent = 'جارِ تحميل التعليقات…';
+    container.appendChild(loading);
 
     var script = document.createElement('script');
     script.src = 'https://giscus.app/client.js';
@@ -40,8 +79,38 @@
     script.setAttribute('crossorigin', 'anonymous');
     script.async = true;
 
+    var settled = false;
+    var timeoutId = setTimeout(function () {
+      if (settled || container.querySelector('iframe.giscus-frame')) return;
+      settled = true;
+      container.innerHTML = '';
+      container.appendChild(buildLoadErrorEl(container, term));
+    }, 8000);
+
+    script.addEventListener('error', function () {
+      if (settled) return;
+      settled = true;
+      clearTimeout(timeoutId);
+      container.innerHTML = '';
+      container.appendChild(buildLoadErrorEl(container, term));
+    });
+
+    // Once the iframe actually shows up, clear the timeout and drop the
+    // loading placeholder (giscus appends the iframe as a sibling, so the
+    // loading div would otherwise sit above it forever).
+    var settleObserver = new MutationObserver(function () {
+      if (container.querySelector('iframe.giscus-frame')) {
+        settled = true;
+        clearTimeout(timeoutId);
+        loading.remove();
+        settleObserver.disconnect();
+      }
+    });
+    settleObserver.observe(container, { childList: true });
+
     container.appendChild(script);
     container.dataset.giscusTerm = term;
+    container.dataset.mounted = '1';
   }
 
   /**
@@ -88,6 +157,14 @@
     });
   }
 
+  // Term -> count, cached so revisiting a page doesn't re-fetch. Also used
+  // as an in-flight guard so the same term is never probed twice at once —
+  // a real user opening the actual thread while this background probe is
+  // still in flight would otherwise mean two simultaneous giscus embeds for
+  // the same discussion competing for the same request.
+  var discussionCountCache = {};
+  var discussionCountInFlight = {};
+
   /**
    * Quietly loads a hidden, invisible giscus instance just to read the
    * thread's total comment count via its "emit metadata" message, then
@@ -96,21 +173,33 @@
    * commented), no message ever arrives and the badge simply stays hidden.
    */
   function fetchDiscussionCount(term) {
+    if (discussionCountInFlight[term]) return;
+    discussionCountInFlight[term] = true;
+
     var hidden = document.createElement('div');
     hidden.setAttribute('aria-hidden', 'true');
     hidden.style.cssText = 'position:absolute;top:-9999px;width:1px;height:1px;overflow:hidden;';
     document.body.appendChild(hidden);
+
+    function cleanup() {
+      delete discussionCountInFlight[term];
+      window.removeEventListener('message', handleMessage);
+      hidden.remove();
+    }
 
     function handleMessage(e) {
       if (e.origin !== 'https://giscus.app') return;
       var data = e.data;
       if (!data || typeof data !== 'object' || !data.giscus || !data.giscus.discussion) return;
       var d = data.giscus.discussion;
-      updateDiscussionCountBadges(term, (d.totalCommentCount || 0) + (d.totalReplyCount || 0));
-      window.removeEventListener('message', handleMessage);
-      hidden.remove();
+      var count = (d.totalCommentCount || 0) + (d.totalReplyCount || 0);
+      discussionCountCache[term] = count;
+      updateDiscussionCountBadges(term, count);
+      cleanup();
     }
     window.addEventListener('message', handleMessage);
+    // Give up after a while so a flaky load doesn't leak the listener/div forever.
+    setTimeout(cleanup, 10000);
 
     var script = document.createElement('script');
     script.src = 'https://giscus.app/client.js';
@@ -132,14 +221,25 @@
   }
 
   // Whenever a page-level discussion tab appears (SPA navigation renders it
-  // fresh each time), quietly fetch its count once.
+  // fresh each time), quietly fetch its count once. Hooked to hashchange
+  // (the SPA's own routing signal) rather than a broad DOM mutation
+  // observer — the page re-renders constantly (every MCQ answer click,
+  // progress bar update, etc.), and watching all of that just to notice a
+  // new discussion tab is unnecessary churn.
   function scanForUncountedToggles() {
-    document.querySelectorAll('.guide-discussion-toggle:not([data-count-fetched])').forEach(function (btn) {
-      btn.dataset.countFetched = '1';
-      fetchDiscussionCount(btn.dataset.discussionTerm);
+    document.querySelectorAll('.guide-discussion-toggle').forEach(function (btn) {
+      var term = btn.dataset.discussionTerm;
+      if (!term) return;
+      if (discussionCountCache[term] !== undefined) {
+        updateDiscussionCountBadges(term, discussionCountCache[term]);
+        return;
+      }
+      // Small delay so this doesn't race a user who opens the real thread
+      // themselves within the first moment of landing on the page.
+      setTimeout(function () { fetchDiscussionCount(term); }, 1500);
     });
   }
-  new MutationObserver(scanForUncountedToggles).observe(document.body, { childList: true, subtree: true });
+  window.addEventListener('hashchange', scanForUncountedToggles);
   scanForUncountedToggles();
 
   function buildCorrectionText(popup) {
@@ -204,13 +304,12 @@
       return;
     }
 
-    // "تعليق عام" / "اقتراح تصحيح" mode buttons inside the modal. Both modes
-    // ultimately post into the SAME shared discussion term as the page-level
-    // tab (data-discussion-term) — there is no separate private
-    // per-question thread. "تعليق عام" just skips the answer/reason form and
-    // mounts the thread right away; "اقتراح تصحيح" shows the form first so
-    // the copied text is tagged with the question number and a structured
-    // answer/reason.
+    // "تعليق عام" / "اقتراح تصحيح" mode buttons inside the modal. Both post
+    // into this question's own thread (data-discussion-term, unique per
+    // question — separate from the page-level "نقاش عام" thread).
+    // "تعليق عام" just skips the answer/reason form and mounts the thread
+    // right away; "اقتراح تصحيح" shows the form first so the copied text is
+    // tagged with a structured answer/reason before they paste it in.
     var modeBtn = e.target.closest('.mcq-comment-mode-btn');
     if (modeBtn) {
       var mPopup = modeBtn.closest('.mcq-comment-popup');
@@ -230,8 +329,8 @@
       return;
     }
 
-    // "نسخ النص والمتابعة للتعليق" inside the correction form. Mounts the
-    // same shared thread, right here in the modal — no navigating away.
+    // "نسخ النص والمتابعة للتعليق" inside the correction form. Mounts this
+    // question's own thread, right here in the modal — no navigating away.
     var copyBtn = e.target.closest('.mcq-correction-copy-btn');
     if (copyBtn) {
       var cPopup = copyBtn.closest('.mcq-comment-popup');

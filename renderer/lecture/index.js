@@ -144,10 +144,9 @@ export function renderCodeGuide(guide, deps, badgeLabel = '💻 أكواد ال�
 
   html += renderAnswerCorrections(guide);
 
-  // Every question's comment modal (general comments AND corrections alike)
-  // posts into this same thread — there's no separate private per-question
-  // thread — so anyone browsing this tab later sees everything in one
-  // place. See renderMcqCard's data-discussion-term.
+  // Its own thread, independent of any single question — each question's
+  // comment modal (see renderMcqCard) has its own separate thread instead,
+  // so opening one question's discussion never shows comments about others.
   const discussionTerm = `${guide.id}-discussion`;
 
   html += `<div class="guide-discussion mb-xl">
@@ -175,7 +174,7 @@ export function renderCodeGuide(guide, deps, badgeLabel = '💻 أكواد ال�
 
     const cardCls = 'border border-outline-variant dark:border-[#1e40af] rounded-xl p-lg custom-shadow box-hover bg-surface-container-lowest dark:bg-transparent';
     if (!isMcq) html += `<div class="${cardCls}">`;
-    html += renderPart(part, { ...partRenderCtx(partId, part, deps), discussionTerm: isMcq ? discussionTerm : undefined });
+    html += renderPart(part, partRenderCtx(partId, part, deps));
     if (!isMcq) html += '</div>';
     html += '</div>';
   });
