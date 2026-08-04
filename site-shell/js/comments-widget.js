@@ -11,6 +11,18 @@
   var GISCUS_ORIGIN       = 'https://giscus.app';
 
   /**
+   * Live read-only feed Worker (Cloudflare). Giscus stays write-only on each
+   * question. After `npx wrangler deploy -c workers/discussion-feed/wrangler.toml`,
+   * paste the workers.dev URL here (or set window.DISCUSSION_FEED_API).
+   */
+  var DISCUSSION_FEED_API =
+    (typeof window !== 'undefined' && window.DISCUSSION_FEED_API) ||
+    'https://homs-uni-discussion-feed.workers.dev';
+
+  // Client cache TTL — short so a normal refresh picks up new comments.
+  var DISCUSSION_FEED_CACHE_MS = 90 * 1000;
+
+  /**
    * Globally unique subject key for giscus terms. DOM ids reuse short stems
    * like `exams-p1-q14` across every DAWRAT page, so without this prefix
    * comments from different subjects collide in the same GitHub Discussion.
@@ -455,153 +467,98 @@
 
   // title (scoped term) -> { title, url, comments: [...] }
   var discussionFeedCache = null;
+  var discussionFeedCacheAt = 0;
   var discussionFeedPromise = null;
-
-  function discussionFeedJsonUrl() {
-    var base = document.querySelector('base[href]');
-    try {
-      return new URL('data/discussion-feed.json', base ? base.href : location.href).href;
-    } catch (e) {
-      return 'data/discussion-feed.json';
-    }
-  }
 
   function normalizeFeedMap(payload) {
     if (!payload) return null;
     if (payload.discussions && typeof payload.discussions === 'object') return payload.discussions;
-    if (typeof payload === 'object' && !payload.generatedAt) return payload;
+    if (typeof payload === 'object' && !payload.generatedAt && !payload.error) return payload;
     return null;
   }
 
   function rememberFeed(map) {
     discussionFeedCache = map;
+    discussionFeedCacheAt = Date.now();
     try {
       sessionStorage.setItem(
-        'giscus-feed-v2:' + GISCUS_REPO,
-        JSON.stringify({ at: Date.now(), map: map }),
+        'giscus-feed-v3:' + GISCUS_REPO,
+        JSON.stringify({ at: discussionFeedCacheAt, map: map }),
       );
     } catch (e) { /* quota */ }
     return map;
   }
 
-  /** Same-origin JSON written at build/sync (avoids browser GitHub rate limits). */
-  function loadStaticDiscussionFeed() {
-    return fetch(discussionFeedJsonUrl(), { cache: 'no-cache' })
-      .then(function (res) {
-        if (!res.ok) throw new Error('feed json ' + res.status);
-        return res.json();
-      })
-      .then(function (payload) {
-        var map = normalizeFeedMap(payload);
-        if (!map || !Object.keys(map).length) throw new Error('empty feed json');
-        return rememberFeed(map);
-      });
-  }
+  /** Cloudflare Worker → GitHub Discussions (live). */
+  function loadWorkerDiscussionFeed() {
+    if (!DISCUSSION_FEED_API) return Promise.reject(new Error('no DISCUSSION_FEED_API'));
 
-  /**
-   * Live GraphQL fallback (often rate-limited unauthenticated). Prefer the
-   * static feed from sync-shell / deploy.
-   */
-  function loadLiveDiscussionFeed() {
-    var query =
-      'query($owner:String!,$name:String!,$categoryId:ID!,$cursor:String){' +
-      'repository(owner:$owner,name:$name){' +
-      'discussions(first:50,after:$cursor,categoryId:$categoryId,orderBy:{field:UPDATED_AT,direction:DESC}){' +
-      'pageInfo{hasNextPage endCursor}' +
-      'nodes{title url ' +
-      'comments(first:40){totalCount nodes{' +
-      'author{login avatarUrl} bodyText createdAt ' +
-      'replies(first:15){nodes{author{login avatarUrl} bodyText createdAt}}' +
-      '}}}}}';
-
-    var owner = GISCUS_REPO.split('/')[0];
-    var name = GISCUS_REPO.split('/')[1];
-    var map = {};
-
-    function page(cursor) {
-      return fetch('https://api.github.com/graphql', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          Accept: 'application/vnd.github+json',
-        },
-        body: JSON.stringify({
-          query: query,
-          variables: {
-            owner: owner,
-            name: name,
-            categoryId: GISCUS_CATEGORY_ID,
-            cursor: cursor || null,
-          },
-        }),
-      }).then(function (res) {
-        if (!res.ok) throw new Error('graphql ' + res.status);
-        return res.json();
-      }).then(function (json) {
-        if (json.errors && json.errors.length) throw new Error(json.errors[0].message || 'graphql error');
-        var conn = json.data && json.data.repository && json.data.repository.discussions;
-        if (!conn) throw new Error('no discussions');
-        (conn.nodes || []).forEach(function (d) {
-          if (!d || !d.title) return;
-          var comments = (d.comments && d.comments.nodes) || [];
-          map[d.title] = {
-            title: d.title,
-            url: d.url,
-            totalCount: (d.comments && d.comments.totalCount) || comments.length,
-            comments: comments.map(function (c) {
-              return {
-                author: (c.author && c.author.login) || 'مجهول',
-                avatar: (c.author && c.author.avatarUrl) || '',
-                body: c.bodyText || '',
-                createdAt: c.createdAt,
-                replies: ((c.replies && c.replies.nodes) || []).map(function (r) {
-                  return {
-                    author: (r.author && r.author.login) || 'مجهول',
-                    avatar: (r.author && r.author.avatarUrl) || '',
-                    body: r.bodyText || '',
-                    createdAt: r.createdAt,
-                  };
-                }),
-              };
-            }),
-          };
-        });
-        if (conn.pageInfo && conn.pageInfo.hasNextPage) {
-          return page(conn.pageInfo.endCursor);
-        }
-        return rememberFeed(map);
-      });
+    var url;
+    try {
+      var u = new URL(DISCUSSION_FEED_API);
+      var scope = giscusTermScope();
+      if (scope) u.searchParams.set('scope', scope);
+      url = u.toString();
+    } catch (e) {
+      throw new Error('bad DISCUSSION_FEED_API');
     }
 
-    return page(null);
+    return fetch(url, { cache: 'no-cache' }).then(function (res) {
+      if (!res.ok) throw new Error('feed worker ' + res.status);
+      return res.json();
+    }).then(function (payload) {
+      if (payload && payload.error) throw new Error(payload.error);
+      var map = normalizeFeedMap(payload);
+      if (!map) throw new Error('empty feed worker');
+      return rememberFeed(map);
+    });
   }
 
   /**
    * Load comment bodies for the read-only general discussion panel.
-   * No giscus expand / no comment box here — writing stays on the question modal.
+   * Worker first (live); probe-count fallback if the Worker is down.
    */
-  function loadDiscussionFeed() {
-    if (discussionFeedCache) return Promise.resolve(discussionFeedCache);
-    if (discussionFeedPromise) return discussionFeedPromise;
+  function loadDiscussionFeed(force) {
+    if (force) {
+      discussionFeedCache = null;
+      discussionFeedCacheAt = 0;
+      discussionFeedPromise = null;
+      try { sessionStorage.removeItem('giscus-feed-v3:' + GISCUS_REPO); } catch (e) { /* ignore */ }
+    }
+
+    if (
+      !force &&
+      discussionFeedCache &&
+      discussionFeedCacheAt &&
+      Date.now() - discussionFeedCacheAt < DISCUSSION_FEED_CACHE_MS
+    ) {
+      return Promise.resolve(discussionFeedCache);
+    }
+    if (!force && discussionFeedPromise) return discussionFeedPromise;
 
     try {
-      var raw = sessionStorage.getItem('giscus-feed-v2:' + GISCUS_REPO);
-      if (raw) {
-        var parsed = JSON.parse(raw);
-        if (parsed && parsed.at && Date.now() - parsed.at < 10 * 60 * 1000 && parsed.map) {
-          discussionFeedCache = parsed.map;
-          return Promise.resolve(discussionFeedCache);
+      if (!force) {
+        var raw = sessionStorage.getItem('giscus-feed-v3:' + GISCUS_REPO);
+        if (raw) {
+          var parsed = JSON.parse(raw);
+          if (
+            parsed &&
+            parsed.at &&
+            Date.now() - parsed.at < DISCUSSION_FEED_CACHE_MS &&
+            parsed.map
+          ) {
+            discussionFeedCache = parsed.map;
+            discussionFeedCacheAt = parsed.at;
+            return Promise.resolve(discussionFeedCache);
+          }
         }
       }
     } catch (e) { /* ignore */ }
 
-    discussionFeedPromise = loadStaticDiscussionFeed()
-      .catch(function () {
-        return loadLiveDiscussionFeed();
-      })
+    discussionFeedPromise = loadWorkerDiscussionFeed()
       .catch(function (err) {
         discussionFeedPromise = null;
-        console.warn('[comments] discussion feed unavailable', err);
+        console.warn('[comments] discussion feed worker unavailable', err);
         return null;
       });
 
@@ -944,16 +901,16 @@
         : 'تعليقات الأسئلة مرتّبة حسب النمط ثم الرقم — اسحب داخل الصندوق للقراءة. للكتابة: "أضف تعليقاً".';
     }
 
-    function showTab(id) {
+    function showTab(id, forceFeed) {
       setActiveTab(id);
       var kind = id === 'corrections' ? 'correction' : 'general';
       statusEl.textContent = 'جارِ تحميل التعليقات…';
       statusEl.classList.remove('hidden');
       listEl.innerHTML = '';
 
-      var ready = feedMapRef
+      var ready = (!forceFeed && feedMapRef)
         ? Promise.resolve(feedMapRef)
-        : loadDiscussionFeed();
+        : loadDiscussionFeed(!!forceFeed);
 
       ready.then(function (feedMap) {
         feedMapRef = feedMap;
@@ -970,9 +927,9 @@
       });
     }
 
-    tabByQ.addEventListener('click', function () { showTab('by-question'); });
-    tabCorr.addEventListener('click', function () { showTab('corrections'); });
-    showTab('by-question');
+    tabByQ.addEventListener('click', function () { showTab('by-question', false); });
+    tabCorr.addEventListener('click', function () { showTab('corrections', false); });
+    showTab('by-question', true);
   }
 
   function scanForUncountedToggles() {
@@ -1034,7 +991,9 @@
       var panel = guideBtn.parentElement && guideBtn.parentElement.querySelector('.guide-discussion-panel');
       if (!panel) return;
       panel.classList.toggle('hidden');
-      if (!panel.classList.contains('hidden') && !panel.dataset.mounted) {
+      if (!panel.classList.contains('hidden')) {
+        // Remount each open so the Worker feed can refresh (short TTL).
+        delete panel.dataset.mounted;
         mountGuideDiscussionByQuestion(panel, guideBtn);
       }
       return;
