@@ -138,7 +138,7 @@ function renderCorrectionPicker(q) {
     <button type="button" class="mcq-correction-copy-btn inline-flex items-center gap-xs px-md py-sm rounded-lg bg-primary text-on-primary font-label-md hover:opacity-90 transition-opacity">
       ${ms('content_copy', false, 'text-sm')} نسخ النص والمتابعة للتعليق
     </button>
-    <p class="mcq-correction-hint hidden mt-sm font-label-sm text-primary">✅ تم النسخ! الصق النص (Ctrl+V) في صندوق التعليق أدناه — يظهر نقاش هذا السؤال أيضاً ضمن "نقاش عام حول هذه الدورة" مرتّباً حسب رقم السؤال.</p>
+    <p class="mcq-correction-hint hidden mt-sm font-label-sm text-primary">✅ تم النسخ! الصق النص (Ctrl+V) في صندوق التعليق أدناه — التصحيح يظهر في تبويب "التصحيحات المقترحة فقط" داخل نقاش عام حول هذه الدورة.</p>
   </div>`;
 }
 
