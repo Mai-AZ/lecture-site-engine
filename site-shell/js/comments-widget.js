@@ -17,7 +17,7 @@
    */
   var DISCUSSION_FEED_API =
     (typeof window !== 'undefined' && window.DISCUSSION_FEED_API) ||
-    'https://homs-uni-discussion-feed.workers.dev';
+    'https://homs-uni-discussion-feed.lecture-site.workers.dev';
 
   // Client cache TTL — short so a normal refresh picks up new comments.
   var DISCUSSION_FEED_CACHE_MS = 90 * 1000;
