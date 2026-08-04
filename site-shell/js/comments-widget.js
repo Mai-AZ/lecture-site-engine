@@ -660,6 +660,7 @@
           author: c.author,
           answer: parsed.answer,
           reason: parsed.reason,
+          createdAt: c.createdAt || '',
         });
       }
     });
@@ -962,7 +963,53 @@
           : 'bg-outline-variant/60 text-on-surface-variant');
   }
 
-  function appendCommentsSection(parent, rows, letterCounts, siteAnswer) {
+  /**
+   * Flatten top-level comments + replies for overview cards.
+   * kind: 'general' | 'correction' — used as a small tag when threads are merged.
+   */
+  function flattenThreadComments(discussion, kind) {
+    var rows = [];
+    if (!discussion) return rows;
+    (discussion.comments || []).forEach(function (c) {
+      var parsed = parseCorrectionBody(c.body);
+      rows.push({
+        author: c.author || 'مجهول',
+        answer: parsed && parsed.answer,
+        text: (parsed && parsed.reason) || c.body || '',
+        kind: kind,
+        createdAt: c.createdAt || '',
+        isReply: false,
+        parentAuthor: '',
+      });
+      (c.replies || []).forEach(function (r) {
+        var rp = parseCorrectionBody(r.body);
+        rows.push({
+          author: r.author || 'مجهول',
+          answer: rp && rp.answer,
+          text: (rp && rp.reason) || r.body || '',
+          kind: kind,
+          createdAt: r.createdAt || '',
+          isReply: true,
+          parentAuthor: c.author || '',
+        });
+      });
+    });
+    return rows;
+  }
+
+  function sortCommentRowsByTime(rows) {
+    return (rows || []).slice().sort(function (a, b) {
+      var ta = Date.parse(a.createdAt) || 0;
+      var tb = Date.parse(b.createdAt) || 0;
+      if (ta !== tb) return ta - tb;
+      // Keep a reply after its parent when timestamps tie / missing.
+      if (a.isReply !== b.isReply) return a.isReply ? 1 : -1;
+      return 0;
+    });
+  }
+
+  function appendCommentsSection(parent, rows, letterCounts, siteAnswer, opts) {
+    opts = opts || {};
     if (!rows || !rows.length) return;
 
     var box = document.createElement('div');
@@ -970,7 +1017,7 @@
 
     var heading = document.createElement('p');
     heading.className = 'font-label-sm text-on-surface-variant m-0 mb-sm';
-    heading.textContent = 'تعليقات';
+    heading.textContent = opts.title || 'تعليقات';
     box.appendChild(heading);
 
     var list = document.createElement('div');
@@ -978,19 +1025,42 @@
 
     rows.forEach(function (r) {
       var row = document.createElement('div');
-      row.className = 'flex items-start gap-xs flex-wrap';
+      row.className = 'flex items-start gap-xs flex-wrap' + (r.isReply ? ' ps-md border-s-2 border-outline-variant/50 ms-xs' : '');
 
-      if (r.answer) {
-        var chip = document.createElement('span');
-        chip.className = optionLetterChipClass(r.answer, letterCounts, siteAnswer);
-        chip.textContent = r.answer;
-        row.appendChild(chip);
+      if (r.isReply) {
+        var replyMark = document.createElement('span');
+        replyMark.className = 'shrink-0 font-label-sm text-on-surface-variant';
+        replyMark.textContent = r.parentAuthor ? '↩ @' + r.parentAuthor : '↩ رد';
+        row.appendChild(replyMark);
       }
 
       var who = document.createElement('span');
       who.className = 'font-label-sm text-on-surface font-bold shrink-0';
       who.textContent = '@' + r.author;
       row.appendChild(who);
+
+      if (r.answer) {
+        var chip = document.createElement('span');
+        chip.className = optionLetterChipClass(r.answer, letterCounts, siteAnswer);
+        chip.textContent = r.answer;
+        chip.title = 'اختيار: ' + r.answer;
+        row.appendChild(chip);
+      }
+
+      var when = formatRelativeTime(r.createdAt);
+      if (when) {
+        var timeEl = document.createElement('time');
+        timeEl.className = 'shrink-0 font-label-sm text-on-surface-variant/80 tabular-nums';
+        timeEl.dateTime = r.createdAt || '';
+        timeEl.textContent = when;
+        try {
+          var abs = new Date(r.createdAt);
+          if (!Number.isNaN(abs.getTime())) {
+            timeEl.title = abs.toLocaleString('ar');
+          }
+        } catch (e) { /* ignore */ }
+        row.appendChild(timeEl);
+      }
 
       if (r.text) {
         var body = document.createElement('span');
@@ -1140,37 +1210,24 @@
 
     appendMcqPreview(section, item, letterCounts);
 
-    var commentRows = [];
-    if (kind === 'correction' && discussion) {
-      if (summary.reasons.length) {
-        summary.reasons.slice(0, 4).forEach(function (r) {
-          commentRows.push({
-            author: r.author,
-            answer: r.answer,
-            text: r.reason,
-          });
-        });
-      } else if (discussion.comments && discussion.comments.length) {
-        discussion.comments.slice(0, 3).forEach(function (c) {
-          var parsed = parseCorrectionBody(c.body);
-          commentRows.push({
-            author: c.author,
-            answer: parsed && parsed.answer,
-            text: (parsed && parsed.reason) || c.body,
-          });
-        });
-      }
-    } else if (discussion && discussion.comments && discussion.comments.length) {
-      discussion.comments.slice(0, 3).forEach(function (c) {
-        var parsed = parseCorrectionBody(c.body);
-        commentRows.push({
-          author: c.author,
-          answer: parsed && parsed.answer,
-          text: (parsed && parsed.reason) || c.body,
-        });
+    var commentRows = sortCommentRowsByTime(flattenThreadComments(discussion, kind)).slice(0, 8);
+    // Prefer structured correction reasons when present (cleaner than raw body).
+    if (kind === 'correction' && summary.reasons.length) {
+      var reasonRows = summary.reasons.map(function (r) {
+        return {
+          author: r.author,
+          answer: r.answer,
+          text: r.reason,
+          kind: 'correction',
+          createdAt: r.createdAt || '',
+          isReply: false,
+          parentAuthor: '',
+        };
       });
+      var replyRows = commentRows.filter(function (r) { return r.isReply; });
+      commentRows = reasonRows.concat(replyRows).slice(0, 8);
     }
-    appendCommentsSection(section, commentRows, letterCounts, siteAnswer);
+    appendCommentsSection(section, commentRows, letterCounts, siteAnswer, { showKind: false });
 
     var actions = document.createElement('div');
     actions.className = 'flex items-center gap-sm flex-wrap pt-xs border-t border-outline-variant/40';
@@ -1190,6 +1247,130 @@
       });
     }
     actions.appendChild(commentBtn);
+
+    var jump = document.createElement('a');
+    jump.href = '#' + encodeURIComponent(item.term);
+    jump.className = 'px-md py-sm rounded-lg font-label-md text-on-surface-variant hover:bg-surface-variant transition-colors';
+    jump.textContent = 'السؤال';
+    actions.appendChild(jump);
+
+    section.appendChild(actions);
+    return section;
+  }
+
+  /**
+   * One overview card per question for the "الكل" tab: same question, two
+   * comment boxes (corrections + general), each with its own replies/times.
+   */
+  function buildMergedQuestionFeedCard(item, generalDisc, corrDisc) {
+    var section = document.createElement('article');
+    section.className = 'guide-discussion-q mb-md p-md rounded-2xl border border-outline-variant bg-surface-container-lowest dark:bg-surface-container/30 custom-shadow';
+    section.dataset.questionNum = String(item.num);
+    section.dataset.discussionTerm = item.term;
+    section.dataset.discussionSource = item.source || '';
+    section.dataset.discussionKind = 'merged';
+
+    var summary = summarizeCorrections(corrDisc);
+    var gCount = (generalDisc && generalDisc.totalCount) || 0;
+    var cCount = (corrDisc && corrDisc.totalCount) || 0;
+    var count = gCount + cCount;
+    var preview = extractMcqPreview(item.term);
+    var siteAnswer = preview && preview.siteAnswer ? preview.siteAnswer : '';
+    var letterCounts = summary.letters || {};
+
+    var head = document.createElement('div');
+    head.className = 'flex items-center gap-sm flex-wrap mb-sm';
+
+    var title = document.createElement('span');
+    title.className = 'inline-flex items-center px-sm py-xs rounded-lg bg-secondary-container text-on-secondary-container font-code-sm text-code-sm';
+    title.textContent = 'س' + item.num;
+    head.appendChild(title);
+
+    if (cCount > 0) {
+      var peer = document.createElement('span');
+      peer.className = 'inline-flex items-center px-sm py-2xs rounded-full bg-tertiary-container text-on-tertiary-container font-label-sm';
+      peer.textContent = 'تصحيحات ' + cCount;
+      head.appendChild(peer);
+    }
+    if (gCount > 0) {
+      var genTag = document.createElement('span');
+      genTag.className = 'inline-flex items-center px-sm py-2xs rounded-full bg-surface-container-high text-on-surface-variant font-label-sm';
+      genTag.textContent = 'نقاش ' + gCount;
+      head.appendChild(genTag);
+    }
+
+    if (siteAnswer) {
+      var siteHead = document.createElement('span');
+      siteHead.className = 'inline-flex items-center px-sm py-2xs rounded-full bg-secondary-container/80 text-on-secondary-container font-label-sm';
+      siteHead.textContent = 'الموقع: ' + siteAnswer;
+      head.appendChild(siteHead);
+    }
+
+    if (count > 0) {
+      var countEl = document.createElement('span');
+      countEl.className = 'inline-flex items-center px-sm py-2xs rounded-full bg-surface-container-high text-on-surface-variant font-label-sm mr-auto';
+      countEl.textContent = count === 1 ? 'تعليق واحد' : count + ' تعليقات';
+      head.appendChild(countEl);
+    }
+
+    var pattern = patternLabel(item.source);
+    if (pattern) {
+      var patEl = document.createElement('span');
+      patEl.className = 'font-label-sm text-on-surface-variant';
+      patEl.textContent = truncateText(pattern, 36);
+      if (count <= 0) patEl.className += ' mr-auto';
+      head.appendChild(patEl);
+    }
+
+    section.appendChild(head);
+    appendMcqPreview(section, item, letterCounts);
+
+    // Two boxes on the same question card — corrections first, then general.
+    var corrRows = sortCommentRowsByTime(flattenThreadComments(corrDisc, 'correction')).slice(0, 8);
+    if (summary.reasons.length) {
+      var reasonRows = summary.reasons.map(function (r) {
+        return {
+          author: r.author,
+          answer: r.answer,
+          text: r.reason,
+          kind: 'correction',
+          createdAt: r.createdAt || '',
+          isReply: false,
+          parentAuthor: '',
+        };
+      });
+      var replyRows = corrRows.filter(function (r) { return r.isReply; });
+      corrRows = reasonRows.concat(replyRows).slice(0, 8);
+    }
+    appendCommentsSection(section, corrRows, letterCounts, siteAnswer, {
+      title: 'التصحيحات المقترحة',
+    });
+
+    var generalRows = sortCommentRowsByTime(flattenThreadComments(generalDisc, 'general')).slice(0, 8);
+    appendCommentsSection(section, generalRows, letterCounts, siteAnswer, {
+      title: 'تعليقات السؤال',
+    });
+
+    var actions = document.createElement('div');
+    actions.className = 'flex items-center gap-sm flex-wrap pt-xs border-t border-outline-variant/40';
+
+    var discussBtn = document.createElement('button');
+    discussBtn.type = 'button';
+    discussBtn.className = 'px-md py-sm rounded-lg bg-primary text-on-primary font-label-md hover:opacity-90 transition-opacity';
+    discussBtn.textContent = 'علّق';
+    discussBtn.addEventListener('click', function () {
+      openQuestionCommentByTerm(item.term, { mode: 'general' });
+    });
+    actions.appendChild(discussBtn);
+
+    var corrBtn = document.createElement('button');
+    corrBtn.type = 'button';
+    corrBtn.className = 'px-md py-sm rounded-lg border border-outline-variant font-label-md hover:bg-surface-variant transition-colors';
+    corrBtn.textContent = 'اقترح تصحيحاً';
+    corrBtn.addEventListener('click', function () {
+      openQuestionCommentByTerm(item.term, { mode: 'correction' });
+    });
+    actions.appendChild(corrBtn);
 
     var jump = document.createElement('a');
     jump.href = '#' + encodeURIComponent(item.term);
@@ -1346,10 +1527,9 @@
   }
 
   /**
-   * "الكل" tab: every general + correction thread with any activity, in one
-   * list. sortMode 'recent' surfaces new activity on old questions (someone
-   * commenting on س3 today should show up even if س40 has more comments
-   * overall); sortMode 'question' orders by pattern/number like the other tabs.
+   * "الكل" tab: one card per question, merging general + correction threads
+   * into a single comments box. sortMode 'recent' surfaces new activity on
+   * old questions; 'question' orders by pattern/number.
    */
   function renderAllDiscussionList(listEl, statusEl, questions, feedMap, sortMode) {
     listEl.innerHTML = '';
@@ -1357,19 +1537,17 @@
 
     var matched = [];
     questions.forEach(function (q) {
-      ['general', 'correction'].forEach(function (kind) {
-        var term = kind === 'correction' ? correctionTermFor(q.term) : q.term;
-        var discussion = lookupDiscussion(feedMap, term);
-        var count = discussion ? discussion.totalCount : 0;
-        if (count > 0) {
-          matched.push({
-            q: q,
-            kind: kind,
-            discussion: discussion,
-            count: count,
-            latest: latestActivityAt(discussion),
-          });
-        }
+      var general = lookupDiscussion(feedMap, q.term);
+      var correction = lookupDiscussion(feedMap, correctionTermFor(q.term));
+      var gCount = general ? general.totalCount : 0;
+      var cCount = correction ? correction.totalCount : 0;
+      if (gCount + cCount <= 0) return;
+      matched.push({
+        q: q,
+        general: general,
+        correction: correction,
+        count: gCount + cCount,
+        latest: Math.max(latestActivityAt(general), latestActivityAt(correction)),
       });
     });
 
@@ -1379,22 +1557,19 @@
       return Promise.resolve(0);
     }
 
+    function appendCard(m) {
+      listEl.appendChild(buildMergedQuestionFeedCard(
+        { term: m.q.term, num: m.q.num, source: m.q.source, count: m.count },
+        m.general,
+        m.correction,
+      ));
+    }
+
     if (sortMode === 'recent') {
       matched.sort(function (a, b) { return b.latest - a.latest; });
-      matched.forEach(function (m) {
-        listEl.appendChild(buildQuestionFeedCard(
-          { term: m.q.term, num: m.q.num, source: m.q.source, count: m.count },
-          m.kind,
-          m.discussion,
-        ));
-      });
+      matched.forEach(appendCard);
     } else {
-      matched.sort(function (a, b) {
-        var byQ = compareQuestionIdentity(a.q, b.q);
-        if (byQ !== 0) return byQ;
-        // Same question: correction first (matches the corrections-first framing elsewhere).
-        return a.kind === b.kind ? 0 : a.kind === 'correction' ? -1 : 1;
-      });
+      matched.sort(function (a, b) { return compareQuestionIdentity(a.q, b.q); });
       var lastPattern = null;
       matched.forEach(function (m) {
         var label = patternLabel(m.q.source) || 'بدون نمط';
@@ -1405,11 +1580,7 @@
           h.textContent = label;
           listEl.appendChild(h);
         }
-        listEl.appendChild(buildQuestionFeedCard(
-          { term: m.q.term, num: m.q.num, source: m.q.source, count: m.count },
-          m.kind,
-          m.discussion,
-        ));
+        appendCard(m);
       });
     }
     return Promise.resolve(matched.length);
@@ -1557,7 +1728,7 @@
       if (id === 'corrections') {
         intro.textContent = 'اقتراحات الطلاب بجانب كل خيار — وشارة "جواب الموقع" توضّح اختيار الدليل.';
       } else if (id === 'all') {
-        intro.textContent = 'كل شيء — تعليقات عامة وتصحيحات مع بعض، بلا تكرار الفتح لكل سؤال.';
+        intro.textContent = 'سؤال واحد = بطاقة واحدة: صندوق للتصحيحات وصندوق لتعليقات السؤال.';
       } else {
         intro.textContent = 'نقاش الأسئلة — اسحب داخل الصندوق للقراءة.';
       }
