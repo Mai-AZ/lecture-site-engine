@@ -144,6 +144,13 @@ export function renderCodeGuide(guide, deps, badgeLabel = '💻 أكواد ال�
 
   html += renderAnswerCorrections(guide);
 
+  html += `<div class="guide-discussion mb-xl">
+    <button type="button" class="guide-discussion-toggle inline-flex items-center gap-sm px-lg py-md bg-secondary-container text-on-secondary-container rounded-full font-label-md hover:opacity-90 transition-opacity" data-comment-term="${esc(guide.id)}-discussion">
+      ${ms('forum', false, 'text-lg')} نقاش عام حول هذه الدورة
+    </button>
+    <div class="guide-discussion-panel hidden mt-lg" data-comment-term="${esc(guide.id)}-discussion"></div>
+  </div>`;
+
   html += `<div class="lecture-body">`;
 
   guide.parts.forEach((part, pi) => {

@@ -119,6 +119,29 @@ function sourceTag(source) {
   return `<span class="font-label-md px-sm py-xs rounded-full bg-outline-variant/40 text-on-surface-variant">${esc(source)}</span>`;
 }
 
+/** Inline "propose a correction" helper shown inside a question's comment
+ * popup — lets a student pick which option they believe is correct and say
+ * why, then copies a formatted message for them to paste into the giscus
+ * comment box below (we can't inject text into that iframe directly, it's
+ * a third-party embed). */
+function renderCorrectionPicker(q) {
+  const optionsHtml = q.options
+    .map(opt => `<option value="${esc(opt.key.toUpperCase())}">${esc(opt.key.toUpperCase())} — ${esc(opt.text)}</option>`)
+    .join('');
+  return `<div class="mcq-correction-form hidden mb-md p-md bg-surface-container rounded-lg border border-outline-variant">
+    <label class="block font-label-md mb-xs">الإجابة الصحيحة برأيك:</label>
+    <select class="mcq-correction-answer w-full p-sm border border-outline-variant rounded-lg mb-md bg-surface">
+      ${optionsHtml}
+    </select>
+    <label class="block font-label-md mb-xs">ليش هاد هو الجواب الصحيح؟</label>
+    <textarea class="mcq-correction-reason w-full p-sm border border-outline-variant rounded-lg mb-md bg-surface" rows="3" placeholder="اشرح باختصار..."></textarea>
+    <button type="button" class="mcq-correction-copy-btn inline-flex items-center gap-xs px-md py-sm rounded-lg bg-primary text-on-primary font-label-md hover:opacity-90 transition-opacity">
+      ${ms('content_copy', false, 'text-sm')} نسخ النص والمتابعة للتعليق
+    </button>
+    <p class="mcq-correction-hint hidden mt-sm font-label-sm text-primary">✅ تم النسخ! الصق النص (Ctrl+V) في صندوق التعليق أدناه.</p>
+  </div>`;
+}
+
 /** Renders one answerable question as its own card — reused both for a
  * standalone question and for each sub-question inside a Case-2 group. */
 function renderMcqCard(q, cardId, { showSource = true } = {}) {
@@ -127,6 +150,9 @@ function renderMcqCard(q, cardId, { showSource = true } = {}) {
       <span class="px-sm py-xs bg-secondary-container text-on-secondary-container rounded-lg font-code-sm text-code-sm">س${q.num}</span>
       ${q.difficulty ? `<span class="font-label-md px-sm py-xs rounded-full ${diffBadgeClass(q.difficulty)}">${esc(q.difficulty)}</span>` : ''}
       ${showSource ? sourceTag(q.source) : ''}
+      <button type="button" class="mcq-comment-btn mr-auto p-xs rounded-full hover:bg-surface-variant transition-all" data-comment-term="${esc(cardId)}" aria-label="نقاش حول هذا السؤال" title="نقاش حول هذا السؤال">
+        ${ms('chat_bubble', false, 'text-on-surface-variant text-sm')}
+      </button>
     </div>
     ${renderQuestionStem(q.question)}
     <div class="grid grid-cols-1 md:grid-cols-2 gap-md mcq-options">`;
@@ -147,6 +173,14 @@ function renderMcqCard(q, cardId, { showSource = true } = {}) {
     <button type="button" data-mcq-reset class="mcq-reset-btn hidden mt-md inline-flex items-center gap-xs px-md py-sm rounded-lg border border-outline-variant bg-surface-container-high text-on-surface font-label-md hover:bg-surface-variant transition-all" aria-label="إعادة تعيين الإجابة">
       ${ms('restart_alt', false, 'text-sm')} إعادة تعيين الإجابة
     </button>
+    <div class="mcq-comment-popup hidden mt-md pt-md border-t border-outline-variant" data-comment-term="${esc(cardId)}" data-question-num="${esc(String(q.num))}">
+      <div class="mcq-comment-mode-picker flex gap-sm mb-md">
+        <button type="button" class="mcq-comment-mode-btn px-md py-sm rounded-lg border border-outline-variant hover:bg-surface-variant transition-all font-label-md" data-mode="general">${ms('chat_bubble', false, 'text-sm')} تعليق عام</button>
+        <button type="button" class="mcq-comment-mode-btn px-md py-sm rounded-lg border border-outline-variant hover:bg-surface-variant transition-all font-label-md" data-mode="correction">${ms('build', false, 'text-sm')} اقتراح تصحيح</button>
+      </div>
+      ${renderCorrectionPicker(q)}
+      <div class="mcq-comment-thread"></div>
+    </div>
   </article>`;
   return html;
 }
