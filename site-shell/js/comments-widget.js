@@ -414,47 +414,202 @@
     });
   }
 
+
   function correctionTermFor(baseTerm) {
     return baseTerm ? baseTerm + '/correction' : baseTerm;
   }
 
-  /**
-   * Probe every question on this lecture and update the guide badge with the
-   * total comment count across general + correction threads.
-   */
-  function refreshGuideDiscussionBadge(btn) {
-    var lecture = btn.closest('.lecture') || document;
-    var questions = collectQuestionThreads(lecture);
-    if (!questions.length) {
-      updateGuideDiscussionBadge(btn, 0);
-      return Promise.resolve(0);
-    }
-    return runPool(questions, 2, function (q) {
-      return Promise.all([
-        probeDiscussionCount(q.term),
-        probeDiscussionCount(correctionTermFor(q.term)),
-      ]).then(function (pair) {
-        return (pair[0] || 0) + (pair[1] || 0);
-      });
-    }).then(function (counts) {
-      var total = 0;
-      for (var i = 0; i < counts.length; i++) total += counts[i] || 0;
-      updateGuideDiscussionBadge(btn, total);
-      return total;
-    });
+  function escText(s) {
+    return String(s || '')
+      .replace(/&/g, '&amp;')
+      .replace(/</g, '&lt;')
+      .replace(/>/g, '&gt;')
+      .replace(/"/g, '&quot;');
   }
 
-  function buildQuestionDiscussionSection(item, kind) {
+  function formatRelativeTime(iso) {
+    var t = Date.parse(iso);
+    if (!Number.isFinite(t)) return '';
+    var sec = Math.round((Date.now() - t) / 1000);
+    if (sec < 60) return 'الآن';
+    var min = Math.round(sec / 60);
+    if (min < 60) return 'منذ ' + min + ' د';
+    var hr = Math.round(min / 60);
+    if (hr < 48) return 'منذ ' + hr + ' س';
+    var day = Math.round(hr / 24);
+    if (day < 30) return 'منذ ' + day + ' يوم';
+    return new Date(t).toLocaleDateString('ar');
+  }
+
+  // title (scoped term) -> { title, url, comments: [{author, avatar, body, createdAt, replies:[]}] }
+  var discussionFeedCache = null;
+  var discussionFeedPromise = null;
+
+  /**
+   * Load all exam-category discussions once (with comment bodies) via GitHub
+   * GraphQL. Cached for the page session. Used to render a read-only feed
+   * without embedding giscus (no expand / no comment box in the overview).
+   */
+  function loadDiscussionFeed() {
+    if (discussionFeedCache) return Promise.resolve(discussionFeedCache);
+    if (discussionFeedPromise) return discussionFeedPromise;
+
+    var cacheKey = 'giscus-feed-v1:' + GISCUS_REPO + ':' + GISCUS_CATEGORY_ID;
+    try {
+      var raw = sessionStorage.getItem(cacheKey);
+      if (raw) {
+        var parsed = JSON.parse(raw);
+        if (parsed && parsed.at && Date.now() - parsed.at < 10 * 60 * 1000 && parsed.map) {
+          discussionFeedCache = parsed.map;
+          return Promise.resolve(discussionFeedCache);
+        }
+      }
+    } catch (e) { /* ignore */ }
+
+    var query =
+      'query($owner:String!,$name:String!,$categoryId:ID!,$cursor:String){' +
+      'repository(owner:$owner,name:$name){' +
+      'discussions(first:50,after:$cursor,categoryId:$categoryId,orderBy:{field:UPDATED_AT,direction:DESC}){' +
+      'pageInfo{hasNextPage endCursor}' +
+      'nodes{title url ' +
+      'comments(first:40){totalCount nodes{' +
+      'author{login avatarUrl} bodyText createdAt ' +
+      'replies(first:15){nodes{author{login avatarUrl} bodyText createdAt}}' +
+      '}}}}}';
+
+    var owner = GISCUS_REPO.split('/')[0];
+    var name = GISCUS_REPO.split('/')[1];
+    var map = {};
+
+    function page(cursor) {
+      return fetch('https://api.github.com/graphql', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Accept: 'application/vnd.github+json',
+        },
+        body: JSON.stringify({
+          query: query,
+          variables: {
+            owner: owner,
+            name: name,
+            categoryId: GISCUS_CATEGORY_ID,
+            cursor: cursor || null,
+          },
+        }),
+      }).then(function (res) {
+        if (!res.ok) throw new Error('graphql ' + res.status);
+        return res.json();
+      }).then(function (json) {
+        if (json.errors && json.errors.length) throw new Error(json.errors[0].message || 'graphql error');
+        var conn = json.data && json.data.repository && json.data.repository.discussions;
+        if (!conn) throw new Error('no discussions');
+        (conn.nodes || []).forEach(function (d) {
+          if (!d || !d.title) return;
+          var comments = (d.comments && d.comments.nodes) || [];
+          map[d.title] = {
+            title: d.title,
+            url: d.url,
+            totalCount: (d.comments && d.comments.totalCount) || comments.length,
+            comments: comments.map(function (c) {
+              return {
+                author: (c.author && c.author.login) || 'مجهول',
+                avatar: (c.author && c.author.avatarUrl) || '',
+                body: c.bodyText || '',
+                createdAt: c.createdAt,
+                replies: ((c.replies && c.replies.nodes) || []).map(function (r) {
+                  return {
+                    author: (r.author && r.author.login) || 'مجهول',
+                    avatar: (r.author && r.author.avatarUrl) || '',
+                    body: r.bodyText || '',
+                    createdAt: r.createdAt,
+                  };
+                }),
+              };
+            }),
+          };
+        });
+        if (conn.pageInfo && conn.pageInfo.hasNextPage) {
+          return page(conn.pageInfo.endCursor);
+        }
+        return map;
+      });
+    }
+
+    discussionFeedPromise = page(null)
+      .then(function (m) {
+        discussionFeedCache = m;
+        try {
+          sessionStorage.setItem(cacheKey, JSON.stringify({ at: Date.now(), map: m }));
+        } catch (e) { /* quota */ }
+        return m;
+      })
+      .catch(function (err) {
+        discussionFeedPromise = null;
+        console.warn('[comments] discussion feed unavailable', err);
+        return null;
+      });
+
+    return discussionFeedPromise;
+  }
+
+  function openQuestionCommentByTerm(baseTerm) {
+    var popup = document.querySelector('.mcq-comment-popup[data-discussion-term="' + CSS.escape(baseTerm) + '"]');
+    if (!popup) return;
+    var card = popup.closest('article');
+    if (card) card.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    openQuestionModal(popup);
+  }
+
+  function renderCommentBubble(c, isReply) {
+    var wrap = document.createElement('div');
+    wrap.className = (isReply ? 'mr-xl ' : '') +
+      'mb-sm p-md rounded-xl bg-surface-container/80 border border-outline-variant/60';
+
+    var meta = document.createElement('div');
+    meta.className = 'flex items-center gap-sm mb-xs';
+
+    if (c.avatar) {
+      var img = document.createElement('img');
+      img.src = c.avatar;
+      img.alt = '';
+      img.width = 22;
+      img.height = 22;
+      img.className = 'rounded-full shrink-0';
+      meta.appendChild(img);
+    }
+
+    var who = document.createElement('span');
+    who.className = 'font-label-md text-on-surface';
+    who.textContent = '@' + c.author;
+    meta.appendChild(who);
+
+    var when = document.createElement('span');
+    when.className = 'font-label-sm text-on-surface-variant mr-auto';
+    when.textContent = formatRelativeTime(c.createdAt);
+    meta.appendChild(when);
+
+    wrap.appendChild(meta);
+
+    var body = document.createElement('p');
+    body.className = 'font-body-md text-on-surface whitespace-pre-wrap m-0 leading-relaxed';
+    body.textContent = c.body;
+    wrap.appendChild(body);
+    return wrap;
+  }
+
+  function buildQuestionFeedCard(item, kind, discussion) {
     var term = kind === 'correction' ? correctionTermFor(item.term) : item.term;
-    var section = document.createElement('section');
-    section.className = 'guide-discussion-q mb-md p-md rounded-xl border border-outline-variant bg-surface-container-lowest dark:bg-transparent';
+    var scoped = scopedDiscussionTerm(term);
+    var section = document.createElement('article');
+    section.className = 'guide-discussion-q mb-md p-md rounded-2xl border border-outline-variant bg-surface-container-lowest dark:bg-transparent';
     section.dataset.questionNum = String(item.num);
     section.dataset.discussionTerm = term;
     section.dataset.discussionSource = item.source || '';
     section.dataset.discussionKind = kind;
 
     var head = document.createElement('div');
-    head.className = 'flex items-center gap-sm flex-wrap';
+    head.className = 'flex items-center gap-sm flex-wrap mb-md';
 
     var title = document.createElement('h4');
     title.className = 'font-headline-sm text-headline-sm text-on-surface m-0';
@@ -476,92 +631,175 @@
       head.appendChild(tag);
     }
 
+    var count = (discussion && discussion.totalCount) || item.count || 0;
     var countEl = document.createElement('span');
-    countEl.className = 'guide-discussion-q-count px-sm py-2xs bg-secondary-container text-on-secondary-container rounded-full font-label-sm';
-    countEl.textContent = item.count + (item.count === 1 ? ' تعليق' : ' تعليقات');
+    countEl.className = 'px-sm py-2xs bg-secondary-container text-on-secondary-container rounded-full font-label-sm';
+    countEl.textContent = count + (count === 1 ? ' تعليق' : ' تعليقات');
     head.appendChild(countEl);
+
+    section.appendChild(head);
+
+    var feed = document.createElement('div');
+    feed.className = 'guide-discussion-q-feed space-y-sm mb-md';
+
+    if (discussion && discussion.comments && discussion.comments.length) {
+      discussion.comments.forEach(function (c) {
+        feed.appendChild(renderCommentBubble(c, false));
+        (c.replies || []).forEach(function (r) {
+          feed.appendChild(renderCommentBubble(r, true));
+        });
+      });
+    } else {
+      var miss = document.createElement('p');
+      miss.className = 'font-label-md text-on-surface-variant m-0';
+      miss.textContent = 'ما قدرنا نعرض نص التعليقات هنا — افتح السؤال لقراءتها.';
+      feed.appendChild(miss);
+    }
+    section.appendChild(feed);
+
+    var actions = document.createElement('div');
+    actions.className = 'flex items-center gap-sm flex-wrap';
 
     var jump = document.createElement('a');
     jump.href = '#' + encodeURIComponent(item.term);
     jump.className = 'font-label-sm text-primary underline';
     jump.textContent = 'اذهب للسؤال';
-    head.appendChild(jump);
+    actions.appendChild(jump);
 
-    var toggle = document.createElement('button');
-    toggle.type = 'button';
-    toggle.className = 'guide-discussion-q-toggle mr-auto px-md py-sm rounded-lg border border-outline-variant hover:bg-surface-variant transition-all font-label-md';
-    toggle.textContent = 'عرض النقاش';
-    head.appendChild(toggle);
-
-    section.appendChild(head);
-
-    var thread = document.createElement('div');
-    thread.className = 'guide-discussion-q-thread hidden mt-md min-h-[16rem]';
-    section.appendChild(thread);
-
-    toggle.addEventListener('click', function () {
-      var open = !thread.classList.contains('hidden');
-      if (open) {
-        thread.classList.add('hidden');
-        toggle.textContent = 'عرض النقاش';
-        return;
-      }
-      thread.classList.remove('hidden');
-      toggle.textContent = 'إخفاء النقاش';
-      if (!thread.dataset.mounted) {
-        mountGiscusThread(thread, term);
-      }
+    var commentBtn = document.createElement('button');
+    commentBtn.type = 'button';
+    commentBtn.className = 'px-md py-sm rounded-lg bg-primary text-on-primary font-label-md hover:opacity-90 transition-opacity';
+    commentBtn.textContent = 'أضف تعليقاً';
+    commentBtn.addEventListener('click', function () {
+      openQuestionCommentByTerm(item.term);
     });
+    actions.appendChild(commentBtn);
 
+    if (discussion && discussion.url) {
+      var gh = document.createElement('a');
+      gh.href = discussion.url;
+      gh.target = '_blank';
+      gh.rel = 'noopener';
+      gh.className = 'font-label-sm text-on-surface-variant underline';
+      gh.textContent = 'على GitHub';
+      actions.appendChild(gh);
+    }
+
+    section.appendChild(actions);
     return section;
   }
 
-  function renderDiscussionList(listEl, statusEl, questions, kind) {
+  function refreshGuideDiscussionBadge(btn, feedMap) {
+    var lecture = btn.closest('.lecture') || document;
+    var questions = collectQuestionThreads(lecture);
+    if (!questions.length) {
+      updateGuideDiscussionBadge(btn, 0);
+      return Promise.resolve(0);
+    }
+
+    if (feedMap) {
+      var total = 0;
+      questions.forEach(function (q) {
+        var g = feedMap[scopedDiscussionTerm(q.term)];
+        var c = feedMap[scopedDiscussionTerm(correctionTermFor(q.term))];
+        total += (g && g.totalCount) || 0;
+        total += (c && c.totalCount) || 0;
+      });
+      updateGuideDiscussionBadge(btn, total);
+      return Promise.resolve(total);
+    }
+
+    return runPool(questions, 2, function (q) {
+      return Promise.all([
+        probeDiscussionCount(q.term),
+        probeDiscussionCount(correctionTermFor(q.term)),
+      ]).then(function (pair) {
+        return (pair[0] || 0) + (pair[1] || 0);
+      });
+    }).then(function (counts) {
+      var total = 0;
+      for (var i = 0; i < counts.length; i++) total += counts[i] || 0;
+      updateGuideDiscussionBadge(btn, total);
+      return total;
+    });
+  }
+
+  function renderDiscussionList(listEl, statusEl, questions, kind, feedMap) {
+    listEl.innerHTML = '';
+    statusEl.classList.add('hidden');
+
+    var matched = [];
+    questions.forEach(function (q) {
+      var term = kind === 'correction' ? correctionTermFor(q.term) : q.term;
+      var scoped = scopedDiscussionTerm(term);
+      var discussion = feedMap && feedMap[scoped];
+      var count = discussion ? discussion.totalCount : 0;
+      if (count > 0) {
+        matched.push({ q: q, discussion: discussion, count: count });
+      }
+    });
+
+    if (!matched.length) {
+      statusEl.textContent = kind === 'correction'
+        ? 'ما في تصحيحات مقترحة بعد على أسئلة هذه الدورة.'
+        : 'ما في نقاشات على الأسئلة بعد — افتح أي سؤال وعلّق من أيقونة النقاش.';
+      statusEl.classList.remove('hidden');
+      return Promise.resolve(0);
+    }
+
+    matched.sort(function (a, b) {
+      return compareQuestionIdentity(a.q, b.q);
+    });
+
+    var lastPattern = null;
+    matched.forEach(function (m) {
+      var label = patternLabel(m.q.source) || 'بدون نمط';
+      if (label !== lastPattern) {
+        lastPattern = label;
+        var h = document.createElement('h3');
+        h.className = 'font-headline-sm text-headline-sm text-primary mt-lg mb-sm first:mt-0 sticky top-0 bg-surface/95 backdrop-blur-sm py-xs z-[1]';
+        h.textContent = label;
+        listEl.appendChild(h);
+      }
+      listEl.appendChild(buildQuestionFeedCard(
+        { term: m.q.term, num: m.q.num, source: m.q.source, count: m.count },
+        kind,
+        m.discussion,
+      ));
+    });
+    return Promise.resolve(matched.length);
+  }
+
+  /**
+   * When GraphQL is unavailable, fall back to giscus count probes and show
+   * compact cards (still no expand/embed — point students at the question).
+   */
+  function renderDiscussionListFallback(listEl, statusEl, questions, kind) {
     listEl.innerHTML = '';
     statusEl.textContent = kind === 'correction'
       ? 'جارِ البحث عن التصحيحات المقترحة…'
       : 'جارِ البحث عن نقاشات الأسئلة…';
     statusEl.classList.remove('hidden');
 
-    var found = 0;
-    var lastPattern = null;
-    // Append as probes succeed so the list fills progressively.
+    var found = [];
     return runPool(questions, 3, function (q) {
       var term = kind === 'correction' ? correctionTermFor(q.term) : q.term;
       return probeDiscussionCount(term).then(function (count) {
-        if (count > 0) {
-          found++;
-          listEl.appendChild(buildQuestionDiscussionSection({
-            term: q.term,
-            num: q.num,
-            source: q.source,
-            count: count,
-          }, kind));
-        }
+        if (count > 0) found.push({ q: q, count: count });
         return count;
       });
     }).then(function () {
-      if (!found) {
+      if (!found.length) {
         statusEl.textContent = kind === 'correction'
           ? 'ما في تصحيحات مقترحة بعد على أسئلة هذه الدورة.'
           : 'ما في نقاشات على الأسئلة بعد — افتح أي سؤال وعلّق من أيقونة النقاش.';
-        statusEl.classList.remove('hidden');
-      } else {
-        statusEl.classList.add('hidden');
+        return 0;
       }
-      // Re-order by pattern then question number (probes finish out of order).
-      var sections = Array.prototype.slice.call(listEl.querySelectorAll('.guide-discussion-q'));
-      sections.sort(function (a, b) {
-        return compareQuestionIdentity(
-          { source: a.dataset.discussionSource || '', num: parseInt(a.dataset.questionNum, 10) || 0, term: a.dataset.discussionTerm || '' },
-          { source: b.dataset.discussionSource || '', num: parseInt(b.dataset.questionNum, 10) || 0, term: b.dataset.discussionTerm || '' },
-        );
-      });
-      listEl.innerHTML = '';
-      lastPattern = null;
-      sections.forEach(function (s) {
-        var src = s.dataset.discussionSource || '';
-        var label = patternLabel(src) || 'بدون نمط';
+      statusEl.classList.add('hidden');
+      found.sort(function (a, b) { return compareQuestionIdentity(a.q, b.q); });
+      var lastPattern = null;
+      found.forEach(function (m) {
+        var label = patternLabel(m.q.source) || 'بدون نمط';
         if (label !== lastPattern) {
           lastPattern = label;
           var h = document.createElement('h3');
@@ -569,16 +807,19 @@
           h.textContent = label;
           listEl.appendChild(h);
         }
-        listEl.appendChild(s);
+        listEl.appendChild(buildQuestionFeedCard(
+          { term: m.q.term, num: m.q.num, source: m.q.source, count: m.count },
+          kind,
+          null,
+        ));
       });
-      return found;
+      return found.length;
     });
   }
 
   /**
-   * General DAWRAT discussion panel with two views:
-   * 1) by question number — only questions that already have comments
-   * 2) corrections only — only questions with a proposed-correction thread
+   * General DAWRAT discussion panel: scrollable read-only feed of comments,
+   * ordered by pattern then question number. Writing stays on the question modal.
    */
   function mountGuideDiscussionByQuestion(panel, btn) {
     var lecture = (btn && btn.closest('.lecture')) || panel.closest('.lecture') || document;
@@ -607,7 +848,7 @@
       return b;
     }
 
-    var tabByQ = makeTab('by-question', 'حسب رقم السؤال');
+    var tabByQ = makeTab('by-question', 'حسب النمط والسؤال');
     var tabCorr = makeTab('corrections', 'التصحيحات المقترحة فقط');
     tabs.appendChild(tabByQ);
     tabs.appendChild(tabCorr);
@@ -619,11 +860,18 @@
 
     var statusEl = document.createElement('div');
     statusEl.className = 'p-md text-center font-label-md text-on-surface-variant';
+    statusEl.textContent = 'جارِ تحميل التعليقات…';
     panel.appendChild(statusEl);
+
+    var scroller = document.createElement('div');
+    scroller.className = 'guide-discussion-scroller max-h-[70vh] overflow-y-auto overscroll-contain pr-xs rounded-xl';
+    panel.appendChild(scroller);
 
     var listEl = document.createElement('div');
     listEl.className = 'guide-discussion-list';
-    panel.appendChild(listEl);
+    scroller.appendChild(listEl);
+
+    var feedMapRef = null;
 
     function setActiveTab(id) {
       [tabByQ, tabCorr].forEach(function (b) {
@@ -633,15 +881,33 @@
         b.classList.toggle('border-transparent', on);
       });
       intro.textContent = id === 'corrections'
-        ? 'تصحيحات مقترحة فقط — مرتّبة حسب النمط ثم رقم السؤال:'
-        : 'نقاشات الأسئلة التي فيها تعليقات — مرتّبة حسب النمط (مثل 2022-2023) ثم رقم السؤال:';
+        ? 'تصحيحات مقترحة فقط — مرتّبة حسب النمط ثم رقم السؤال. للقراءة السريعة (التعليق من صفحة السؤال):'
+        : 'تعليقات الأسئلة — مرتّبة حسب النمط ثم رقم السؤال. اسحب للأسفل للقراءة؛ للكتابة اضغط "أضف تعليقاً":';
     }
 
     function showTab(id) {
       setActiveTab(id);
       var kind = id === 'corrections' ? 'correction' : 'general';
-      renderDiscussionList(listEl, statusEl, questions, kind).then(function () {
-        if (id === 'by-question' && btn) refreshGuideDiscussionBadge(btn);
+      statusEl.textContent = 'جارِ تحميل التعليقات…';
+      statusEl.classList.remove('hidden');
+      listEl.innerHTML = '';
+
+      var ready = feedMapRef
+        ? Promise.resolve(feedMapRef)
+        : loadDiscussionFeed();
+
+      ready.then(function (feedMap) {
+        feedMapRef = feedMap;
+        if (feedMap) {
+          return renderDiscussionList(listEl, statusEl, questions, kind, feedMap)
+            .then(function () {
+              if (btn) refreshGuideDiscussionBadge(btn, feedMap);
+            });
+        }
+        return renderDiscussionListFallback(listEl, statusEl, questions, kind)
+          .then(function () {
+            if (btn) refreshGuideDiscussionBadge(btn, null);
+          });
       });
     }
 
