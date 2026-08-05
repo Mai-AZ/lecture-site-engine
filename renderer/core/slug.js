@@ -19,10 +19,25 @@ export function mcqSectionAnchor(section) {
   return `sec-${slugify(normalizeMcqSection(section) || section)}`;
 }
 
+/** Normalize a "**المصدر:**" / نمط tag for use in ids and sort keys. */
+export function normalizeMcqPattern(source) {
+  return String(source || '')
+    .replace(/^\[|\]$/g, '')
+    .replace(/^المصدر:\s*/u, '')
+    .trim();
+}
+
+/** Short slug of the exam pattern (e.g. نمط 2022-2023 — الفصل الثاني). */
+export function mcqPatternSlug(source) {
+  const label = normalizeMcqPattern(source);
+  return label ? slugify(label).slice(0, 48) : '';
+}
+
 /**
- * DOM id for an MCQ card. When questions are grouped under "## نمط …" /
- * "## المحاضرة …" dividers, include the section so duplicate question numbers
- * across sittings stay unique (needed for deep-links).
+ * DOM id for an MCQ card. Identity is pattern (نمط / year sitting) + question
+ * number, plus the lecture section when present so deep-links stay unique.
+ * When section text and المصدر/نمط are the same, only `sec-…` is kept (no
+ * redundant `pat-…`) so giscus terms stay stable.
  */
 export function mcqCardDomId(partId, qOrNum, subNum) {
   const num = typeof qOrNum === 'object' && qOrNum != null ? qOrNum.num : qOrNum;
@@ -30,7 +45,19 @@ export function mcqCardDomId(partId, qOrNum, subNum) {
     typeof qOrNum === 'object' && qOrNum != null
       ? normalizeMcqSection(qOrNum.section)
       : '';
+  const source =
+    typeof qOrNum === 'object' && qOrNum != null
+      ? qOrNum.source
+      : '';
   const sec = section ? `${mcqSectionAnchor(section)}-` : '';
-  const base = `${partId}-${sec}q${num}`;
+  const sectionSlug = section ? slugify(section) : '';
+  const pat = mcqPatternSlug(source);
+  const patRedundant =
+    !pat ||
+    pat === sectionSlug ||
+    pat === sectionSlug.slice(0, 48) ||
+    (sectionSlug && sectionSlug.startsWith(pat));
+  const patPart = pat && !patRedundant ? `pat-${pat}-` : '';
+  const base = `${partId}-${sec}${patPart}q${num}`;
   return subNum != null && subNum !== '' ? `${base}-${subNum}` : base;
 }

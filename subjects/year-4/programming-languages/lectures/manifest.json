@@ -5,11 +5,20 @@
     "year": "2025-2026",
     "academicYear": 4,
     "theme": "programming-blue-lavender",
+    "enabledLectures": true,
     "department": "نظري"
   },
   "title": "لغات البرمجة — Programming Languages",
   "subtitle": "مفاهيم + تصميم + تنفيذ",
-  "files": [],
+  "files": [
+    {
+      "path": "par1.md",
+      "num": 1,
+      "icon": "📌",
+      "matIcon": "school",
+      "badge": "المحاضرة ١"
+    }
+  ],
   "lectureIcons": [
     "📌",
     "📖",

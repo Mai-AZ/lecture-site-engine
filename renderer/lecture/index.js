@@ -37,7 +37,13 @@ export function renderAnswerCorrections(guide) {
       const ref = esc(g.ref || section);
       const links = g.questions
         .map((n) => {
-          const id = mcqCardDomId(partId, { num: n, section });
+          // Prefer explicit source/pattern; many DAWRAT banks use the نمط
+          // sitting as the ## section label itself.
+          const id = mcqCardDomId(partId, {
+            num: n,
+            section: g.section,
+            source: g.source || g.section,
+          });
           return `<a href="#${esc(id)}" class="answer-corrections__q">${esc(String(n))}</a>`;
         })
         .join('');
@@ -143,6 +149,18 @@ export function renderCodeGuide(guide, deps, badgeLabel = '💻 أكواد ال�
   html += `</section>`;
 
   html += renderAnswerCorrections(guide);
+
+  // Aggregates per-question threads (see renderMcqCard) ordered by question
+  // number — not a single chronological giscus thread. comments-widget.js
+  // probes which questions already have comments and mounts each below a
+  // "سN" heading when this panel is opened.
+  html += `<div class="guide-discussion mb-xl">
+    <button type="button" class="guide-discussion-toggle inline-flex items-center gap-sm px-lg py-md bg-secondary-container text-on-secondary-container rounded-full font-label-md hover:opacity-90 transition-opacity" data-discussion-mode="corrections">
+      ${ms('forum', false, 'text-lg')} تصحيحات ونقاش الإجابات
+      <span class="guide-discussion-count hidden px-sm py-2xs bg-surface/60 rounded-full font-label-sm" title="عدد التصحيحات المقترحة"></span>
+    </button>
+    <div class="guide-discussion-panel hidden mt-lg" data-discussion-mode="corrections"></div>
+  </div>`;
 
   html += `<div class="lecture-body">`;
 

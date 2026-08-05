@@ -94,9 +94,19 @@ async function main() {
 
     await build(all, subject)
 
+    // Wait for a quiet window before rebuilding so mid-edit saves don't thrash.
+    const REBUILD_DEBOUNCE_MS = 5000
+    // live-server's default wait is 100ms — during a rebuild it sees hundreds of
+    // dist/ writes and reloads the browser on every one. Match the quiet window.
+    const LIVE_RELOAD_WAIT_MS = 5000
+
+    let pendingLabel = null
     const rebuild = debounce((filename) => {
+        const label = pendingLabel || filename || "sources"
+        pendingLabel = null
+        console.log(`↻ rebuilding after quiet window (${label})`)
         build(all, subject, isHubGeneratorChange(filename))
-    }, 250)
+    }, REBUILD_DEBOUNCE_MS)
 
     const watchDirs = all
         ? [
@@ -117,7 +127,7 @@ async function main() {
     for (const dir of watchDirs) {
         try {
             watch(dir, { recursive: true }, (_event, filename) => {
-                console.log(`↻ change detected: ${filename || dir}`)
+                pendingLabel = filename || path.relative(ENGINE_ROOT, dir)
                 rebuild(filename)
             })
             console.log(`watching ${path.relative(ENGINE_ROOT, dir)}`)
@@ -126,13 +136,17 @@ async function main() {
         }
     }
 
-    console.log(`\nStarting live-reload server → http://localhost:${port}\n`)
+    console.log(
+        `\nStarting live-reload server → http://localhost:${port}` +
+            ` (rebuild + reload after ${REBUILD_DEBOUNCE_MS / 1000}s quiet)\n`
+    )
     await run("npx", [
         "--yes",
         "live-server",
         outDir,
         `--port=${port}`,
         "--no-browser",
+        `--wait=${LIVE_RELOAD_WAIT_MS}`,
     ])
 }
 
