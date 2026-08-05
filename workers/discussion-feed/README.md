@@ -3,9 +3,15 @@
 Live JSON API for the DAWRAT **تصحيحات ونقاش الإجابات** panel (read-only).  
 Giscus stays only for writing on each question.
 
-Each discussion in the payload may include `reactionGroups`
-(`{ THUMBS_UP: n, HEART: n, … }` — only counts > 0) on the discussion and
-on each comment. Client uses these for card-level 👍 summaries.
+Each discussion in the payload may include:
+
+- `reactionGroups` (`{ THUMBS_UP: n, … }` — counts > 0) on the discussion and comments
+- `answerVotes` (`{ A: n, B: n, … }`) from comments tagged `#correction` (plus legacy Arabic correction templates)
+- `correctionCount` — how many of those correction comments/replies were found
+- per-comment `isCorrection` / `answer` flags for the client overview boxes
+
+Corrections and general chat share **one** Discussion per question. The old
+`…/correction` Discussion titles are still returned when they exist (legacy).
 
 ## Deploy
 

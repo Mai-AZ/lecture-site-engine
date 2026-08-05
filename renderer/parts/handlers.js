@@ -120,9 +120,9 @@ function sourceTag(source) {
 }
 
 /** Inline "propose a correction" helper shown inside a question's comment
- * popup — builds a structured correction message, copies it when possible,
- * then opens the correction Giscus thread with the draft visible above the
- * iframe (Giscus cannot be true-prefilled cross-origin). */
+ * popup — builds a `#correction`-tagged message, copies it when possible,
+ * then shows the draft above the shared question Giscus thread (same
+ * Discussion as general chat; Giscus cannot be true-prefilled cross-origin). */
 function renderCorrectionPicker(q) {
   const optionsHtml = q.options
     .map(opt => `<option value="${esc(opt.key.toUpperCase())}">${esc(opt.key.toUpperCase())} — ${esc(opt.text)}</option>`)

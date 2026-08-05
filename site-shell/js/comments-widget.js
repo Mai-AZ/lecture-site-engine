@@ -24,7 +24,7 @@
 
   // Client cache TTL — short so a normal refresh picks up new comments.
   var DISCUSSION_FEED_CACHE_MS = 90 * 1000;
-  var FEED_STORAGE_KEY = 'giscus-feed-v4:' + GISCUS_REPO;
+  var FEED_STORAGE_KEY = 'giscus-feed-v5:' + GISCUS_REPO;
 
   /**
    * Globally unique subject key for giscus terms. DOM ids reuse short stems
@@ -615,11 +615,16 @@
   }
 
   function correctionTermFor(baseTerm) {
+    // Legacy only — old posts used a separate `…/correction` Discussion.
+    // New writes all go to the base question term with a `#correction` tag.
     return baseTerm ? baseTerm + '/correction' : baseTerm;
   }
 
   /**
-   * Parse a structured correction comment body:
+   * Parse a correction comment. Canonical marker: `#correction` at the start.
+   * Legacy Arabic templates (from old `/correction` threads) still match.
+   *
+   *   #correction
    *   🔧 تصحيح مقترح — السؤال سN …
    *   الإجابة الصحيحة برأيي: X
    *   السبب: …
@@ -627,43 +632,111 @@
   function parseCorrectionBody(body) {
     if (!body) return null;
     var text = String(body);
-    var looksLike =
+    var trimmed = text.trim();
+    var hasTag = /^#correction\b/i.test(trimmed);
+    var legacy =
       /🔧\s*تصحيح مقترح/.test(text) ||
       /تصحيح مقترح/.test(text) ||
       /الإجابة الصحيحة برأيي\s*:/.test(text);
-    if (!looksLike) return null;
+    if (!hasTag && !legacy) return null;
 
+    var answer = null;
+    var tagAns = trimmed.match(/^#correction(?:\s*[:=]\s*|\s+)([A-Za-z])/i);
+    if (tagAns) answer = String(tagAns[1]).toUpperCase();
     var answerMatch = text.match(/الإجابة الصحيحة برأيي\s*:\s*([A-Za-zأ-ي٠-٩0-9])/u);
+    if (answerMatch) answer = String(answerMatch[1]).toUpperCase();
+
     var reasonMatch = text.match(/السبب\s*:\s*([\s\S]+)/u);
-    var answer = answerMatch ? String(answerMatch[1]).toUpperCase() : null;
     var reason = reasonMatch ? reasonMatch[1].trim() : '';
-    // Drop trailing author noise / replies markers from reason preview.
     if (reason.length > 180) reason = reason.slice(0, 177) + '…';
+    // Body without a reason line: show text after the hashtag / first line.
+    if (!reason) {
+      var stripped = trimmed.replace(/^#correction\b[^\n]*\n?/i, '').trim();
+      if (stripped) reason = truncateText(stripped, 120);
+    }
     return { answer: answer, reason: reason, raw: text };
   }
 
-  /** Aggregate proposed letters + short reasons from a correction thread. */
+  function mergeVoteMaps(a, b) {
+    var out = {};
+    [a, b].forEach(function (map) {
+      Object.keys(map || {}).forEach(function (k) {
+        out[k] = (out[k] || 0) + (map[k] || 0);
+      });
+    });
+    return out;
+  }
+
+  /**
+   * One Discussion per question. Also folds in a legacy `…/correction`
+   * thread when it still exists, so old posts keep showing.
+   */
+  function questionDiscussion(feedMap, term) {
+    var main = lookupDiscussion(feedMap, term);
+    var legacy = lookupDiscussion(feedMap, correctionTermFor(term));
+    if (!main && !legacy) return null;
+    if (main && !legacy) return main;
+    if (!main && legacy) return legacy;
+
+    var comments = (main.comments || []).concat(legacy.comments || []);
+    return {
+      title: main.title,
+      url: main.url,
+      totalCount: (main.totalCount || 0) + (legacy.totalCount || 0),
+      reactionGroups: mergeVoteMaps(main.reactionGroups, legacy.reactionGroups),
+      answerVotes: mergeVoteMaps(main.answerVotes, legacy.answerVotes),
+      correctionCount:
+        (typeof main.correctionCount === 'number' ? main.correctionCount : 0) +
+        (typeof legacy.correctionCount === 'number' ? legacy.correctionCount : 0),
+      comments: comments,
+    };
+  }
+
+  /** Aggregate proposed letters + short reasons from #correction comments. */
   function summarizeCorrections(discussion) {
     var letters = {};
     var reasons = [];
     var corrCount = 0;
     var comments = (discussion && discussion.comments) || [];
+
+    if (discussion && discussion.answerVotes && typeof discussion.answerVotes === 'object') {
+      letters = Object.assign({}, discussion.answerVotes);
+    }
+
     comments.forEach(function (c) {
-      var parsed = parseCorrectionBody(c.body);
-      if (!parsed) return;
+      var isCorr = c.isCorrection || !!parseCorrectionBody(c.body);
+      if (!isCorr) return;
       corrCount += 1;
-      if (parsed.answer) {
-        letters[parsed.answer] = (letters[parsed.answer] || 0) + 1;
+      var parsed = parseCorrectionBody(c.body);
+      var answer = c.answer || (parsed && parsed.answer);
+      if (answer && !discussion.answerVotes) {
+        letters[answer] = (letters[answer] || 0) + 1;
       }
-      if (parsed.reason && reasons.length < 3) {
+      var reason = (parsed && parsed.reason) || '';
+      if (reason && reasons.length < 3) {
         reasons.push({
           author: c.author,
-          answer: parsed.answer,
-          reason: parsed.reason,
+          answer: answer,
+          reason: reason,
           createdAt: c.createdAt || '',
         });
       }
+      (c.replies || []).forEach(function (r) {
+        var rCorr = r.isCorrection || !!parseCorrectionBody(r.body);
+        if (!rCorr) return;
+        corrCount += 1;
+        var rp = parseCorrectionBody(r.body);
+        var rAns = r.answer || (rp && rp.answer);
+        if (rAns && !discussion.answerVotes) {
+          letters[rAns] = (letters[rAns] || 0) + 1;
+        }
+      });
     });
+
+    if (typeof discussion.correctionCount === 'number' && discussion.correctionCount > corrCount) {
+      corrCount = discussion.correctionCount;
+    }
+
     return {
       letters: letters,
       reasons: reasons,
@@ -977,16 +1050,22 @@
 
   /**
    * Flatten top-level comments + replies for overview cards.
-   * kind: 'general' | 'correction' — used as a small tag when threads are merged.
+   * filterKind: 'all' | 'correction' | 'general'
    */
-  function flattenThreadComments(discussion, kind) {
+  function flattenThreadComments(discussion, filterKind) {
     var rows = [];
     if (!discussion) return rows;
+    filterKind = filterKind || 'all';
     (discussion.comments || []).forEach(function (c) {
       var parsed = parseCorrectionBody(c.body);
+      var isCorr = c.isCorrection || !!parsed;
+      var kind = isCorr ? 'correction' : 'general';
+      if (filterKind === 'correction' && !isCorr) return;
+      if (filterKind === 'general' && isCorr) return;
+
       rows.push({
         author: c.author || 'مجهول',
-        answer: parsed && parsed.answer,
+        answer: c.answer || (parsed && parsed.answer),
         text: (parsed && parsed.reason) || c.body || '',
         kind: kind,
         createdAt: c.createdAt || '',
@@ -994,10 +1073,13 @@
         parentAuthor: '',
       });
       (c.replies || []).forEach(function (r) {
+        // Replies stay in the same box as their parent comment.
+        if (filterKind === 'correction' && !isCorr) return;
+        if (filterKind === 'general' && isCorr) return;
         var rp = parseCorrectionBody(r.body);
         rows.push({
           author: r.author || 'مجهول',
-          answer: rp && rp.answer,
+          answer: r.answer || (rp && rp.answer),
           text: (rp && rp.reason) || r.body || '',
           kind: kind,
           createdAt: r.createdAt || '',
@@ -1174,22 +1256,18 @@
   }
 
   function buildQuestionFeedCard(item, kind, discussion) {
-    var term = kind === 'correction' ? correctionTermFor(item.term) : item.term;
     var section = document.createElement('article');
     section.className = 'guide-discussion-q mb-md p-md rounded-2xl border border-outline-variant bg-surface-container-lowest dark:bg-surface-container/30 custom-shadow';
     section.dataset.questionNum = String(item.num);
-    section.dataset.discussionTerm = term;
+    section.dataset.discussionTerm = item.term;
     section.dataset.discussionSource = item.source || '';
     section.dataset.discussionKind = kind;
 
-    var summary = kind === 'correction' && discussion
-      ? summarizeCorrections(discussion)
-      : { letters: {}, reasons: [] };
-
+    var summary = summarizeCorrections(discussion);
     var count = (discussion && discussion.totalCount) || item.count || 0;
     var preview = extractMcqPreview(item.term);
     var siteAnswer = preview && preview.siteAnswer ? preview.siteAnswer : '';
-    var letterCounts = kind === 'correction' ? summary.letters : {};
+    var letterCounts = kind === 'correction' || kind === 'merged' ? summary.letters : {};
 
     var head = document.createElement('div');
     head.className = 'flex items-center gap-sm flex-wrap mb-sm';
@@ -1199,7 +1277,7 @@
     title.textContent = 'س' + item.num;
     head.appendChild(title);
 
-    if (kind === 'correction') {
+    if (kind === 'correction' || (kind === 'merged' && summary.corrCount > 0)) {
       var peer = document.createElement('span');
       peer.className = 'inline-flex items-center px-sm py-2xs rounded-full bg-tertiary-container text-on-tertiary-container font-label-sm';
       peer.textContent = 'اقتراح طلاب';
@@ -1233,24 +1311,56 @@
 
     appendMcqPreview(section, item, letterCounts);
 
-    var commentRows = sortCommentRowsByTime(flattenThreadComments(discussion, kind)).slice(0, 8);
-    // Prefer structured correction reasons when present (cleaner than raw body).
-    if (kind === 'correction' && summary.reasons.length) {
-      var reasonRows = summary.reasons.map(function (r) {
-        return {
-          author: r.author,
-          answer: r.answer,
-          text: r.reason,
-          kind: 'correction',
-          createdAt: r.createdAt || '',
-          isReply: false,
-          parentAuthor: '',
-        };
+    if (kind === 'correction') {
+      var corrOnly = sortCommentRowsByTime(flattenThreadComments(discussion, 'correction')).slice(0, 8);
+      if (summary.reasons.length) {
+        var reasonRows = summary.reasons.map(function (r) {
+          return {
+            author: r.author,
+            answer: r.answer,
+            text: r.reason,
+            kind: 'correction',
+            createdAt: r.createdAt || '',
+            isReply: false,
+            parentAuthor: '',
+          };
+        });
+        var replyRows = corrOnly.filter(function (r) { return r.isReply; });
+        corrOnly = reasonRows.concat(replyRows).slice(0, 8);
+      }
+      appendCommentsSection(section, corrOnly, letterCounts, siteAnswer, {
+        title: 'التصحيحات المقترحة',
       });
-      var replyRows = commentRows.filter(function (r) { return r.isReply; });
-      commentRows = reasonRows.concat(replyRows).slice(0, 8);
+    } else if (kind === 'general') {
+      var genOnly = sortCommentRowsByTime(flattenThreadComments(discussion, 'general')).slice(0, 8);
+      appendCommentsSection(section, genOnly, letterCounts, siteAnswer, {
+        title: 'تعليقات السؤال',
+      });
+    } else {
+      // merged — both boxes from the same Discussion
+      var corrRows = sortCommentRowsByTime(flattenThreadComments(discussion, 'correction')).slice(0, 8);
+      if (summary.reasons.length) {
+        var rRows = summary.reasons.map(function (r) {
+          return {
+            author: r.author,
+            answer: r.answer,
+            text: r.reason,
+            kind: 'correction',
+            createdAt: r.createdAt || '',
+            isReply: false,
+            parentAuthor: '',
+          };
+        });
+        corrRows = rRows.concat(corrRows.filter(function (r) { return r.isReply; })).slice(0, 8);
+      }
+      appendCommentsSection(section, corrRows, letterCounts, siteAnswer, {
+        title: 'التصحيحات المقترحة',
+      });
+      var generalRows = sortCommentRowsByTime(flattenThreadComments(discussion, 'general')).slice(0, 8);
+      appendCommentsSection(section, generalRows, letterCounts, siteAnswer, {
+        title: 'تعليقات السؤال',
+      });
     }
-    appendCommentsSection(section, commentRows, letterCounts, siteAnswer, { showKind: false });
 
     var actions = document.createElement('div');
     actions.className = 'flex items-center gap-sm flex-wrap pt-xs border-t border-outline-variant/40';
@@ -1258,133 +1368,11 @@
     var commentBtn = document.createElement('button');
     commentBtn.type = 'button';
     commentBtn.className = 'px-md py-sm rounded-lg bg-primary text-on-primary font-label-md hover:opacity-90 transition-opacity';
-    if (kind === 'correction') {
-      commentBtn.textContent = 'اقترح تصحيحاً';
-      commentBtn.addEventListener('click', function () {
-        openQuestionCommentByTerm(item.term, { mode: 'correction' });
-      });
-    } else {
-      commentBtn.textContent = 'علّق';
-      commentBtn.addEventListener('click', function () {
-        openQuestionCommentByTerm(item.term, { mode: 'general' });
-      });
-    }
-    actions.appendChild(commentBtn);
-
-    var jump = document.createElement('a');
-    jump.href = '#' + encodeURIComponent(item.term);
-    jump.className = 'px-md py-sm rounded-lg font-label-md text-on-surface-variant hover:bg-surface-variant transition-colors';
-    jump.textContent = 'السؤال';
-    actions.appendChild(jump);
-
-    section.appendChild(actions);
-    return section;
-  }
-
-  /**
-   * One overview card per question for the "الكل" tab: same question, two
-   * comment boxes (corrections + general), each with its own replies/times.
-   */
-  function buildMergedQuestionFeedCard(item, generalDisc, corrDisc) {
-    var section = document.createElement('article');
-    section.className = 'guide-discussion-q mb-md p-md rounded-2xl border border-outline-variant bg-surface-container-lowest dark:bg-surface-container/30 custom-shadow';
-    section.dataset.questionNum = String(item.num);
-    section.dataset.discussionTerm = item.term;
-    section.dataset.discussionSource = item.source || '';
-    section.dataset.discussionKind = 'merged';
-
-    var summary = summarizeCorrections(corrDisc);
-    var gCount = (generalDisc && generalDisc.totalCount) || 0;
-    var cCount = (corrDisc && corrDisc.totalCount) || 0;
-    var count = gCount + cCount;
-    var preview = extractMcqPreview(item.term);
-    var siteAnswer = preview && preview.siteAnswer ? preview.siteAnswer : '';
-    var letterCounts = summary.letters || {};
-
-    var head = document.createElement('div');
-    head.className = 'flex items-center gap-sm flex-wrap mb-sm';
-
-    var title = document.createElement('span');
-    title.className = 'inline-flex items-center px-sm py-xs rounded-lg bg-secondary-container text-on-secondary-container font-code-sm text-code-sm';
-    title.textContent = 'س' + item.num;
-    head.appendChild(title);
-
-    if (cCount > 0) {
-      var peer = document.createElement('span');
-      peer.className = 'inline-flex items-center px-sm py-2xs rounded-full bg-tertiary-container text-on-tertiary-container font-label-sm';
-      peer.textContent = 'تصحيحات ' + cCount;
-      head.appendChild(peer);
-    }
-    if (gCount > 0) {
-      var genTag = document.createElement('span');
-      genTag.className = 'inline-flex items-center px-sm py-2xs rounded-full bg-surface-container-high text-on-surface-variant font-label-sm';
-      genTag.textContent = 'نقاش ' + gCount;
-      head.appendChild(genTag);
-    }
-
-    if (siteAnswer) {
-      var siteHead = document.createElement('span');
-      siteHead.className = 'inline-flex items-center px-sm py-2xs rounded-full bg-secondary-container/80 text-on-secondary-container font-label-sm';
-      siteHead.textContent = 'الموقع: ' + siteAnswer;
-      head.appendChild(siteHead);
-    }
-
-    if (count > 0) {
-      var countEl = document.createElement('span');
-      countEl.className = 'inline-flex items-center px-sm py-2xs rounded-full bg-surface-container-high text-on-surface-variant font-label-sm mr-auto';
-      countEl.textContent = count === 1 ? 'تعليق واحد' : count + ' تعليقات';
-      head.appendChild(countEl);
-    }
-
-    var pattern = patternLabel(item.source);
-    if (pattern) {
-      var patEl = document.createElement('span');
-      patEl.className = 'font-label-sm text-on-surface-variant';
-      patEl.textContent = truncateText(pattern, 36);
-      if (count <= 0) patEl.className += ' mr-auto';
-      head.appendChild(patEl);
-    }
-
-    section.appendChild(head);
-    appendMcqPreview(section, item, letterCounts);
-
-    // Two boxes on the same question card — corrections first, then general.
-    var corrRows = sortCommentRowsByTime(flattenThreadComments(corrDisc, 'correction')).slice(0, 8);
-    if (summary.reasons.length) {
-      var reasonRows = summary.reasons.map(function (r) {
-        return {
-          author: r.author,
-          answer: r.answer,
-          text: r.reason,
-          kind: 'correction',
-          createdAt: r.createdAt || '',
-          isReply: false,
-          parentAuthor: '',
-        };
-      });
-      var replyRows = corrRows.filter(function (r) { return r.isReply; });
-      corrRows = reasonRows.concat(replyRows).slice(0, 8);
-    }
-    appendCommentsSection(section, corrRows, letterCounts, siteAnswer, {
-      title: 'التصحيحات المقترحة',
-    });
-
-    var generalRows = sortCommentRowsByTime(flattenThreadComments(generalDisc, 'general')).slice(0, 8);
-    appendCommentsSection(section, generalRows, letterCounts, siteAnswer, {
-      title: 'تعليقات السؤال',
-    });
-
-    var actions = document.createElement('div');
-    actions.className = 'flex items-center gap-sm flex-wrap pt-xs border-t border-outline-variant/40';
-
-    var discussBtn = document.createElement('button');
-    discussBtn.type = 'button';
-    discussBtn.className = 'px-md py-sm rounded-lg bg-primary text-on-primary font-label-md hover:opacity-90 transition-opacity';
-    discussBtn.textContent = 'علّق';
-    discussBtn.addEventListener('click', function () {
+    commentBtn.textContent = 'علّق';
+    commentBtn.addEventListener('click', function () {
       openQuestionCommentByTerm(item.term, { mode: 'general' });
     });
-    actions.appendChild(discussBtn);
+    actions.appendChild(commentBtn);
 
     var corrBtn = document.createElement('button');
     corrBtn.type = 'button';
@@ -1406,8 +1394,15 @@
   }
 
   /**
-   * Guide badge: prefer correction-thread counts from Worker.
-   * Falls back to general+correction probes only when feedMap is null.
+   * One overview card per question — single Discussion, two comment boxes
+   * (#correction vs everything else). Legacy `/correction` threads are folded in.
+   */
+  function buildMergedQuestionFeedCard(item, discussion) {
+    return buildQuestionFeedCard(item, 'merged', discussion);
+  }
+
+  /**
+   * Guide badge: prefer #correction counts from Worker; else total activity.
    */
   function refreshGuideDiscussionBadge(btn, feedMap) {
     var lecture = btn.closest('.lecture') || document;
@@ -1421,35 +1416,23 @@
       var corrTotal = 0;
       var anyTotal = 0;
       questions.forEach(function (q) {
-        var g = lookupDiscussion(feedMap, q.term);
-        var c = lookupDiscussion(feedMap, correctionTermFor(q.term));
-        corrTotal += (c && c.totalCount) || 0;
-        anyTotal += (g && g.totalCount) || 0;
-        anyTotal += (c && c.totalCount) || 0;
+        var d = questionDiscussion(feedMap, q.term);
+        if (!d) return;
+        var s = summarizeCorrections(d);
+        corrTotal += s.corrCount || 0;
+        anyTotal += d.totalCount || 0;
       });
-      // Corrections-first: show correction count when any exist, else total activity.
       updateGuideDiscussionBadge(btn, corrTotal > 0 ? corrTotal : anyTotal);
       return Promise.resolve(corrTotal > 0 ? corrTotal : anyTotal);
     }
 
-    return runPool(questions, 2, function (q) {
-      return Promise.all([
-        probeDiscussionCount(q.term),
-        probeDiscussionCount(correctionTermFor(q.term)),
-      ]).then(function (pair) {
-        return { general: pair[0] || 0, corr: pair[1] || 0 };
-      });
+    return runPool(questions, 3, function (q) {
+      return probeDiscussionCount(q.term);
     }).then(function (counts) {
-      var corrTotal = 0;
       var anyTotal = 0;
-      for (var i = 0; i < counts.length; i++) {
-        var row = counts[i] || { general: 0, corr: 0 };
-        corrTotal += row.corr;
-        anyTotal += row.general + row.corr;
-      }
-      var shown = corrTotal > 0 ? corrTotal : anyTotal;
-      updateGuideDiscussionBadge(btn, shown);
-      return shown;
+      for (var i = 0; i < counts.length; i++) anyTotal += counts[i] || 0;
+      updateGuideDiscussionBadge(btn, anyTotal);
+      return anyTotal;
     });
   }
 
@@ -1490,17 +1473,19 @@
 
     var matched = [];
     questions.forEach(function (q) {
-      var term = kind === 'correction' ? correctionTermFor(q.term) : q.term;
-      var discussion = lookupDiscussion(feedMap, term);
-      var count = discussion ? discussion.totalCount : 0;
-      if (count > 0) {
-        matched.push({
-          q: q,
-          discussion: discussion,
-          count: count,
-          hotness: kind === 'correction' ? correctionHotness(discussion) : 0,
-        });
+      var discussion = questionDiscussion(feedMap, q.term);
+      if (!discussion || !discussion.totalCount) return;
+      var summary = summarizeCorrections(discussion);
+      if (kind === 'correction' && !(summary.corrCount > 0)) return;
+      if (kind === 'general' && flattenThreadComments(discussion, 'general').length === 0 && summary.corrCount > 0) {
+        // Only corrections — still show under by-question? Yes, show the card.
       }
+      matched.push({
+        q: q,
+        discussion: discussion,
+        count: discussion.totalCount,
+        hotness: kind === 'correction' ? correctionHotness(discussion) : 0,
+      });
     });
 
     if (!matched.length) {
@@ -1521,7 +1506,7 @@
       matched.forEach(function (m) {
         listEl.appendChild(buildQuestionFeedCard(
           { term: m.q.term, num: m.q.num, source: m.q.source, count: m.count },
-          kind,
+          'correction',
           m.discussion,
         ));
       });
@@ -1539,9 +1524,10 @@
           h.textContent = label;
           listEl.appendChild(h);
         }
+        // by-question: show both boxes so the card matches what students see in the modal later
         listEl.appendChild(buildQuestionFeedCard(
           { term: m.q.term, num: m.q.num, source: m.q.source, count: m.count },
-          kind,
+          'merged',
           m.discussion,
         ));
       });
@@ -1550,9 +1536,8 @@
   }
 
   /**
-   * "الكل" tab: one card per question, merging general + correction threads
-   * into a single comments box. sortMode 'recent' surfaces new activity on
-   * old questions; 'question' orders by pattern/number.
+   * "الكل" tab: one card per question from a single Discussion (plus any
+   * legacy `/correction` thread). sortMode 'recent' | 'question'.
    */
   function renderAllDiscussionList(listEl, statusEl, questions, feedMap, sortMode) {
     listEl.innerHTML = '';
@@ -1560,17 +1545,13 @@
 
     var matched = [];
     questions.forEach(function (q) {
-      var general = lookupDiscussion(feedMap, q.term);
-      var correction = lookupDiscussion(feedMap, correctionTermFor(q.term));
-      var gCount = general ? general.totalCount : 0;
-      var cCount = correction ? correction.totalCount : 0;
-      if (gCount + cCount <= 0) return;
+      var discussion = questionDiscussion(feedMap, q.term);
+      if (!discussion || !discussion.totalCount) return;
       matched.push({
         q: q,
-        general: general,
-        correction: correction,
-        count: gCount + cCount,
-        latest: Math.max(latestActivityAt(general), latestActivityAt(correction)),
+        discussion: discussion,
+        count: discussion.totalCount,
+        latest: latestActivityAt(discussion),
       });
     });
 
@@ -1583,8 +1564,7 @@
     function appendCard(m) {
       listEl.appendChild(buildMergedQuestionFeedCard(
         { term: m.q.term, num: m.q.num, source: m.q.source, count: m.count },
-        m.general,
-        m.correction,
+        m.discussion,
       ));
     }
 
@@ -1622,8 +1602,7 @@
 
     var found = [];
     return runPool(questions, 3, function (q) {
-      var term = kind === 'correction' ? correctionTermFor(q.term) : q.term;
-      return probeDiscussionCount(term).then(function (count) {
+      return probeDiscussionCount(q.term).then(function (count) {
         if (count > 0) found.push({ q: q, count: count });
         return count;
       });
@@ -1751,7 +1730,7 @@
       if (id === 'corrections') {
         intro.textContent = 'اقتراحات الطلاب بجانب كل خيار — وشارة "جواب الموقع" توضّح اختيار الدليل.';
       } else if (id === 'all') {
-        intro.textContent = 'سؤال واحد = بطاقة واحدة: صندوق للتصحيحات وصندوق لتعليقات السؤال.';
+        intro.textContent = 'سؤال واحد = نقاش واحد. التصحيحات تُميَّز بوسم #correction داخل نفس الخيط.';
       } else {
         intro.textContent = 'نقاش الأسئلة — اسحب داخل الصندوق للقراءة.';
       }
@@ -1828,7 +1807,8 @@
     var reason = popup.querySelector('.mcq-correction-reason');
     var answer = select ? select.value : '';
     var why = reason ? reason.value.trim() : '';
-    return '🔧 تصحيح مقترح — السؤال س' + qNum +
+    return '#correction\n' +
+      '🔧 تصحيح مقترح — السؤال س' + qNum +
       (pattern ? ' · ' + pattern : '') + '\n' +
       'الإجابة الصحيحة برأيي: ' + answer + '\n' +
       (why ? 'السبب: ' + why : '');
@@ -1919,12 +1899,17 @@
         if (form) form.classList.add('hidden');
         showCorrectionDraft(popup, opts.draftText);
       }
+      // Same Discussion as general chat — corrections are tagged #correction.
       if (thread && term) {
-        delete thread.dataset.mounted;
-        mountGiscusThread(thread, correctionTermFor(term)).then(function () {
+        if (!thread.dataset.mounted) {
+          mountGiscusThread(thread, term).then(function () {
+            scrollThreadIntoModal(popup, thread, false);
+            if (opts.draftText) showCorrectionDraft(popup, opts.draftText);
+          });
+        } else {
           scrollThreadIntoModal(popup, thread, false);
           if (opts.draftText) showCorrectionDraft(popup, opts.draftText);
-        });
+        }
       }
       return;
     }
@@ -1935,9 +1920,6 @@
     if (draft) draft.classList.add('hidden');
 
     if (thread && term) {
-      if (thread.dataset.giscusTerm && thread.dataset.giscusTerm.indexOf('/correction') !== -1) {
-        delete thread.dataset.mounted;
-      }
       if (!thread.dataset.mounted) {
         mountGiscusThread(thread, term).then(function () {
           scrollThreadIntoModal(popup, thread, mode === 'react');
@@ -1964,11 +1946,15 @@
       var baseTerm = popup.dataset.discussionTerm;
       var thread = popup.querySelector('.mcq-comment-thread');
       if (thread && baseTerm) {
-        delete thread.dataset.mounted;
-        mountGiscusThread(thread, correctionTermFor(baseTerm)).then(function () {
+        if (!thread.dataset.mounted) {
+          mountGiscusThread(thread, baseTerm).then(function () {
+            scrollThreadIntoModal(popup, thread, false);
+            showCorrectionDraft(popup, text);
+          });
+        } else {
           scrollThreadIntoModal(popup, thread, false);
           showCorrectionDraft(popup, text);
-        });
+        }
       }
     });
   }
@@ -1984,12 +1970,10 @@
       var term = (popup && popup.dataset.discussionTerm) || card.dataset.discussionTerm;
       if (!term) return;
 
-      var general = lookupDiscussion(feedMap, term);
-      var corr = lookupDiscussion(feedMap, correctionTermFor(term));
-      var gCount = (general && general.totalCount) || 0;
-      var corrCount = (corr && corr.totalCount) || 0;
-      var totalComments = gCount + corrCount;
-      var thumbs = thumbsUpCount(general) + thumbsUpCount(corr);
+      var discussion = questionDiscussion(feedMap, term);
+      var totalComments = (discussion && discussion.totalCount) || 0;
+      var corrCount = discussion ? summarizeCorrections(discussion).corrCount : 0;
+      var thumbs = thumbsUpCount(discussion);
 
       var summary = card.querySelector('.mcq-discuss-summary');
       if (!summary) return;
@@ -2147,13 +2131,19 @@
         if (form) form.classList.remove('hidden');
         var draftBox = mPopup.querySelector('.mcq-correction-draft');
         if (draftBox) draftBox.classList.add('hidden');
+        if (mThread && mTerm && !mThread.dataset.mounted) {
+          mountGiscusThread(mThread, mTerm).then(function () {
+            scrollThreadIntoModal(mPopup, mThread, false);
+          });
+        }
       } else if (mThread && mTerm) {
         var draftHide = mPopup.querySelector('.mcq-correction-draft');
         if (draftHide) draftHide.classList.add('hidden');
-        delete mThread.dataset.mounted;
-        mountGiscusThread(mThread, mTerm).then(function () {
-          scrollThreadIntoModal(mPopup, mThread, false);
-        });
+        if (!mThread.dataset.mounted) {
+          mountGiscusThread(mThread, mTerm).then(function () {
+            scrollThreadIntoModal(mPopup, mThread, false);
+          });
+        }
       }
       return;
     }

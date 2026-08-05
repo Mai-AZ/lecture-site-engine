@@ -7,9 +7,11 @@
  * Vars:   GISCUS_REPO, GISCUS_CATEGORY_ID
  *
  * Each discussion value:
- *   { title, url, totalCount, reactionGroups, comments: [{ author, avatar, body,
- *     createdAt, reactionGroups, replies }] }
- * reactionGroups: { THUMBS_UP: n, HEART: n, … } (only counts > 0)
+ *   { title, url, totalCount, reactionGroups, answerVotes, correctionCount,
+ *     comments: [{ author, avatar, body, createdAt, reactionGroups, replies,
+ *                  isCorrection, answer }] }
+ * answerVotes: { A: n, B: n, … } from comments tagged #correction (and legacy
+ * structured correction bodies). reactionGroups: { THUMBS_UP: n, … } (counts > 0).
  */
 
 const QUERY = `query($owner:String!,$name:String!,$categoryId:ID!,$cursor:String){
@@ -60,20 +62,75 @@ function mapReactionGroups(groups) {
   return out;
 }
 
+/**
+ * Corrections live in the same Discussion as general chat.
+ * Canonical marker: `#correction` at the start of the body.
+ * Legacy Arabic templates (old `/correction` threads) still count.
+ */
+function parseCorrectionComment(body) {
+  if (!body) return null;
+  const text = String(body);
+  const trimmed = text.trim();
+  const hasTag = /^#correction\b/i.test(trimmed);
+  const legacy =
+    /🔧\s*تصحيح مقترح/.test(text) ||
+    /تصحيح مقترح/.test(text) ||
+    /الإجابة الصحيحة برأيي\s*:/.test(text);
+  if (!hasTag && !legacy) return null;
+
+  let answer = null;
+  const tagAns = trimmed.match(/^#correction(?:\s*[:=]\s*|\s+)([A-Za-z])/i);
+  if (tagAns) answer = tagAns[1].toUpperCase();
+  const arAns = text.match(/الإجابة الصحيحة برأيي\s*:\s*([A-Za-zأ-ي٠-٩0-9])/u);
+  if (arAns) answer = String(arAns[1]).toUpperCase();
+
+  return { answer };
+}
+
 function mapComment(c) {
+  const body = c.bodyText || '';
+  const parsed = parseCorrectionComment(body);
   return {
     author: (c.author && c.author.login) || 'مجهول',
     avatar: (c.author && c.author.avatarUrl) || '',
-    body: c.bodyText || '',
+    body,
     createdAt: c.createdAt,
     reactionGroups: mapReactionGroups(c.reactionGroups),
-    replies: ((c.replies && c.replies.nodes) || []).map((r) => ({
-      author: (r.author && r.author.login) || 'مجهول',
-      avatar: (r.author && r.author.avatarUrl) || '',
-      body: r.bodyText || '',
-      createdAt: r.createdAt,
-    })),
+    isCorrection: !!parsed,
+    answer: (parsed && parsed.answer) || null,
+    replies: ((c.replies && c.replies.nodes) || []).map((r) => {
+      const rBody = r.bodyText || '';
+      const rParsed = parseCorrectionComment(rBody);
+      return {
+        author: (r.author && r.author.login) || 'مجهول',
+        avatar: (r.author && r.author.avatarUrl) || '',
+        body: rBody,
+        createdAt: r.createdAt,
+        isCorrection: !!rParsed,
+        answer: (rParsed && rParsed.answer) || null,
+      };
+    }),
   };
+}
+
+/** Tally answer letters from #correction (and legacy) comments + replies. */
+function tallyAnswerVotes(comments) {
+  const answerVotes = {};
+  let correctionCount = 0;
+
+  function add(parsedish) {
+    if (!parsedish || !parsedish.isCorrection) return;
+    correctionCount += 1;
+    if (parsedish.answer) {
+      answerVotes[parsedish.answer] = (answerVotes[parsedish.answer] || 0) + 1;
+    }
+  }
+
+  for (const c of comments || []) {
+    add(c);
+    for (const r of c.replies || []) add(r);
+  }
+  return { answerVotes, correctionCount };
 }
 
 async function buildFeed(env) {
@@ -118,13 +175,33 @@ async function buildFeed(env) {
 
     for (const d of conn.nodes || []) {
       if (!d || !d.title) continue;
-      const comments = (d.comments && d.comments.nodes) || [];
+      const comments = ((d.comments && d.comments.nodes) || []).map(mapComment);
+      // Old dedicated …/correction threads: treat every comment as a correction
+      // if the body didn't already parse (so vote tallies still work).
+      const isLegacyCorrThread = /\/correction$/i.test(d.title);
+      if (isLegacyCorrThread) {
+        for (const c of comments) {
+          if (!c.isCorrection) {
+            c.isCorrection = true;
+            const arAns = String(c.body || '').match(
+              /الإجابة الصحيحة برأيي\s*:\s*([A-Za-zأ-ي٠-٩0-9])/u,
+            );
+            if (arAns && !c.answer) c.answer = String(arAns[1]).toUpperCase();
+          }
+          for (const r of c.replies || []) {
+            if (!r.isCorrection) r.isCorrection = true;
+          }
+        }
+      }
+      const tallies = tallyAnswerVotes(comments);
       discussions[d.title] = {
         title: d.title,
         url: d.url,
         totalCount: (d.comments && d.comments.totalCount) || comments.length,
         reactionGroups: mapReactionGroups(d.reactionGroups),
-        comments: comments.map(mapComment),
+        answerVotes: tallies.answerVotes,
+        correctionCount: tallies.correctionCount,
+        comments,
       };
     }
 
