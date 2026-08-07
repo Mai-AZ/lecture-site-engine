@@ -1,0 +1,107 @@
+name: PR sync check (up to date with main)
+
+# pull_request_target (not pull_request) so fork PRs get a write token.
+# This workflow only calls the GitHub API — it never checks out PR code.
+on:
+  pull_request_target:
+    types: [opened, reopened, synchronize]
+    branches: [main]
+  push:
+    branches: [main]
+  workflow_dispatch:
+    inputs:
+      pr_number:
+        description: 'PR number to update and check (blank = update all behind-PRs)'
+        required: false
+
+permissions:
+  contents: write
+  pull-requests: write
+
+jobs:
+  sync-check:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check PR is up to date with main — auto-update or flag conflicts
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const { owner, repo } = context.repo;
+            const prNumberInput = context.payload.inputs?.pr_number;
+
+            let prs;
+            if (prNumberInput) {
+              const { data: pr } = await github.rest.pulls.get({ owner, repo, pull_number: Number(prNumberInput) });
+              prs = [pr];
+            } else if (context.eventName === 'pull_request_target') {
+              prs = [context.payload.pull_request];
+            } else {
+              // main just moved — every open PR may now be behind, re-check all of them.
+              const res = await github.rest.pulls.list({ owner, repo, state: 'open', base: 'main', per_page: 100 });
+              prs = res.data;
+            }
+
+            // Job conclusion is the required check (not a commit-status API context).
+            // That avoids forever-"Expected — Waiting" when statuses cannot be posted.
+            const failed = [];
+            const isSinglePr =
+              Boolean(prNumberInput) || context.eventName === 'pull_request_target';
+
+            for (const pr of prs) {
+              if (pr.base.ref !== 'main' || pr.draft) continue;
+
+              const headSha = pr.head.sha;
+              console.log(`PR #${pr.number} (${headSha.slice(0, 7)})…`);
+
+              try {
+                const { data: compare } = await github.rest.repos.compareCommits({
+                  owner, repo, base: headSha, head: 'main',
+                });
+
+                if (compare.ahead_by === 0) {
+                  console.log(`PR #${pr.number}: up to date.`);
+                  continue;
+                }
+
+                console.log(`PR #${pr.number} is ${compare.ahead_by} commit(s) behind main — attempting auto-update.`);
+                try {
+                  await github.rest.pulls.updateBranch({ owner, repo, pull_number: pr.number });
+                  // updateBranch pushes a merge commit which fires a fresh "synchronize"
+                  // event — that re-run reports success on the new head SHA.
+                  console.log(`PR #${pr.number}: auto-updated from main.`);
+                } catch (err) {
+                  const isConflict = err.status === 422;
+                  const msg = isConflict
+                    ? `PR #${pr.number}: merge conflicts with main — resolve manually.`
+                    : `PR #${pr.number}: could not auto-update (${err.status}: ${err.message}); still ${compare.ahead_by} commit(s) behind.`;
+                  console.error(msg);
+                  failed.push(msg);
+                }
+              } catch (err) {
+                const msg = `PR #${pr.number}: unexpected error: ${err.message}`;
+                console.error(msg);
+                failed.push(msg);
+              }
+
+              // Only when a single PR was targeted: confirm GitHub sees no conflicts
+              // after the update has landed.
+              if (prNumberInput) {
+                let mergeable = null;
+                for (let i = 0; i < 5 && mergeable === null; i++) {
+                  if (i > 0) await new Promise(r => setTimeout(r, 3000));
+                  const { data: fresh } = await github.rest.pulls.get({ owner, repo, pull_number: pr.number });
+                  mergeable = fresh.mergeable;
+                }
+                if (mergeable === false) {
+                  failed.push(`PR #${pr.number}: still reports merge conflicts after update.`);
+                }
+              }
+            }
+
+            // On push-to-main fan-out, don't fail the whole run if one PR conflicts —
+            // other PRs may have updated fine. For a single-PR event, fail loudly.
+            if (failed.length > 0 && isSinglePr) {
+              core.setFailed(failed.join('\n'));
+            } else if (failed.length > 0) {
+              core.warning(`Some PRs could not be synced:\n${failed.join('\n')}`);
+            }

@@ -6,7 +6,7 @@
  *   node build/cli.mjs --subject year-1/kotlin
  *   node build/cli.mjs --subject subjects/year-1/kotlin --output dist/year-1/kotlin
  */
-import { readFile, writeFile, mkdir, cp, readdir } from 'node:fs/promises';
+import { readFile, writeFile, mkdir, cp } from 'node:fs/promises';
 import { existsSync } from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
@@ -15,9 +15,12 @@ import { runSchemaChecks, hasErrors } from './lib/schema-checks.mjs';
 import { ensureSubjectScaffold } from './lib/scaffold-subject.mjs';
 import { normalizeLectureMd } from './lib/normalize-lecture-md.mjs';
 import { patchSubjectIndexHtml, patchSubjectStoragePrefix } from './lib/patch-subject-index.mjs';
+import { patchAnalyticsInDir } from './lib/patch-analytics.mjs';
 import { patchBuildMeta } from './lib/patch-build-meta.mjs';
 import { generateServiceWorker } from './lib/generate-sw.mjs';
 import { lectureSummaryFromLec } from './lib/lecture-summary.mjs';
+import { generateSearchIndex } from './lib/generate-search-index.mjs';
+import { listLectureMarkdownFiles } from './lib/subject-paths.mjs';
 
 const ENGINE_ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 
@@ -54,7 +57,7 @@ async function loadGuideConfig(subjectDir) {
 
 async function validateSubject(subjectDir, parser) {
   const lecturesDir = path.join(subjectDir, 'lectures');
-  const names = (await readdir(lecturesDir)).filter(n => /^par.+\.md$/i.test(n)).sort();
+  const names = await listLectureMarkdownFiles(lecturesDir);
   let errorCount = 0;
   for (const name of names) {
     const filePath = path.join(lecturesDir, name);
@@ -66,13 +69,15 @@ async function validateSubject(subjectDir, parser) {
     } catch (err) {
       issues.push({ severity: 'error', line: 1, message: `parse failed: ${err.message}` });
     }
-    if (issues.length) {
-      const errors = issues.filter(i => i.severity === 'error');
+    // Warnings are counted but not printed — too noisy during builds.
+    const errors = issues.filter(i => i.severity === 'error');
+    if (errors.length) {
       errorCount += errors.length;
       console.error(`✗ ${rel}: ${errors.length} error(s), ${issues.length - errors.length} warning(s)`);
-      for (const i of issues) console.error(`  L${i.line} ${i.severity}: ${i.message}`);
+      for (const i of errors) console.error(`  L${i.line} ${i.severity}: ${i.message}`);
     } else {
-      console.log(`✓ ${rel}`);
+      const warnNote = issues.length ? ` (${issues.length} warning(s) hidden)` : '';
+      console.log(`✓ ${rel}${warnNote}`);
     }
   }
   if (errorCount) throw new Error(`Validation failed with ${errorCount} error(s)`);
@@ -128,6 +133,110 @@ async function buildReviewJson(subjectDir, reviewsOut, parser) {
   await writeFile(manifestPath, JSON.stringify(manifest, null, 2));
 }
 
+/**
+ * "دورات" (past-exam MCQ archive) — one manifest + one or more .md files per
+ * subject, each shaped like a normal lecture's MCQ part (starts with
+ * "## أسئلة اختيار من متعدد (MCQ)"). Mirrors buildReviewJson's structure, but
+ * uses parser.parsePart (not parseReviewGuide) so the mcq-typed part comes
+ * back as {title, type:'mcq', questions:[...]} — the shape renderCodeGuide /
+ * renderMCQ expect, not the generic {blocks:[...]} shape reviews use.
+ */
+async function buildExamsJson(subjectDir, examsOut, parser) {
+  const manifestPath = path.join(examsOut, 'manifest.json');
+  if (!existsSync(manifestPath)) return;
+
+  const manifest = JSON.parse(await readFile(manifestPath, 'utf8'));
+  if (!manifest.files?.length) return;
+
+  const updatedFiles = [];
+  for (const file of manifest.files) {
+    const entry = typeof file === 'string' ? { path: file } : { ...file };
+    const srcPath = entry.path;
+    if (!srcPath) continue;
+
+    if (/\.md$/i.test(srcPath)) {
+      const mdPath = path.join(subjectDir, 'DAWRAT', srcPath);
+      if (!existsSync(mdPath)) {
+        console.warn(`  exam source missing: DAWRAT/${srcPath}`);
+        continue;
+      }
+      const md = await readFile(mdPath, 'utf8');
+      const mcqPart = parser.parsePart(`## أسئلة اختيار من متعدد (MCQ)\n${md}`);
+      const exam = {
+        id: entry.id || srcPath.replace(/\.md$/i, ''),
+        title: entry.label || manifest.title || 'دورات سنوات سابقة',
+        tag: manifest.subtitle || '',
+        notice: entry.notice || manifest.notice || '',
+        answerCorrections: entry.answerCorrections || manifest.answerCorrections || null,
+        parts: [mcqPart],
+      };
+      const jsonName = srcPath.replace(/\.md$/i, '.json');
+      const parsedAt = new Date().toISOString();
+      await writeFile(
+        path.join(examsOut, jsonName),
+        JSON.stringify({
+          schemaVersion: '1.0',
+          source: srcPath,
+          parsedAt,
+          exam,
+        }, null, 2),
+      );
+      updatedFiles.push({ ...entry, path: jsonName, source: srcPath, parsedAt });
+      console.log(`  parsed → DAWRAT/${jsonName}`);
+    } else {
+      updatedFiles.push(entry);
+    }
+  }
+
+  manifest.files = updatedFiles;
+  await writeFile(manifestPath, JSON.stringify(manifest, null, 2));
+}
+
+/**
+ * "notes" — an alternate set of per-lecture study material (summary + a big
+ * MCQ bank), shaped exactly like a normal lectures/*.md file (same
+ * "# المحاضرة N — Title" + "##" parts structure), so it reuses parser.parseDocument
+ * and the client's existing renderLecture unchanged — only the source folder,
+ * output folder, and home-page UI entry point are different from lectures/.
+ */
+async function buildNotesJson(subjectDir, notesOut, parser) {
+  const notesLecturesDir = path.join(subjectDir, 'notes/lectures');
+  if (!existsSync(notesLecturesDir)) return;
+
+  const manifestSrc = path.join(notesLecturesDir, 'manifest.json');
+  if (!existsSync(manifestSrc)) return;
+  const manifest = JSON.parse(await readFile(manifestSrc, 'utf8'));
+
+  const mdFiles = await listLectureMarkdownFiles(notesLecturesDir);
+  const parsedByJson = new Map();
+
+  for (const name of mdFiles) {
+    const text = normalizeLectureMd(await readFile(path.join(notesLecturesDir, name), 'utf8'));
+    const doc = parser.parseDocument(text);
+    const lec = doc.lectures[0];
+    // Prefixed so a note's id never collides with the main lecture id for the
+    // same par*.md filename (both folders commonly reuse par1, par2, ...).
+    if (lec) lec.id = 'note-' + name.replace(/\.md$/i, '').replace(/[\\/]+/g, '-');
+    const sectionIndex = lec ? parser.buildSectionIndex(lec) : {};
+    const parsedAt = new Date().toISOString();
+    const jsonName = name.replace(/\.md$/i, '.json');
+    await mkdir(path.dirname(path.join(notesOut, jsonName)), { recursive: true });
+    await writeFile(
+      path.join(notesOut, jsonName),
+      JSON.stringify({ schemaVersion: '1.0', source: name, parsedAt, sectionIndex, ...doc }, null, 2),
+    );
+    parsedByJson.set(jsonName, { parsedAt, summary: lectureSummaryFromLec(lec), jsonName });
+    console.log(`  parsed → notes/lectures/${jsonName}`);
+  }
+
+  manifest.files = (manifest.files || []).map((f, i) => {
+    const jsonPath = String(f.path).replace(/\.md$/i, '.json');
+    const parsed = parsedByJson.get(jsonPath);
+    return { ...f, path: jsonPath, source: f.path, parsedAt: parsed?.parsedAt, summary: parsed?.summary, num: f.num ?? i + 1 };
+  });
+  await writeFile(path.join(notesOut, 'manifest.json'), JSON.stringify(manifest, null, 2));
+}
+
 async function main() {
   const args = parseArgs(process.argv);
   if (!args.subject) {
@@ -156,7 +265,7 @@ async function main() {
   const lecturesDir = path.join(subjectDir, 'lectures');
   const hasLectureDir = existsSync(lecturesDir);
   const mdFiles = args.skipValidate && hasLectureDir
-    ? (await readdir(lecturesDir)).filter(n => /^par.+\.md$/i.test(n)).sort()
+    ? await listLectureMarkdownFiles(lecturesDir)
     : hasLectureDir
       ? await validateSubject(subjectDir, parser)
       : [];
@@ -174,6 +283,7 @@ async function main() {
   await copyDir(path.join(ENGINE_ROOT, 'renderer'), path.join(outDir, 'engine/renderer'));
 
   await patchSubjectIndexHtml(outDir, subjectRel);
+  await patchAnalyticsInDir(outDir);
 
   const guideSrc = path.join(subjectDir, 'guide-config.js');
   const guideDest = path.join(outDir, 'js/guide-config.js');
@@ -192,6 +302,20 @@ async function main() {
     await buildReviewJson(subjectDir, reviewsOut, parser);
   }
 
+  const examsSrc = path.join(subjectDir, 'DAWRAT');
+  if (existsSync(examsSrc)) {
+    const examsOut = path.join(outDir, 'DAWRAT');
+    await cp(examsSrc, examsOut, { recursive: true });
+    await buildExamsJson(subjectDir, examsOut, parser);
+  }
+
+  const notesSrc = path.join(subjectDir, 'notes');
+  if (existsSync(notesSrc)) {
+    const notesOut = path.join(outDir, 'notes/lectures');
+    await mkdir(notesOut, { recursive: true });
+    await buildNotesJson(subjectDir, notesOut, parser);
+  }
+
   // Parse lectures → JSON
   const lecturesOut = path.join(outDir, 'lectures');
   await mkdir(lecturesOut, { recursive: true });
@@ -202,15 +326,19 @@ async function main() {
   const builtFiles = [];
   /** @type {Map<string, { parsedAt: string, summary: ReturnType<typeof lectureSummaryFromLec>, jsonName: string }>} */
   const parsedByJson = new Map();
+  /** @type {import('./lib/generate-search-index.mjs').Lecture[]} */
+  const allParsedLecs = [];
 
   for (const name of mdFiles) {
     const text = normalizeLectureMd(await readFile(path.join(subjectDir, 'lectures', name), 'utf8'));
     const doc = parser.parseDocument(text);
     const lec = doc.lectures[0];
-    if (lec) lec.id = name.replace(/\.md$/i, '');
+    if (lec) lec.id = name.replace(/\.md$/i, '').replace(/[\\/]+/g, '-');
+    if (lec) allParsedLecs.push(lec);
     const sectionIndex = lec ? parser.buildSectionIndex(lec) : {};
     const parsedAt = new Date().toISOString();
     const jsonName = name.replace(/\.md$/i, '.json');
+    await mkdir(path.dirname(path.join(lecturesOut, jsonName)), { recursive: true });
     await writeFile(
       path.join(lecturesOut, jsonName),
       JSON.stringify({
@@ -273,6 +401,14 @@ async function main() {
     settings: manifest.settings || {},
   };
   await writeFile(path.join(outDir, 'build-report.json'), JSON.stringify(report, null, 2));
+
+  // Search index (all lecture text for client-side search)
+  const searchIndex = generateSearchIndex(allParsedLecs);
+  await writeFile(
+    path.join(lecturesOut, 'search-index.json'),
+    JSON.stringify(searchIndex),
+  );
+  console.log(`  indexed → lectures/search-index.json (${searchIndex.entries.length} entries)`);
 
   await patchBuildMeta(outDir, buildId);
   await generateServiceWorker(outDir, {

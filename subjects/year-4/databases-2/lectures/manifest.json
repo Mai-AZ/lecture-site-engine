@@ -1,0 +1,107 @@
+{
+  "settings": {
+    "subjectName": "أنظمة إدارة قواعد البيانات",
+    "subjectNameEn": "Database Management Systems (DBMS)",
+    "year": "2025-2026",
+    "academicYear": 4,
+    "theme": "emerald-coral",
+    "enabledLectures": true,
+    "hubTag": "مادة حملة",
+    "department": "تصميم"
+  },
+  "title": "أنظمة إدارة قواعد البيانات — Database Management Systems (DBMS)",
+  "subtitle": "دليل دراسي تفاعلي",
+  "files": [
+    {
+      "path": "par1-sec1.md",
+      "num": 1,
+      "icon": "📌",
+      "matIcon": "school",
+      "badge": "المحاضرة ١ — جزء ١"
+    },
+    {
+      "path": "par1-sec2.md",
+      "num": 1,
+      "icon": "📖",
+      "matIcon": "menu_book",
+      "badge": "المحاضرة ١ — جزء ٢"
+    },
+    {
+      "path": "par2.md",
+      "num": 2,
+      "icon": "💻",
+      "matIcon": "code",
+      "badge": "المحاضرة ٢"
+    },
+    {
+      "path": "par3-sec1.md",
+      "num": 3,
+      "icon": "🎯",
+      "matIcon": "quiz",
+      "badge": "المحاضرة ٣ — جزء ١"
+    },
+    {
+      "path": "par3-sec2.md",
+      "num": 3,
+      "icon": "📝",
+      "matIcon": "description",
+      "badge": "المحاضرة ٣ — جزء ٢"
+    },
+    {
+      "path": "par4.md",
+      "num": 4,
+      "icon": "📝",
+      "matIcon": "description",
+      "badge": "المحاضرة ٤"
+    },
+    {
+      "path": "par5.md",
+      "num": 5,
+      "icon": "📌",
+      "matIcon": "school",
+      "badge": "المحاضرة ٥"
+    },
+    {
+      "path": "par6.md",
+      "num": 6,
+      "icon": "📖",
+      "matIcon": "menu_book",
+      "badge": "المحاضرة ٦"
+    },
+    {
+      "path": "par7.md",
+      "num": 7,
+      "icon": "🎯",
+      "matIcon": "quiz",
+      "badge": "المحاضرة ٧"
+    },
+    {
+      "path": "par8.md",
+      "num": 8,
+      "icon": "📝",
+      "matIcon": "description",
+      "badge": "المحاضرة ٨"
+    },
+    {
+      "path": "par9.md",
+      "num": 9,
+      "icon": "🎯",
+      "matIcon": "quiz",
+      "badge": "المحاضرة ٩"
+    }
+  ],
+  "lectureIcons": [
+    "📌",
+    "📖",
+    "💻",
+    "🎯",
+    "📝"
+  ],
+  "lectureMatIcons": [
+    "school",
+    "menu_book",
+    "code",
+    "quiz",
+    "description"
+  ]
+}

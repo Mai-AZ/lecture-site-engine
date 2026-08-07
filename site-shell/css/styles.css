@@ -11,8 +11,23 @@ html {
   scroll-padding-top: var(--site-scroll-offset);
 }
 
+/* ── Better scroll padding & focus visibility ── */
+a:focus-visible {
+  outline: 2px solid var(--color-primary);
+  outline-offset: 2px;
+  border-radius: 2px;
+}
+
+button:focus-visible {
+  outline: 2px solid var(--color-primary);
+  outline-offset: 2px;
+}
+
 body {
-  font-family: 'IBM Plex Sans Arabic', sans-serif;
+  font-family: 'Noto Naskh Arabic', 'Source Serif 4', Georgia, serif;
+  font-size: 17px;
+  line-height: 1.9;
+  letter-spacing: 0;
   transition: background-color 0.3s ease, color 0.3s ease;
   background-color: var(--color-background);
   background-image:
@@ -143,6 +158,45 @@ body {
   background: linear-gradient(90deg, var(--color-primary), var(--color-secondary-accent)) !important;
 }
 
+.mcq-progress-track {
+  display: flex;
+  gap: 2px;
+  height: 0.65rem;
+  width: 100%;
+  border-radius: 9999px;
+  overflow: hidden;
+  background: var(--color-surface-container-high);
+  border: 1px solid color-mix(in srgb, var(--color-outline-variant) 70%, transparent);
+}
+
+.mcq-progress-seg {
+  flex: 1 1 0;
+  min-width: 0;
+  height: 100%;
+  background: transparent;
+  transition: background-color 0.25s ease;
+}
+
+.mcq-progress-seg--pending {
+  background: color-mix(in srgb, var(--color-outline-variant) 70%, transparent);
+}
+
+.mcq-progress-seg--correct {
+  background: var(--color-primary);
+}
+
+.mcq-progress-seg--wrong {
+  background: var(--color-error);
+}
+
+.dark .mcq-progress-track {
+  background: color-mix(in srgb, var(--dm-elevated-2, #1c2440) 80%, transparent);
+}
+
+.dark .mcq-progress-seg--pending {
+  background: color-mix(in srgb, var(--dm-border, #2b3a8f) 45%, transparent);
+}
+
 #jumpQuizBtn {
   background: linear-gradient(135deg, var(--color-primary-container), var(--color-primary)) !important;
   box-shadow: 0 4px 16px -4px var(--shadow-primary-md);
@@ -159,6 +213,197 @@ body {
 
 .dark .custom-shadow {
   box-shadow: 0 4px 12px -2px var(--shadow-black-35), 0 0 0 1px var(--shadow-border-dark-40);
+}
+
+.subject-progress-card {
+  border: 1px solid color-mix(in srgb, var(--color-primary) 14%, var(--color-outline-variant));
+  border-radius: 1rem;
+  padding: 1rem;
+  background: linear-gradient(155deg, color-mix(in srgb, var(--color-primary-container) 68%, #fff) 0%, var(--color-surface-container-lowest) 72%);
+  box-shadow: 0 8px 20px -14px var(--shadow-primary-md);
+}
+
+.subject-progress-card__head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  margin-bottom: 0.75rem;
+}
+
+.subject-progress-card__label {
+  margin: 0;
+  font-size: 0.8rem;
+  color: var(--color-on-surface-variant);
+}
+
+.subject-progress-card__title {
+  margin: 0.2rem 0 0;
+  font-size: 1rem;
+  font-weight: 700;
+  color: var(--color-on-surface);
+}
+
+.subject-progress-card__percent {
+  font-size: 1.2rem;
+  font-weight: 800;
+  color: var(--color-primary);
+}
+
+.subject-progress-card__track {
+  width: 100%;
+  height: 0.6rem;
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--color-outline-variant) 45%, transparent);
+  overflow: hidden;
+}
+
+.subject-progress-card__fill {
+  display: block;
+  height: 100%;
+  border-radius: inherit;
+  background: linear-gradient(90deg, var(--color-primary), var(--color-secondary-accent));
+  transition: width 0.25s ease;
+}
+
+.lecture-card-head-actions {
+  min-width: 8.25rem;
+}
+
+.lecture-card-footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.6rem;
+}
+
+.lecture-card-status {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3rem;
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: var(--color-on-surface-variant);
+}
+
+.lecture-card-status.is-complete {
+  color: var(--color-primary);
+}
+
+.lecture-open-btn {
+  background: transparent;
+  border: 0;
+  cursor: pointer;
+  padding: 0;
+}
+
+.lecture-complete-btn,
+.lecture-complete-toggle {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.35rem;
+  border-radius: 999px;
+  border: 1px solid color-mix(in srgb, var(--color-primary) 20%, var(--color-outline-variant));
+  background: color-mix(in srgb, var(--color-primary) 7%, transparent);
+  color: var(--color-primary);
+  font-size: 0.76rem;
+  font-weight: 700;
+  padding: 0.35rem 0.65rem;
+  cursor: pointer;
+  transition: background-color 0.2s ease, color 0.2s ease, border-color 0.2s ease;
+}
+
+.lecture-complete-btn .material-symbols-outlined,
+.lecture-complete-toggle .material-symbols-outlined {
+  font-size: 1.05rem;
+}
+
+.lecture-complete-btn.is-complete,
+.lecture-complete-toggle.is-complete {
+  background: var(--color-primary);
+  color: var(--color-on-primary);
+  border-color: var(--color-primary);
+}
+
+/* داخل صف عنوان المحاضرة بالفهرس (ديسكتوب وموبايل) — زر أيقونة صغير بدل المستطيل الطويل، مشان يبقى
+   مكان لاسم المحاضرة. بطاقات المحاضرات بالصفحة الرئيسية (.lecture-complete-btn) تحتفظ بشكلها الأصلي. */
+.lecture-sidebar__course .lecture-complete-toggle,
+.mobile-toc-drawer__course .lecture-complete-toggle {
+  flex: 0 0 auto;
+  width: 1.75rem;
+  height: 1.75rem;
+  padding: 0;
+  border-radius: 0.5rem;
+}
+
+.lecture-sidebar__course .lecture-complete-toggle .material-symbols-outlined,
+.mobile-toc-drawer__course .lecture-complete-toggle .material-symbols-outlined {
+  font-size: 1.05rem;
+}
+
+.dark .subject-progress-card {
+  background: linear-gradient(150deg, color-mix(in srgb, var(--color-primary) 18%, var(--dm-elevated)) 0%, var(--dm-elevated) 74%);
+  border-color: var(--dm-border);
+}
+
+/* ── Exam practice mode (الاختبار الذاتي) ── */
+.exam-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  border-radius: 999px;
+  border: 1px solid var(--color-outline-variant);
+  background: color-mix(in srgb, var(--color-primary) 4%, transparent);
+  color: var(--color-on-surface-variant);
+  font-size: 0.82rem;
+  font-weight: 600;
+  padding: 0.45rem 0.85rem;
+  cursor: pointer;
+  transition: background-color 0.2s ease, color 0.2s ease, border-color 0.2s ease;
+}
+
+.exam-chip:hover {
+  border-color: color-mix(in srgb, var(--color-primary) 45%, var(--color-outline-variant));
+}
+
+.exam-chip[aria-pressed="true"] {
+  background: var(--color-primary);
+  border-color: var(--color-primary);
+  color: var(--color-on-primary);
+}
+
+.exam-chip__count {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 1.4rem;
+  padding: 0 0.3rem;
+  border-radius: 999px;
+  background: color-mix(in srgb, currentColor 14%, transparent);
+  font-size: 0.72rem;
+  font-weight: 700;
+}
+
+.exam-stat {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.25rem;
+  border: 1px solid var(--color-outline-variant);
+  border-radius: 1rem;
+  padding: 1rem;
+  background: var(--color-surface-container-lowest);
+}
+
+.exam-stat__num {
+  font-size: 1.6rem;
+  font-weight: 800;
+}
+
+.exam-stat__label {
+  font-size: 0.78rem;
+  color: var(--color-on-surface-variant);
 }
 
 /* ── Dark theme (surfaces from tokens.css + theme-brand.css) ── */
@@ -191,11 +436,7 @@ body {
 }
 
 .dark .lecture-picker-card {
-  background: linear-gradient(
-    165deg,
-    color-mix(in srgb, var(--color-primary) 12%, var(--dm-elevated)) 0%,
-    var(--dm-elevated) 60%
-  ) !important;
+  background: var(--dm-elevated) !important;
   border-color: var(--dm-border) !important;
 }
 
@@ -273,10 +514,40 @@ body {
 .dark table thead tr { background-color: var(--dm-elevated-2) !important; }
 .dark table tbody tr:hover { background-color: var(--dm-elevated) !important; }
 
+/* TOC Improvements */
+.toc-nav-link {
+  display: block;
+  padding: 10px 12px;
+  border-radius: 6px;
+  transition: all 0.2s ease;
+  position: relative;
+  overflow: hidden;
+}
+
+.toc-nav-link:hover {
+  background: var(--color-primary-container);
+  color: var(--color-primary);
+  transform: translateX(-4px);
+}
+
+.toc-nav-link.active,
+.toc-nav-link.bg-primary-container {
+  background: color-mix(in srgb, var(--color-primary) 14%, var(--color-surface-container-low)) !important;
+  border-left: 3px solid var(--color-primary);
+  padding-left: 9px;
+  font-weight: 600;
+  color: var(--color-primary) !important;
+}
+
 /* TOC active link */
 .dark .toc-nav-link.bg-primary-container {
   background-color: var(--inverse-primary-a18) !important;
   color: var(--color-primary) !important;
+  border-left: 3px solid var(--color-primary);
+}
+
+.dark .toc-nav-link:hover {
+  background: var(--dm-elevated) !important;
 }
 
 .dark .text-on-error-container { color: var(--palette-error-dark-text) !important; }
@@ -304,7 +575,7 @@ body {
 .box-animate {
   opacity: 0;
   transform: translateY(24px);
-  transition: opacity 0.55s cubic-bezier(0.22, 1, 0.36, 1);
+  transition: opacity 0.55s cubic-bezier(0.22, 1, 0.36, 1),
               transform 0.55s cubic-bezier(0.22, 1, 0.36, 1);
 }
 
@@ -333,7 +604,7 @@ body {
 }
 
 .box-hover {
-  transition: transform 0.35s cubic-bezier(0.34, 1.56, 0.64, 1);
+  transition: transform 0.35s cubic-bezier(0.34, 1.56, 0.64, 1),
               box-shadow 0.35s ease,
               border-color 0.25s ease;
 }
@@ -392,22 +663,14 @@ body {
   overflow: hidden;
   opacity: 0;
   animation: fade-in-up 0.6s cubic-bezier(0.22, 1, 0.36, 1) forwards;
-  background: linear-gradient(
-    165deg,
-    color-mix(in srgb, var(--color-primary-fixed) 45%, var(--color-surface-container-lowest)) 0%,
-    var(--color-surface-container-lowest) 55%
-  ) !important;
-  border-color: color-mix(in srgb, var(--color-primary) 16%, var(--color-outline-variant)) !important;
+  background: var(--color-surface-container-lowest) !important;
+  border-color: color-mix(in srgb, var(--color-primary) 10%, var(--color-outline-variant)) !important;
+  border-radius: 1.25rem !important;
+  padding: 1.5rem !important;
 }
 
 .lecture-picker-card::before {
-  content: '';
-  position: absolute;
-  inset: 0 auto auto 0;
-  width: 100%;
-  height: 3px;
-  background: linear-gradient(90deg, var(--color-primary), var(--color-secondary-accent), var(--color-tertiary-fixed-dim));
-  opacity: 0.85;
+  display: none !important;
 }
 
 .lecture-picker-card:hover {
@@ -523,7 +786,7 @@ body {
   border: 1px solid color-mix(in srgb, var(--color-primary) 35%, var(--color-outline-variant));
   box-shadow: 0 10px 28px -8px var(--shadow-primary-md);
   pointer-events: none;
-  font-family: 'IBM Plex Sans Arabic', sans-serif;
+  font-family: 'Noto Naskh Arabic', 'Source Serif 4', sans-serif;
   font-size: 0.875rem;
   line-height: 1.45;
   text-align: right;
@@ -561,7 +824,7 @@ body {
   display: block;
   margin: 0;
   padding: 0;
-  font-family: 'JetBrains Mono', 'IBM Plex Sans Arabic', ui-monospace, monospace;
+  font-family: 'JetBrains Mono', 'Noto Naskh Arabic', 'Source Serif 4', ui-monospace, monospace;
   font-size: 14px;
   line-height: 1.6;
   white-space: pre;
@@ -574,7 +837,7 @@ body {
 
 .code-terminal pre,
 .code-terminal .hljs {
-  font-family: 'JetBrains Mono', 'IBM Plex Sans Arabic', ui-monospace, monospace;
+  font-family: 'JetBrains Mono', 'Noto Naskh Arabic', 'Source Serif 4', ui-monospace, monospace;
   background-color: var(--code-bg) !important;
   color: var(--code-text);
   direction: ltr;
@@ -601,17 +864,80 @@ body {
 
 @keyframes spin { to { transform: rotate(360deg); } }
 
-.prose-content p {
-  font-size: 16px; line-height: 1.75;
-  color: inherit; margin-bottom: 1rem;
+/* ── Prose Content — Ensure Readable Font Sizes ── */
+.prose-content {
+  font-size: 16px;
+  line-height: 1.85;
 }
+
+.prose-content p {
+  font-size: 16px !important;
+  line-height: 1.85 !important;
+  letter-spacing: 0.2px;
+  color: inherit;
+  margin-bottom: 1.5rem;
+}
+
+.prose-content h1 { font-size: 2rem !important; margin-bottom: 1.5rem; margin-top: 2rem; }
+.prose-content h2 { font-size: 1.6rem !important; margin-bottom: 1.25rem; margin-top: 1.75rem; }
+.prose-content h3 { font-size: 1.3rem !important; margin-bottom: 0.35rem; margin-top: 1.35rem; }
+.prose-content h4 { font-size: 1.1rem !important; margin-bottom: 0.25rem !important; margin-top: 1.5rem; }
+.prose-content h5 { font-size: 1rem !important; margin-bottom: 0.2rem !important; margin-top: 1.5rem; }
+.prose-content h6 { font-size: 0.95rem !important; margin-bottom: 0.15rem !important; margin-top: 1.5rem; }
 
 .prose-content ul, .prose-content ol {
-  margin: 0.5rem 1.5rem 1rem 0;
-  font-size: 16px; line-height: 1.75;
+  margin: 0 1.25rem 0.85rem 0;
+  font-size: 16px !important;
+  line-height: 1.75 !important;
+  padding-right: 1.25rem;
+  padding-top: 0;
 }
 
-.prose-content li { margin-bottom: 0.35rem; }
+.prose-content li {
+  font-size: 16px !important;
+  margin-bottom: 0.25rem;
+  line-height: 1.75 !important;
+}
+
+/*
+  Mini subheads (الشرح / الملخص السريع / …):
+  — larger gap ABOVE (separate from previous block)
+  — almost no gap BELOW (list belongs to this heading)
+*/
+.prose-content .mini-heading {
+  margin-top: 1.5rem !important;
+  margin-bottom: 0 !important;
+  padding-top: 0;
+  padding-bottom: 0;
+}
+
+.prose-content .mini-heading:first-child {
+  margin-top: 0.65rem !important;
+}
+
+.prose-content .mini-heading + :is(ul, ol, p),
+.prose-content :is(h4, h5, h6) + :is(ul, ol),
+.prose-content div:has(> :is(h4, h5, h6)) + :is(ul, ol, p) {
+  margin-top: 0.15rem !important;
+  padding-top: 0 !important;
+}
+
+.prose-content div:has(> :is(h4, h5, h6)):not(.mini-heading) {
+  margin-top: 1.35rem !important;
+  margin-bottom: 0 !important;
+}
+
+.prose-content ul ul, .prose-content ol ul {
+  margin-right: 1rem;
+  font-size: 15px !important;
+}
+
+.prose-content strong, .prose-content b {
+  font-weight: 600;
+}
+
+.prose-content span { font-size: inherit !important; }
+.prose-content div { font-size: inherit !important; }
 
 .prose-content code {
   font-family: 'JetBrains Mono', monospace;
@@ -619,11 +945,158 @@ body {
   background: var(--primary-a10);
   padding: 0.15em 0.4em;
   border-radius: 0.25rem;
-  direction: ltr; unicode-bidi: embed;
+  direction: ltr;
+  unicode-bidi: embed;
+  font-weight: 500;
+}
+
+.prose-content pre {
+  margin: 1.5rem 0;
+  padding: 1rem;
+  border-radius: 6px;
+  border-left: 4px solid var(--color-primary);
+  overflow-x: auto;
+  scrollbar-width: thin;
+}
+
+.prose-content pre code {
+  font-size: 0.9rem;
+  line-height: 1.6;
+  padding: 0;
+  background: transparent;
+  border-radius: 0;
+  border-left: none;
 }
 
 .dark .prose-content code {
   background: var(--inverse-primary-a15);
+}
+
+.prose-content mark.term-highlight {
+  background: color-mix(in srgb, var(--color-tertiary) 20%, transparent);
+  color: var(--color-tertiary);
+  padding: 0.05em 0.3em;
+  border-radius: 0.2rem;
+  font-weight: 500;
+}
+
+.dark .prose-content mark.term-highlight {
+  background: color-mix(in srgb, var(--color-tertiary-fixed) 25%, transparent);
+  color: var(--color-tertiary-fixed);
+}
+
+/* ── Lecture Main Content Area ── */
+.lecture-main {
+  max-width: 720px;
+  margin: 0 auto;
+  padding: 2rem 2.5rem;
+}
+
+@media (max-width: 1024px) {
+  .lecture-main {
+    padding: 1.5rem 2rem;
+  }
+}
+
+@media (max-width: 768px) {
+  .lecture-main {
+    max-width: 100%;
+    padding: 1rem;
+  }
+}
+
+/* ── Section Block Improvements ── */
+.section-block {
+  margin-top: 3rem;
+  padding-top: 2rem;
+  border-top: 1px solid var(--color-outline-variant);
+  scroll-margin-top: 5rem;
+}
+
+.section-block:first-child {
+  margin-top: 0;
+  padding-top: 0;
+  border-top: none;
+}
+
+.section-block h3,
+.section-block > .flex ~ * h3 {
+  font-size: 1.4rem;
+  font-weight: 600;
+  color: var(--color-primary);
+  margin-top: 1rem;
+  margin-bottom: 1rem;
+  padding-bottom: 0.5rem;
+  border-bottom: 2px solid var(--color-primary-container);
+  line-height: 1.6;
+  letter-spacing: 0.1px;
+}
+
+.section-block .flex {
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 1rem;
+}
+
+/* ── Blockquotes ── */
+.prose-content blockquote {
+  border-left: 4px solid var(--color-primary);
+  padding-left: 1.5rem;
+  margin: 1.5rem 0;
+  color: var(--color-on-surface-variant);
+  font-style: italic;
+  font-size: 1.05rem;
+  line-height: 1.85;
+}
+
+.prose-content blockquote p {
+  margin: 0.5rem 0;
+}
+
+/* ── Tables ── */
+.prose-content table {
+  width: 100%;
+  border-collapse: collapse;
+  margin: 1.5rem 0;
+  font-size: 0.95rem;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+  border-radius: 6px;
+  overflow: hidden;
+}
+
+.prose-content thead {
+  background: var(--color-primary-container);
+  color: var(--color-on-primary-container);
+  font-weight: 600;
+}
+
+.prose-content th,
+.prose-content td {
+  padding: 12px 16px;
+  text-align: right;
+  border-bottom: 1px solid var(--color-outline-variant);
+}
+
+.prose-content tbody tr {
+  transition: background 0.2s ease;
+}
+
+.prose-content tbody tr:hover {
+  background: var(--color-surface-container-highest);
+}
+
+.dark .prose-content table {
+  box-shadow: none;
+  border: 1px solid var(--dm-border);
+}
+
+.dark .prose-content thead {
+  background: var(--dm-elevated-2);
+  color: var(--dm-text);
+}
+
+.dark .prose-content tbody tr:hover {
+  background: var(--dm-elevated);
 }
 
 details[open] summary .acc-chevron { transform: rotate(180deg); }
@@ -636,6 +1109,38 @@ details[open] summary .acc-chevron { transform: rotate(180deg); }
   0% { transform: scale(1); }
   50% { transform: scale(1.015); }
   100% { transform: scale(1); }
+}
+
+/* ── Mobile Typography Optimizations ── */
+@media (max-width: 768px) {
+  body {
+    font-size: 15px;
+    line-height: 1.75;
+  }
+
+  .prose-content h2 { font-size: 1.4rem; }
+  .prose-content h3 { font-size: 1.1rem; }
+  .section-block h3 { font-size: 1.2rem; }
+
+  .prose-content p {
+    font-size: 15px;
+    line-height: 1.75;
+    margin-bottom: 1.25rem;
+  }
+
+  .prose-content ul, .prose-content ol {
+    font-size: 15px;
+    line-height: 1.75;
+  }
+
+  .prose-content code { font-size: 0.8em; }
+  .prose-content pre { padding: 0.75rem; margin: 1rem 0; }
+
+  .prose-content table { font-size: 0.9rem; }
+  .prose-content th, .prose-content td { padding: 10px 12px; }
+
+  /* Better touch targets */
+  a, button { min-height: 44px; }
 }
 
 @media (prefers-reduced-motion: reduce) {
@@ -699,6 +1204,105 @@ details[open] summary .acc-chevron { transform: rotate(180deg); }
   display: flex;
   flex-direction: column;
   gap: 0.625rem;
+}
+
+/* ── DAWRAT answer-correction jump box ── */
+.answer-corrections {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.75rem;
+  max-width: 48rem;
+  margin-inline: auto;
+  padding: 0.875rem 1rem;
+  border-radius: 0.75rem;
+  border: 1px solid color-mix(in srgb, var(--color-tertiary) 30%, var(--color-outline-variant));
+  border-right: 3px solid var(--color-tertiary);
+  background: linear-gradient(
+    135deg,
+    color-mix(in srgb, var(--color-tertiary-fixed) 42%, var(--color-surface-container-lowest)),
+    color-mix(in srgb, var(--color-secondary-fixed) 28%, var(--color-surface-container-lowest))
+  );
+  color: var(--color-on-surface);
+  text-align: right;
+}
+
+.answer-corrections__icon {
+  flex-shrink: 0;
+  font-size: 1.35rem;
+  margin-top: 0.1rem;
+  color: var(--color-tertiary);
+}
+
+.answer-corrections__body {
+  flex: 1;
+  min-width: 0;
+}
+
+.answer-corrections__intro {
+  margin: 0 0 0.65rem;
+  font-size: 0.875rem;
+  line-height: 1.65;
+}
+
+.answer-corrections__row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.4rem 0.55rem;
+  margin-top: 0.4rem;
+}
+
+.answer-corrections__ref {
+  font-size: 0.8rem;
+  font-weight: 700;
+  color: var(--color-on-tertiary-fixed-variant, var(--color-tertiary));
+  background: color-mix(in srgb, var(--color-tertiary) 14%, transparent);
+  border-radius: 999px;
+  padding: 0.2rem 0.55rem;
+}
+
+.answer-corrections__qs {
+  display: inline-flex;
+  flex-wrap: wrap;
+  gap: 0.35rem;
+}
+
+.answer-corrections__q {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 2rem;
+  padding: 0.2rem 0.45rem;
+  border-radius: 0.45rem;
+  border: 1px solid color-mix(in srgb, var(--color-primary) 28%, var(--color-outline-variant));
+  background: var(--color-surface-container-lowest);
+  color: var(--color-primary);
+  font-size: 0.8rem;
+  font-weight: 700;
+  text-decoration: none;
+  transition: background 0.15s ease, border-color 0.15s ease;
+}
+
+.answer-corrections__q:hover {
+  background: color-mix(in srgb, var(--color-primary) 12%, var(--color-surface-container-lowest));
+  border-color: var(--color-primary);
+}
+
+.dark .answer-corrections {
+  border-color: color-mix(in srgb, var(--color-tertiary) 32%, var(--dm-border));
+  border-right-color: var(--color-tertiary);
+  background: linear-gradient(
+    135deg,
+    color-mix(in srgb, var(--color-tertiary) 14%, var(--dm-elevated)),
+    color-mix(in srgb, var(--color-secondary) 10%, var(--dm-elevated))
+  );
+  color: var(--dm-text);
+}
+
+.dark .answer-corrections__q {
+  background: var(--dm-elevated);
+  border-color: color-mix(in srgb, var(--color-primary) 35%, var(--dm-border));
+  color: var(--color-primary);
 }
 
 /* ── Study tip (lecture intro) ── */
@@ -1440,6 +2044,80 @@ details[open] summary .acc-chevron { transform: rotate(180deg); }
   margin: 0 auto;
 }
 
+/* ── Mermaid diagrams ── */
+.mermaid-container {
+  border: 1px solid var(--color-outline-variant);
+  border-radius: 1rem;
+  background: var(--color-surface-container-lowest);
+  overflow: hidden;
+  margin-bottom: 1.5rem;
+}
+
+.dark .mermaid-container {
+  background: var(--dm-elevated);
+  border-color: var(--dm-border);
+}
+
+.mermaid-header {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 0.75rem 1rem;
+  border-bottom: 1px solid var(--color-outline-variant);
+  background: var(--color-surface-container-low);
+}
+
+.dark .mermaid-header {
+  background: var(--dm-elevated-2);
+  border-color: var(--dm-border);
+}
+
+.mermaid-header__icon {
+  color: var(--color-secondary);
+  font-size: 1.5rem;
+}
+
+.dark .mermaid-header__icon {
+  color: var(--color-primary);
+}
+
+.mermaid-header__text {
+  display: flex;
+  flex-direction: column;
+  gap: 0.125rem;
+  min-width: 0;
+}
+
+.mermaid-header__type {
+  font-size: 0.7rem;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--color-on-surface-variant);
+  opacity: 0.8;
+}
+
+.mermaid-header__title {
+  font-size: 0.95rem;
+  font-weight: 600;
+  color: var(--color-on-surface);
+}
+
+.mermaid-container > .mermaid {
+  margin: 0;
+  padding: 1rem 1.25rem 1.25rem;
+  overflow-x: auto;
+  text-align: center;
+  background: transparent;
+  border: 0;
+  font-size: inherit;
+}
+
+.mermaid-container > .mermaid svg {
+  max-width: 100%;
+  height: auto;
+}
+
 .screen-desc-header {
   border-right: 4px solid var(--color-secondary);
 }
@@ -1754,19 +2432,23 @@ html.is-lecture-view .site-navbar__actions {
   gap: 0.125rem;
 }
 
-.site-navbar__toggle.is-active {
+.site-navbar__toggle.is-active,
+.site-navbar__toggle[aria-pressed="true"] {
   background: color-mix(in srgb, var(--color-primary) 18%, var(--color-surface-variant));
 }
 
-.site-navbar__toggle.is-active .material-symbols-outlined {
+.site-navbar__toggle.is-active .material-symbols-outlined,
+.site-navbar__toggle[aria-pressed="true"] .material-symbols-outlined {
   color: var(--color-primary);
 }
 
-.dark .site-navbar__toggle.is-active {
+.dark .site-navbar__toggle.is-active,
+.dark .site-navbar__toggle[aria-pressed="true"] {
   background: color-mix(in srgb, var(--color-primary) 24%, var(--dm-elevated-2));
 }
 
-.dark .site-navbar__toggle.is-active .material-symbols-outlined {
+.dark .site-navbar__toggle.is-active .material-symbols-outlined,
+.dark .site-navbar__toggle[aria-pressed="true"] .material-symbols-outlined {
   color: var(--color-inverse-primary, #f8fafc);
 }
 
@@ -1870,7 +2552,7 @@ body.laser-pointer-enabled button {
   border-radius: 0.75rem;
   background: var(--color-surface);
   color: var(--color-on-surface);
-  font-family: 'IBM Plex Sans Arabic', sans-serif;
+  font-family: 'Noto Naskh Arabic', 'Source Serif 4', sans-serif;
   font-size: 0.9375rem;
   line-height: 1.6;
   resize: vertical;
@@ -1925,6 +2607,24 @@ body.laser-pointer-enabled button {
   border-color: var(--dm-border);
 }
 
+/* ── الفكرة الأساسية — flows like other section blocks, no callout box ── */
+.core-idea__text {
+  margin: 0 0 0.25rem;
+  padding-inline-start: 1.85rem;
+  font-size: 1.05rem;
+  font-weight: 600;
+  line-height: 1.7;
+  color: var(--color-on-surface);
+}
+
+.core-idea__text strong {
+  font-weight: inherit;
+}
+
+.dark .core-idea__text {
+  color: var(--dm-text);
+}
+
 /* ── النص الأصلي — لطيف وبسيط ── */
 .source-quote {
   margin-bottom: 1.25rem;
@@ -1954,6 +2654,11 @@ body.laser-pointer-enabled button {
   padding: 0.875rem 1rem 1rem;
 }
 
+.source-quote__body[dir="ltr"] {
+  direction: ltr;
+  text-align: left;
+}
+
 .source-quote__body p {
   margin: 0 0 0.625rem;
   font-size: 1rem;
@@ -1978,6 +2683,163 @@ body.laser-pointer-enabled button {
 
 .dark .source-quote__body p {
   color: var(--dm-text);
+}
+
+/* Original text at top of topic (toggle mode) */
+#content.expand-original-mode .original-text-collapsible {
+  border-right: 3px solid var(--color-secondary);
+  background: color-mix(in srgb, var(--color-secondary-fixed) 30%, var(--color-surface-container-lowest));
+}
+
+#content.expand-original-mode .original-text-collapsible summary {
+  pointer-events: none;
+  cursor: default;
+  padding: 0.5rem 0.875rem;
+  border-bottom: 1px dashed color-mix(in srgb, var(--color-secondary) 18%, transparent);
+}
+
+#content.expand-original-mode .original-text-collapsible summary .acc-chevron {
+  display: none;
+}
+
+#content.expand-original-mode .original-text-collapsible summary .acc-title {
+  font-size: 0.8125rem;
+  font-weight: 700;
+  color: var(--color-secondary);
+}
+
+#content.expand-original-mode .original-text-collapsible .acc-body {
+  border-top: none;
+  padding-top: 0.5rem;
+  padding-bottom: 0.5rem;
+}
+
+.original-text-collapsible .acc-body {
+  padding-bottom: 0.5rem !important;
+}
+
+.original-text-collapsible .acc-body.prose-content blockquote {
+  margin: 0 0 0.2rem 0 !important;
+}
+
+.original-text-collapsible .acc-body > :last-child {
+  margin-bottom: 0 !important;
+  padding-bottom: 0 !important;
+}
+
+.dark #content.expand-original-mode .original-text-collapsible {
+  border-right-color: var(--color-secondary-accent);
+  background: color-mix(in srgb, var(--color-secondary) 8%, var(--dm-elevated));
+}
+
+.dark #content.expand-original-mode .original-text-collapsible summary {
+  border-bottom-color: color-mix(in srgb, var(--color-secondary-accent) 15%, transparent);
+}
+
+.dark #content.expand-original-mode .original-text-collapsible summary .acc-title {
+  color: var(--color-secondary-accent);
+}
+
+/* Tight spacing: quote → coverage hint */
+.original-text-collapsible .acc-body blockquote {
+  margin-bottom: 0.2rem !important;
+}
+
+.original-text-collapsible .acc-body blockquote ~ p,
+.original-text-collapsible .acc-body blockquote ~ ul,
+.original-text-collapsible .acc-body blockquote ~ ol {
+  font-size: 0.6875rem;
+  line-height: 1.45;
+  color: var(--color-on-surface-variant);
+  opacity: 0.75;
+  margin-top: 0.1rem;
+  margin-bottom: 0;
+}
+
+.original-text-collapsible .acc-body blockquote ~ ul,
+.original-text-collapsible .acc-body blockquote ~ ol {
+  padding-right: 1rem;
+}
+
+.dark .original-text-collapsible .acc-body blockquote ~ p,
+.dark .original-text-collapsible .acc-body blockquote ~ ul,
+.dark .original-text-collapsible .acc-body blockquote ~ ol {
+  color: var(--dm-text-muted, var(--color-on-surface-variant));
+  opacity: 0.7;
+}
+
+/* Inside original text blocks, coverage notes should be tiny muted hints (no card) */
+.original-text-collapsible .acc-body .callout-note {
+  background: transparent !important;
+  border: 0 !important;
+  box-shadow: none !important;
+  padding: 0 !important;
+  margin: 0.1rem 0 0 !important;
+  gap: 0.2rem !important;
+  color: var(--color-on-surface-variant) !important;
+  opacity: 0.65;
+}
+
+.original-text-collapsible .acc-body .callout-note .material-symbols-outlined {
+  display: none;
+}
+
+.original-text-collapsible .acc-body .callout-note h5,
+.original-text-collapsible .acc-body .callout-note .font-body-md,
+.original-text-collapsible .acc-body .callout-note p,
+.original-text-collapsible .acc-body .callout-note li {
+  font-size: 0.68rem !important;
+  line-height: 1.35 !important;
+  margin: 0 !important;
+  font-weight: 500 !important;
+  color: inherit !important;
+}
+
+.original-text-collapsible .acc-body .callout-note h5 {
+  display: inline;
+}
+
+.original-text-collapsible .acc-body .callout-note .flex-1 {
+  display: inline;
+}
+
+.original-text-collapsible .acc-body .callout-note ul,
+.original-text-collapsible .acc-body .callout-note ol {
+  margin: 0.1rem 0 0 !important;
+  padding-right: 0.9rem !important;
+}
+
+.dark .original-text-collapsible .acc-body .callout-note {
+  color: var(--dm-text-muted, var(--color-on-surface-variant)) !important;
+  opacity: 0.58;
+}
+
+.expand-original-hint-toggle {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.35rem 0.75rem;
+  border-radius: 9999px;
+  border: 1px solid color-mix(in srgb, var(--color-primary) 20%, var(--color-outline-variant));
+  background: color-mix(in srgb, var(--color-primary-container) 40%, var(--color-surface-container-low));
+  color: var(--color-on-surface-variant);
+  font-size: 0.75rem;
+  line-height: 1.35;
+  cursor: pointer;
+  user-select: none;
+}
+
+.expand-original-hint-toggle input[type="checkbox"] {
+  width: 0.9rem;
+  height: 0.9rem;
+  accent-color: var(--color-primary);
+  cursor: pointer;
+}
+
+.dark .expand-original-hint-toggle {
+  border-color: color-mix(in srgb, var(--color-primary) 30%, var(--dm-border));
+  background: color-mix(in srgb, var(--color-primary) 12%, var(--dm-elevated));
+  color: var(--dm-text-muted, var(--color-on-surface-variant));
 }
 
 /* ── Numbered code snippets ── */
@@ -2021,7 +2883,7 @@ body.laser-pointer-enabled button {
   flex: 1;
   min-width: 0;
   padding: 0.35rem 0.75rem;
-  font-family: 'JetBrains Mono', 'IBM Plex Sans Arabic', ui-monospace, monospace;
+  font-family: 'JetBrains Mono', 'Noto Naskh Arabic', 'Source Serif 4', ui-monospace, monospace;
   font-size: 0.8125rem;
   line-height: 1.55;
   color: #e8f5f2;
@@ -3566,8 +4428,17 @@ body.laser-pointer-enabled button {
 .think-prompt__icon { color: var(--color-secondary); }
 .think-prompt__label { font-weight: 700; font-size: 0.875rem; }
 .think-prompt__body {
-  margin: 0; padding: 0.5rem 1rem 1rem; border: none; background: transparent;
-  font-size: 0.9375rem; line-height: 1.65; color: var(--color-on-surface-variant);
+  display: block;
+  margin: 0 !important;
+  padding: 0.5rem 1rem 1rem !important;
+  border: none !important;
+  background: transparent !important;
+  font-size: 0.9375rem;
+  line-height: 1.65;
+  color: var(--color-on-surface-variant);
+  white-space: normal;
+  overflow-wrap: anywhere;
+  word-break: break-word;
 }
 
 .dark .think-prompt {
@@ -3608,6 +4479,119 @@ body.laser-pointer-enabled button {
 .dark .expected-output__head {
   background: var(--dm-elevated-2);
   color: var(--dm-text);
+}
+
+/* Nested mini-MCQ — compact check under a ### paragraph (not a full MCQ part) */
+.mini-mcq {
+  margin: 1rem 0 1.25rem;
+  padding: 0.85rem 1rem;
+  border-radius: 0.75rem;
+  border: 1px dashed color-mix(in srgb, var(--color-outline-variant) 85%, transparent);
+  border-inline-start: 3px solid color-mix(in srgb, var(--color-primary) 55%, transparent);
+  background: color-mix(in srgb, var(--color-surface-container-low) 70%, transparent);
+  box-shadow: none;
+}
+.mini-mcq__label {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  flex-wrap: wrap;
+  margin-bottom: 0.5rem;
+  font-size: 0.75rem;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+  color: var(--color-on-surface-variant);
+  text-transform: none;
+}
+.mini-mcq__source {
+  margin-inline-start: auto;
+  font-weight: 500;
+  opacity: 0.75;
+  font-size: 0.7rem;
+}
+.mini-mcq__question {
+  margin: 0 0 0.65rem;
+  font-size: 0.9375rem;
+  font-weight: 600;
+  line-height: 1.55;
+  color: var(--color-on-surface);
+}
+.mini-mcq__options {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 0.4rem;
+}
+.mini-mcq__opt {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.55rem;
+  width: 100%;
+  text-align: right;
+  padding: 0.55rem 0.7rem;
+  border: 1px solid var(--color-outline-variant);
+  border-radius: 0.55rem;
+  background: var(--color-surface-container-lowest);
+  font-size: 0.875rem;
+  line-height: 1.45;
+  cursor: pointer;
+  transition: border-color 0.15s ease, background 0.15s ease;
+}
+.mini-mcq__opt:hover {
+  border-color: color-mix(in srgb, var(--color-primary) 45%, transparent);
+  background: var(--color-surface-container-low);
+}
+.mini-mcq__key {
+  flex-shrink: 0;
+  width: 1.5rem;
+  height: 1.5rem;
+  border-radius: 0.4rem;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.7rem;
+  font-weight: 800;
+  background: var(--color-secondary-fixed);
+  color: var(--color-secondary);
+}
+.mini-mcq__feedback {
+  min-height: 0;
+  margin-top: 0.5rem;
+  font-size: 0.8125rem;
+  font-weight: 700;
+}
+.mini-mcq__explain {
+  margin-top: 0.5rem;
+  padding: 0.6rem 0.75rem;
+  border-radius: 0.5rem;
+  border-inline-start: 3px solid var(--color-primary);
+  background: color-mix(in srgb, var(--color-primary) 8%, transparent);
+  font-size: 0.8125rem;
+  line-height: 1.55;
+  color: var(--color-on-surface-variant);
+}
+.mini-mcq__reset {
+  margin-top: 0.45rem;
+  padding: 0.25rem 0.55rem;
+  font-size: 0.75rem;
+  border-radius: 0.4rem;
+  border: 1px solid var(--color-outline-variant);
+  background: transparent;
+  color: var(--color-on-surface-variant);
+  cursor: pointer;
+}
+.dark .mini-mcq {
+  background: color-mix(in srgb, var(--dm-elevated) 80%, transparent);
+  border-color: var(--dm-border);
+}
+.dark .mini-mcq__opt {
+  background: var(--dm-elevated);
+  border-color: var(--dm-border);
+  color: var(--dm-text);
+}
+.dark .mini-mcq__question { color: var(--dm-text); }
+.dark .mini-mcq__explain {
+  background: color-mix(in srgb, var(--color-primary) 12%, var(--dm-elevated-2));
+  color: var(--dm-text-muted);
 }
 
 .qa-card {
@@ -3888,7 +4872,19 @@ body.laser-pointer-enabled button {
 
   #content .prose-content ul,
   #content .prose-content ol {
-    margin: 0.35rem 1rem 0.75rem 0;
+    margin-top: 0;
+    margin-bottom: 0.55rem;
+    margin-inline-start: 0;
+    margin-inline-end: 1rem;
+  }
+
+  #content .prose-content .mini-heading {
+    margin-top: 1.35rem !important;
+    margin-bottom: 0 !important;
+  }
+
+  #content .prose-content .mini-heading + :is(ul, ol, p) {
+    margin-top: 0.1rem !important;
   }
 
   #content .section-block.mb-xl {
@@ -3924,14 +4920,14 @@ body.laser-pointer-enabled button {
   }
 
   #content .mcq-opt {
-    padding: 0.625rem !important;
-    min-height: 2.75rem;
+    padding: 0.375rem 0.5rem !important;
+    min-height: 2.25rem;
   }
 
-  #content .mcq-opt .w-8 {
-    width: 1.75rem;
-    height: 1.75rem;
-    font-size: 0.8125rem;
+  #content .mcq-opt .mcq-opt-key {
+    width: 1.125rem;
+    height: 1.125rem;
+    font-size: 0.6875rem;
   }
 
   #content .study-tip,
@@ -4022,5 +5018,242 @@ body.laser-pointer-enabled button {
   .code-terminal .hljs {
     font-size: 0.8125rem;
   }
+}
+
+.lecture-sidebar {
+  position: relative;
+  display: flex;
+  align-items: stretch;
+}
+
+.lecture-sidebar__panel {
+  width: 20rem; /* يطابق w-80 الحالية */
+  overflow: hidden;
+  transition: width 0.22s ease, opacity 0.18s ease, margin 0.22s ease;
+}
+
+.lecture-sidebar.is-collapsed .lecture-sidebar__panel {
+  width: 0;
+  opacity: 0;
+  pointer-events: none;
+  margin-inline-end: -1px; /* يطوي الحدّ الفاصل معها */
+}
+
+.lecture-sidebar__head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
+  padding: var(--lecture-pad-sm, 0.5rem) var(--lecture-pad-default, 1.5rem) var(--lecture-pad-sm, 0.5rem) 0.5rem;
+  min-height: 2.75rem;
+  border-bottom: 1px solid var(--color-outline-variant);
+}
+
+/* السهم بزاوية أقصى اليسار دايماً، وعنوان الفهرس بالطرف المقابل */
+.lecture-sidebar__head .lecture-sidebar__toggle {
+  order: 2;
+}
+
+.lecture-sidebar__head .lecture-sidebar__head-label {
+  order: 1;
+}
+
+.lecture-sidebar__head-label {
+  flex: 1 1 auto;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-weight: 700;
+  color: var(--color-on-surface-variant);
+}
+
+.lecture-sidebar__toggle,
+.lecture-sidebar__expand {
+  display: inline-flex;
+  flex: 0 0 auto;
+  align-items: center;
+  justify-content: center;
+  width: 2rem;
+  height: 2rem;
+  border-radius: 0.5rem;
+  color: var(--color-on-surface-variant);
+  background: transparent;
+  border: 1px solid transparent;
+  transition: background-color 0.15s ease, color 0.15s ease, border-color 0.15s ease;
+}
+
+.lecture-sidebar__toggle:hover,
+.lecture-sidebar__expand:hover {
+  background: var(--color-surface-container-high, var(--color-surface));
+  color: var(--color-primary);
+  border-color: var(--color-outline-variant);
+}
+
+.lecture-sidebar__expand {
+  position: sticky;
+  top: calc(var(--site-scroll-offset, 4rem) + 0.75rem);
+  align-self: flex-start;
+  margin-inline-start: 0.25rem;
+  background: var(--color-surface-container-lowest);
+  border-color: var(--color-outline-variant);
+}
+
+/* Tailwind's .hidden{display:none} and our .lecture-sidebar__expand{display:inline-flex} have
+   equal specificity, so whichever stylesheet loads later in the DOM wins the tie — that let the
+   expand button render (and drift around via its own `position: sticky`) even while the sidebar
+   was open. Pin it down with an ID+class rule, which always outranks a lone class rule. */
+#sidebarExpandBtn.hidden {
+  display: none;
+}
+
+/* رأس المادة المضغوط أعلى الفهرس — أيقونة + عنوان/عنوان فرعي بسطر واحد، مع سهمي تنقل بين المحاضرات */
+.lecture-sidebar__course {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.75rem var(--lecture-pad-default, 1.5rem);
+  border-bottom: 1px solid var(--color-outline-variant);
+}
+
+.lecture-sidebar__course-icon {
+  flex: 0 0 auto;
+  font-size: 1.25rem;
+}
+
+.lecture-sidebar__course-text {
+  flex: 1 1 auto;
+  min-width: 0;
+}
+
+.lecture-sidebar__course-title {
+  margin: 0;
+  font-size: 0.85rem;
+  font-weight: 700;
+  color: var(--color-primary);
+  line-height: 1.35;
+}
+
+.lecture-sidebar__course-sub {
+  margin: 0.1rem 0 0;
+  font-size: 0.72rem;
+  color: var(--color-on-surface-variant);
+  line-height: 1.3;
+}
+
+.lecture-sidebar__nav-arrow {
+  display: inline-flex;
+  flex: 0 0 auto;
+  align-items: center;
+  justify-content: center;
+  width: 1.75rem;
+  height: 1.75rem;
+  border-radius: 0.5rem;
+  color: var(--color-on-surface-variant);
+  background: transparent;
+  border: 1px solid transparent;
+  cursor: pointer;
+  transition: background-color 0.15s ease, color 0.15s ease, border-color 0.15s ease, opacity 0.15s ease;
+}
+
+.lecture-sidebar__nav-arrow:hover:not(:disabled) {
+  background: var(--color-surface-container-high, var(--color-surface));
+  color: var(--color-primary);
+  border-color: var(--color-outline-variant);
+}
+
+.lecture-sidebar__nav-arrow:disabled {
+  opacity: 0.3;
+  cursor: default;
+}
+
+.lecture-sidebar__nav-arrow .material-symbols-outlined {
+  font-size: 1.15rem;
+}
+
+/* شريط تقدم أفقي بسيط بدل الطابة العائمة السابقة — أوضح وأصعب ينكسر */
+.lecture-sidebar__progress {
+  padding: 0.65rem var(--lecture-pad-default, 1.5rem);
+  border-bottom: 1px solid var(--color-outline-variant);
+}
+
+.lecture-sidebar__progress-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 0.35rem;
+}
+
+.lecture-sidebar__progress-label {
+  font-size: 0.7rem;
+  color: var(--color-on-surface-variant);
+}
+
+.lecture-sidebar__progress-pct {
+  font-size: 0.7rem;
+  font-weight: 700;
+  color: var(--color-primary);
+}
+
+.lecture-sidebar__progress-track {
+  height: 4px;
+  background: var(--color-outline-variant);
+  border-radius: 999px;
+  overflow: hidden;
+}
+
+.lecture-sidebar__progress-fill {
+  height: 100%;
+  width: 0%;
+  background: var(--color-primary);
+  border-radius: 999px;
+  transition: width 0.12s linear;
+}
+
+/* تمييز خفيف للعنوان الرئيسي بالفهرس لما يكون أحد عناوينه الفرعية هو الفعّال حالياً */
+.toc-nav-link.is-parent-active {
+  background: color-mix(in srgb, var(--color-primary) 8%, transparent);
+  color: var(--color-primary);
+}
+
+.dark .toc-nav-link.is-parent-active {
+  background: color-mix(in srgb, var(--color-primary) 14%, transparent);
+}
+
+/* عناوين فرعية بالفهرس فيها كود مثل `Tree Search` — تنسيق أنظف بدل إظهار العلامات الفاصلة كنص خام */
+.toc-inline-code {
+  font-family: var(--font-code, monospace);
+  background: var(--code-bg);
+  padding: 0.05rem 0.35rem;
+  border-radius: 0.25rem;
+  font-size: 0.9em;
+}
+
+/* إصلاح: إبقاء حالة "مكتملة/غير مكتملة" أقصى طرف والزر "ابدأ الدراسة" بالطرف المقابل */
+.lecture-card-footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--lecture-pad-sm, 0.5rem);
+}
+/* ── Search ─────────────────────────────────────────────────────────────── */
+#searchContainer input[type="search"]::-webkit-search-decoration,
+#searchContainer input[type="search"]::-webkit-search-cancel-button,
+#searchContainer input[type="search"]::-webkit-search-results-button,
+#searchContainer input[type="search"]::-webkit-search-results-decoration {
+  -webkit-appearance: none;
+}
+
+#searchResults {
+  scrollbar-width: thin;
+}
+
+.search-result-item {
+  transition: background-color 0.15s ease;
+}
+
+.search-result-item:focus-visible {
+  outline: 2px solid var(--color-primary);
+  outline-offset: -2px;
 }
 

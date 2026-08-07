@@ -14,6 +14,11 @@ import {
   toArabicDigits,
   inferTheme,
 } from './lib/scaffold-subject.mjs';
+import {
+  analyticsMetaTagsHtml,
+  hubAnalyticsScriptHtml,
+  patchAnalyticsHtml,
+} from './lib/patch-analytics.mjs';
 
 const ENGINE_ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const DIST = path.join(ENGINE_ROOT, 'dist');
@@ -171,6 +176,7 @@ async function collectHubSubjects() {
     let theme = inferTheme(subjectId, domain);
     let matIcon = HUB_THEME_PALETTE[theme]?.icon || 'school';
     let enabledLectures = false;
+    let hubTag = '';
     const manifestSrc = path.join(lecturesDir, 'manifest.json');
     if (existsSync(manifestSrc)) {
       try {
@@ -179,6 +185,7 @@ async function collectHubSubjects() {
         subtitle = m.subtitle || subtitle;
         year = m.settings?.year || '';
         enabledLectures = m.settings?.enabledLectures || false;
+        hubTag = m.settings?.hubTag || '';
         academicYear = m.settings?.academicYear ?? academicYear;
         theme = m.settings?.theme || theme;
         matIcon = m.lectureMatIcons?.[0]
@@ -194,7 +201,7 @@ async function collectHubSubjects() {
     if(enabledLectures)
     {
       items.push({
-      rel, title, subtitle, year, academicYear, hasLectures, lectureCount, theme, matIcon,
+      rel, title, subtitle, year, academicYear, hasLectures, lectureCount, theme, matIcon, hubTag,
     });
     }
   }
@@ -220,10 +227,10 @@ function renderStubHtml(subject) {
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>${escapeHtml(subject.title)} — قريباً</title>
-  <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+Arabic:wght@400;600;700&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Naskh+Arabic:wght@400;500;600;700&family=Source+Serif+4:opsz,wght@8..60,400;8..60,600;8..60,700&display=swap" rel="stylesheet">
   <style>
     * { box-sizing: border-box; }
-    body { font-family: 'IBM Plex Sans Arabic', sans-serif; margin: 0; min-height: 100vh; display: flex; align-items: center; justify-content: center; padding: 2rem; background: #f8fafc; color: #0f172a; text-align: center; }
+    body { font-family: 'Noto Naskh Arabic', 'Source Serif 4', serif; margin: 0; min-height: 100vh; display: flex; align-items: center; justify-content: center; padding: 2rem; background: #f8fafc; color: #0f172a; text-align: center; }
     .box { max-width: 420px; background: #fff; border: 1px solid #e2e8f0; border-radius: 16px; padding: 2rem 1.5rem; }
     h1 { font-size: 1.35rem; margin: 0 0 0.75rem; color: #111827; }
     p { color: #555; margin: 0 0 1.25rem; line-height: 1.7; }
@@ -231,16 +238,7 @@ function renderStubHtml(subject) {
     a:hover { text-decoration: underline; }
     .badge { display: inline-block; margin-bottom: 1rem; padding: 0.25rem 0.65rem; border-radius: 999px; background: #e0f2fe; color: #1d4ed8; font-size: 0.8rem; }
   </style>
-  <script type="text/javascript">
-(function(c,l,a,r,i,t,y){
-    c[a]=c[a]||function(){(c[a].q=c[a].q||[]).push(arguments)};
-    t=l.createElement(r);t.async=1;
-    t.src="https://www.clarity.ms/tag/"+i;
-    y=l.getElementsByTagName(r)[0];
-    y.parentNode.insertBefore(t,y);
-})(window, document, "clarity", "script", "xim6tigbcd");
-</script>
-
+${analyticsMetaTagsHtml()}
 </head>
 <body>
   <div class="box">
@@ -281,9 +279,15 @@ function renderSubjectCard(s, year, staggerIdx) {
   const countLabel = lectureCountLabel(s.lectureCount);
   const palette = HUB_THEME_PALETTE[s.theme] || HUB_THEME_PALETTE['amber-default'];
   const stagger = (staggerIdx * 0.07).toFixed(2);
+  const tagHtml = s.hubTag
+    ? `<span class="hub-card-wrap__tag">${escapeHtml(s.hubTag)}</span>`
+    : '';
 
   return `
+    <div class="hub-card-wrap">
+      ${tagHtml}
       <a class="hub-card${pending ? ' hub-card--pending' : ''}" href="./${s.rel}/"
+       data-progress-subject="${escapeHtml(s.rel)}" data-progress-total="${s.lectureCount}" data-progress-year="${year}"
          style="--card-primary:${palette.primary};--card-secondary:${palette.secondary};--card-tertiary:${palette.tertiary};--card-fixed:${palette.fixed};--card-on-fixed:${palette.onFixed};--stagger:${stagger}s"
          aria-label="${escapeHtml(s.title)}">
         <div class="hub-card__head">
@@ -309,7 +313,8 @@ function renderSubjectCard(s, year, staggerIdx) {
           ${pending ? 'عرض المادة' : 'فتح الدليل'}
           <span class="material-symbols-outlined">arrow_back</span>
         </span>
-      </a>`;
+      </a>
+    </div>`;
 }
 
 /** @param {Awaited<ReturnType<typeof collectHubSubjects>>} subjects */
@@ -331,12 +336,13 @@ function renderHtml(subjects) {
     const stats = yearBlockStats(subjects, yearNum);
     const cards = byYear[y].map(s => renderSubjectCard(s, yearNum, cardIndex++)).join('\n');
     return `
-    <details id="year-${yearNum}" class="year-panel" style="--year-primary:${accent.primary};--year-secondary:${accent.secondary};--year-fixed:${accent.fixed}">
+    <details id="year-${yearNum}" class="year-panel" data-year-progress="${yearNum}" style="--year-primary:${accent.primary};--year-secondary:${accent.secondary};--year-fixed:${accent.fixed}">
       <summary class="year-panel__header">
         <div class="year-panel__badge" aria-hidden="true">${toArabicDigits(y)}</div>
         <div class="year-panel__intro">
           <h2>السنة ${accent.label}</h2>
           <p class="year-panel__tagline">${toArabicDigits(stats.subjects)} مواد · ${toArabicDigits(stats.lectures)} محاضرة · ${toArabicDigits(stats.ready)} جاهزة</p>
+          
         </div>
         <div class="year-panel__chips">
           <span class="year-panel__chip">
@@ -387,7 +393,7 @@ function renderHtml(subjects) {
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>دلائل الدراسة — Faculty Study Guides</title>
-  <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+Arabic:wght@400;600;700&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Naskh+Arabic:wght@400;500;600;700&family=Source+Serif+4:opsz,wght@8..60,400;8..60,600;8..60,700&display=swap" rel="stylesheet">
   <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet">
   <style>
     * { box-sizing: border-box; }
@@ -511,7 +517,7 @@ function renderHtml(subjects) {
       border-color: #4f92ff;
     }
     body {
-      font-family: 'IBM Plex Sans Arabic', sans-serif;
+      font-family: 'Noto Naskh Arabic', 'Source Serif 4', serif;
       margin: 0;
       padding: 0 0 3rem;
       background: linear-gradient(180deg, #f8fafc 0%, #e2e8f0 55%, #f8fafc 100%);
@@ -674,6 +680,7 @@ function renderHtml(subjects) {
       color: #475569;
     }
     .dark .year-panel__tagline { color: #cbd5e1; }
+    
     .year-panel__chips {
       display: flex;
       flex-wrap: wrap;
@@ -716,6 +723,29 @@ function renderHtml(subjects) {
       display: grid;
       grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
       gap: 1.25rem;
+    }
+    .hub-card-wrap {
+      position: relative;
+      display: flex;
+      flex-direction: column;
+      gap: 0.45rem;
+    }
+    .hub-card-wrap__tag {
+      align-self: flex-start;
+      padding: 0.2rem 0.65rem;
+      border-radius: 999px;
+      background: #fef3c7;
+      color: #b45309;
+      font-size: 0.72rem;
+      font-weight: 700;
+      letter-spacing: 0.01em;
+      border: 1px solid #fcd34d;
+      line-height: 1.4;
+    }
+    .dark .hub-card-wrap__tag {
+      background: rgba(245, 158, 11, 0.16);
+      color: #fbbf24;
+      border-color: rgba(251, 191, 36, 0.35);
     }
     .hub-card {
       position: relative;
@@ -878,16 +908,7 @@ function renderHtml(subjects) {
       background: rgba(37,99,235,.18);
       color: #bfdbfe;
     }
-    .hub-card__cta {
-      display: inline-flex;
-      align-items: center;
-      gap: 0.35rem;
-      margin-top: auto;
-      font-size: 0.9rem;
-      font-weight: 700;
-      color: var(--card-primary);
-      transition: gap 0.2s ease;
-    }
+    
     .dark .hub-card__cta {
       color: #bfdbfe;
     }
@@ -970,15 +991,7 @@ function renderHtml(subjects) {
       .year-panel__chips { margin-inline-start: 0; }
     }
   </style>
-  <script type="text/javascript">
-(function(c,l,a,r,i,t,y){
-    c[a]=c[a]||function(){(c[a].q=c[a].q||[]).push(arguments)};
-    t=l.createElement(r);t.async=1;
-    t.src="https://www.clarity.ms/tag/"+i;
-    y=l.getElementsByTagName(r)[0];
-    y.parentNode.insertBefore(t,y);
-})(window, document, "clarity", "script", "xim6tigbcd");
-</script>
+${analyticsMetaTagsHtml()}
 </head>
 <body>
   <nav class="hub-navbar" aria-label="التنقل الرئيسي">
@@ -1011,8 +1024,10 @@ function renderHtml(subjects) {
   <script>
     (function () {
       const key = 'study-guide-theme';
+      const progressKey = 'study-guide-progress-v1';
       const toggle = document.getElementById('hubThemeToggle');
       const icon = document.getElementById('hubThemeIcon');
+      const arabicDigits = ['٠', '١', '٢', '٣', '٤', '٥', '٦', '٧', '٨', '٩'];
 
       function syncTheme(theme) {
         const dark = theme === 'dark';
@@ -1043,8 +1058,82 @@ function renderHtml(subjects) {
         });
       }
 
+      function toArabicDigitsLocal(value) {
+        return String(value).replace(/\d/g, (digit) => arabicDigits[Number(digit)] || digit);
+      }
+
+      function readProgressStore() {
+        try {
+          const raw = localStorage.getItem(progressKey);
+          if (!raw) return { subjects: {} };
+          const parsed = JSON.parse(raw);
+          if (!parsed || typeof parsed !== 'object') return { subjects: {} };
+          if (!parsed.subjects || typeof parsed.subjects !== 'object') return { subjects: {} };
+          return parsed;
+        } catch {
+          return { subjects: {} };
+        }
+      }
+
+      function subjectDoneCount(store, subjectKey, total) {
+        const rawState = store.subjects?.[subjectKey];
+        if (!rawState || typeof rawState !== 'object') return 0;
+
+        const completedMap = rawState.completed && typeof rawState.completed === 'object'
+          ? rawState.completed
+          : rawState;
+
+        const done = Object.keys(completedMap || {}).length;
+        return Math.max(0, Math.min(Number(total) || 0, done));
+      }
+
+      function applyProgressUi() {
+        const store = readProgressStore();
+
+        document.querySelectorAll('[data-progress-subject]').forEach((card) => {
+          const subjectKey = card.getAttribute('data-progress-subject') || '';
+          const total = Number(card.getAttribute('data-progress-total') || '0');
+          const done = subjectDoneCount(store, subjectKey, total);
+          const percent = total > 0 ? Math.round((done / total) * 100) : 0;
+
+          const fill = card.querySelector('[data-progress-fill]');
+          const doneText = card.querySelector('[data-progress-done]');
+          const totalText = card.querySelector('[data-progress-total]');
+
+          if (fill) fill.style.width = percent + '%';
+          if (doneText) doneText.textContent = toArabicDigitsLocal(done);
+          if (totalText) totalText.textContent = toArabicDigitsLocal(total);
+        });
+
+        document.querySelectorAll('[data-year-progress]').forEach((panel) => {
+          const year = panel.getAttribute('data-year-progress');
+          const cards = panel.querySelectorAll('[data-progress-year="' + year + '"]');
+
+          let done = 0;
+          let total = 0;
+          cards.forEach((card) => {
+            const lectureTotal = Number(card.getAttribute('data-progress-total') || '0');
+            const subjectKey = card.getAttribute('data-progress-subject') || '';
+            total += lectureTotal;
+            done += subjectDoneCount(store, subjectKey, lectureTotal);
+          });
+
+          const percent = total > 0 ? Math.round((done / total) * 100) : 0;
+          const fill = panel.querySelector('[data-year-progress-fill]');
+          const doneText = panel.querySelector('[data-year-progress-done]');
+          const totalText = panel.querySelector('[data-year-progress-total]');
+
+          if (fill) fill.style.width = percent + '%';
+          if (doneText) doneText.textContent = toArabicDigitsLocal(done);
+          if (totalText) totalText.textContent = toArabicDigitsLocal(total);
+        });
+      }
+
+      applyProgressUi();
+
       window.addEventListener('storage', (event) => {
         if (event.key === key && typeof event.newValue === 'string') syncTheme(event.newValue);
+        if (event.key === progressKey) applyProgressUi();
       });
 
       const prefersReducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
@@ -1130,6 +1219,7 @@ function renderHtml(subjects) {
       });
     })();
   </script>
+${hubAnalyticsScriptHtml()}
 </body>
 </html>`;
 }
@@ -1138,7 +1228,7 @@ async function main() {
   await mkdir(DIST, { recursive: true });
   const subjects = await collectHubSubjects();
   const stubs = await ensureSubjectStubs(subjects);
-  const html = renderHtml(subjects);
+  const html = patchAnalyticsHtml(renderHtml(subjects));
   await writeFile(path.join(DIST, 'index.html'), html);
   console.log(`✓ dist/index.html (${subjects.length} subject(s), ${stubs} stub(s))`);
 }

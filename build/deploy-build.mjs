@@ -15,6 +15,7 @@ import {
   distDir,
   listAllSubjectsWithLectures,
   subjectHasBuildableLectures,
+  subjectNeedsLectureBuild,
   subjectNeedsReviewBuild,
 } from './lib/subject-paths.mjs';
 import { readSubjectsFromStdin } from './lib/read-subjects-stdin.mjs';
@@ -35,7 +36,14 @@ function runBuild(subject) {
 async function needsBuild(subject) {
   const out = distDir(subject);
   // Stub pages from generate-dist-index only have index.html — not a real build.
-  if (!existsSync(path.join(out, 'lectures', 'manifest.json'))) return true;
+  if (!existsSync(path.join(out, 'lectures', 'manifest.json'))) {
+    console.log(`Rebuild ${subject} — cached subject output is missing.`);
+    return true;
+  }
+  if (await subjectNeedsLectureBuild(subject)) {
+    console.log(`Rebuild ${subject} — cached lecture list is stale or incomplete.`);
+    return true;
+  }
   return subjectNeedsReviewBuild(subject);
 }
 
@@ -61,13 +69,18 @@ async function main() {
   if (!toBuild.size) {
     console.log('No subjects to build.');
   } else {
-    let failed = false;
+    // One broken subject must not abort the whole Pages deploy — otherwise a
+    // single invalid lecture folder blocks every other subject's updates
+    // (including DAWRAT) from reaching the live site. Failed subjects are
+    // reported and skipped; hub/admin generation still runs so successful
+    // builds get published. PR "Validate lectures" still catches content errors.
+    const failed = [];
     for (const subject of [...toBuild].sort()) {
-      if (!runBuild(subject)) failed = true;
+      if (!runBuild(subject)) failed.push(subject);
     }
-    if (failed) {
-      console.error('\n✗ Build failed.');
-      process.exit(1);
+    if (failed.length) {
+      console.error(`\n⚠ Skipped ${failed.length} failed subject(s): ${failed.join(', ')}`);
+      console.error('  Continuing deploy so successfully built subjects still publish.');
     }
   }
 

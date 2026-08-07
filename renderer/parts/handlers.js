@@ -2,6 +2,8 @@ import { esc } from '../core/escape.js';
 import { inlineMd } from '../core/inline-md.js';
 import { ms } from '../core/icons.js';
 import { renderBlocks } from '../blocks/index.js';
+import { calloutHtml, renderMermaid } from '../blocks/handlers.js';
+import { mcqCardDomId, mcqSectionAnchor, normalizeMcqSection } from '../core/slug.js';
 
 function diffBadgeClass(d) {
   if (d === 'سهل') return 'bg-primary/20 text-primary';
@@ -9,41 +11,280 @@ function diffBadgeClass(d) {
   return 'bg-tertiary-fixed text-on-tertiary-fixed-variant';
 }
 
+/**
+ * Optional "تذكرة" reinforcement block inside an MCQ rationale — same visual
+ * family as `مهم للامتحان`. Accepts:
+ *   #### تذكرة:
+ *   > line…
+ * or:
+ *   **تذكرة:** …
+ * followed by optional `>` blockquote lines (or plain lines until a blank line).
+ */
+function extractTadhkira(explain) {
+  if (!explain) return { body: '', tadhkira: '' };
+  const m = explain.match(/\n*(?:#{2,4}\s*تذكرة\s*:?|\*\*تذكرة:\*\*)\s*\n*/);
+  if (!m) return { body: explain.trim(), tadhkira: '' };
+
+  const before = explain.slice(0, m.index).trim();
+  const afterLines = explain.slice(m.index + m[0].length).split('\n');
+  let i = 0;
+  while (i < afterLines.length && !afterLines[i].trim()) i++;
+
+  const tadhkiraLines = [];
+  if (i < afterLines.length && /^>\s?/.test(afterLines[i])) {
+    while (i < afterLines.length && (/^>\s?/.test(afterLines[i]) || !afterLines[i].trim())) {
+      if (afterLines[i].trim()) tadhkiraLines.push(afterLines[i].replace(/^>\s?/, ''));
+      i++;
+    }
+  } else {
+    while (i < afterLines.length && afterLines[i].trim()) {
+      tadhkiraLines.push(afterLines[i]);
+      i++;
+    }
+  }
+
+  const trailing = afterLines.slice(i).join('\n').trim();
+  const body = [before, trailing].filter(Boolean).join('\n\n');
+  return { body, tadhkira: tadhkiraLines.join('\n').trim() };
+}
+
+/** Split text on fenced blocks; render ```mermaid via Mermaid, other fences as <pre>. */
+function renderFencedSegments(text, { plainClass, wrapClass } = {}) {
+  if (!text.includes('```')) {
+    return null;
+  }
+  let html = wrapClass ? `<div class="${wrapClass}">` : '<div>';
+  const parts = text.split(/```(\w*)\n?([\s\S]*?)```/g);
+  for (let i = 0; i < parts.length; i += 3) {
+    const plain = parts[i];
+    if (plain && plain.trim()) {
+      const paras = plain
+        .split(/\n{2,}/)
+        .map(p => p.trim())
+        .filter(Boolean)
+        .map(p => `<p class="${plainClass}">${inlineMd(p).replace(/\n/g, '<br>')}</p>`)
+        .join('');
+      html += paras;
+    }
+    const lang = parts[i + 1] !== undefined ? String(parts[i + 1] || '').toLowerCase() : undefined;
+    const code = parts[i + 1] !== undefined ? parts[i + 2] : undefined;
+    if (code !== undefined && code.trim()) {
+      if (lang === 'mermaid') {
+        html += `<div class="mb-md">${renderMermaid({ code: code.trim() })}</div>`;
+      } else {
+        html += `<pre class="bg-surface-container-high dark:bg-[#0d0f1a] rounded-lg p-md mb-md overflow-x-auto font-code-sm text-code-sm"><code>${esc(code.trim())}</code></pre>`;
+      }
+    }
+  }
+  return html + '</div>';
+}
+
+/** Renders MCQ rationale: paragraph breaks preserved, optional تذكرة callout.
+ * Also renders ```mermaid fences inside the rationale (teaching diagrams). */
+function renderMcqExplain(explain) {
+  const { body, tadhkira } = extractTadhkira(explain || '');
+  const fenced = renderFencedSegments(body, {
+    plainClass: 'mb-sm last:mb-0',
+    wrapClass: '',
+  });
+  const paras = fenced || body
+    .split(/\n{2,}/)
+    .map(p => p.trim())
+    .filter(Boolean)
+    .map(p => `<p class="mb-sm last:mb-0">${inlineMd(p).replace(/\n/g, '<br>')}</p>`)
+    .join('');
+  const tadhkiraHtml = tadhkira
+    ? `<div class="mt-md">${calloutHtml('callout-exam', 'تذكرة 💡', tadhkira)}</div>`
+    : '';
+  return `${paras}${tadhkiraHtml}`;
+}
+
+/** Renders an MCQ question stem — plain text via inlineMd, or (for a shared
+ * code/paragraph/diagram stimulus feeding several questions) text + fenced
+ * segments. ```mermaid becomes a live Mermaid diagram; other fences stay <pre>. */
+function renderQuestionStem(text) {
+  if (!text.includes('```')) {
+    return `<p class="font-headline-md text-headline-md leading-snug mb-xl">${inlineMd(text)}</p>`;
+  }
+  return renderFencedSegments(text, {
+    plainClass: 'font-headline-md text-headline-md leading-snug mb-md',
+    wrapClass: 'mb-xl',
+  });
+}
+
+/** A small pill next to the difficulty badge, shown only when the question
+ * carries a "**المصدر:**" tag (e.g. a past-exam-year source). */
+function sourceTag(source) {
+  if (!source) return '';
+  return `<span class="font-label-md px-sm py-xs rounded-full bg-outline-variant/40 text-on-surface-variant">${esc(source)}</span>`;
+}
+
+/** Inline "propose a correction" helper shown inside a question's comment
+ * popup — builds a `#correction`-tagged message, copies it when possible,
+ * then shows the draft above the shared question Giscus thread (same
+ * Discussion as general chat; Giscus cannot be true-prefilled cross-origin). */
+function renderCorrectionPicker(q) {
+  const optionsHtml = q.options
+    .map(opt => `<option value="${esc(opt.key.toUpperCase())}">${esc(opt.key.toUpperCase())} — ${esc(opt.text)}</option>`)
+    .join('');
+  return `<div class="mcq-correction-form hidden mb-md p-md bg-surface-container rounded-lg border border-outline-variant">
+    <label class="block font-label-md mb-xs">الإجابة الصحيحة برأيك:</label>
+    <select class="mcq-correction-answer w-full p-sm border border-outline-variant rounded-lg mb-md bg-surface">
+      ${optionsHtml}
+    </select>
+    <label class="block font-label-md mb-xs">ليش هاد هو الجواب الصحيح؟</label>
+    <textarea class="mcq-correction-reason w-full p-sm border border-outline-variant rounded-lg mb-md bg-surface" rows="3" placeholder="اشرح باختصار..."></textarea>
+    <button type="button" class="mcq-correction-submit-btn inline-flex items-center gap-xs px-md py-sm rounded-lg bg-primary text-on-primary font-label-md hover:opacity-90 transition-opacity">
+      ${ms('send', false, 'text-sm')} اقترح التصحيح
+    </button>
+    <p class="mcq-correction-hint hidden mt-sm font-label-sm text-primary"></p>
+  </div>
+  <div class="mcq-correction-draft hidden mb-md p-md rounded-lg border border-primary/40 bg-primary/5">
+    <div class="flex items-center justify-between gap-sm mb-sm flex-wrap">
+      <span class="font-label-md text-primary">نص التصحيح جاهز — الصقه في صندوق Giscus أدناه</span>
+      <button type="button" class="mcq-correction-recopy-btn px-sm py-2xs rounded-lg border border-outline-variant font-label-sm hover:bg-surface-variant transition-all">${ms('content_copy', false, 'text-sm')} نسخ</button>
+    </div>
+    <pre class="mcq-correction-draft-text m-0 whitespace-pre-wrap font-body-md text-on-surface bg-surface p-sm rounded-lg border border-outline-variant/60 max-h-40 overflow-y-auto"></pre>
+  </div>`;
+}
+
+/** Renders one answerable question as its own card — reused both for a
+ * standalone question and for each sub-question inside a Case-2 group. */
+function renderMcqCard(q, cardId, { showSource = true } = {}) {
+  let html = `<article class="mcq-card bg-surface-container-lowest dark:bg-[#161b30] border border-outline-variant dark:border-[#1e40af] rounded-xl p-lg custom-shadow box-animate box-hover scroll-mt-16 anchor-target" id="${cardId}" data-correct="${q.correct}" data-discussion-term="${esc(cardId)}">
+    <div class="flex items-center gap-md mb-md flex-wrap">
+      <span class="px-sm py-xs bg-secondary-container text-on-secondary-container rounded-lg font-code-sm text-code-sm">س${q.num}</span>
+      ${q.difficulty ? `<span class="font-label-md px-sm py-xs rounded-full ${diffBadgeClass(q.difficulty)}">${esc(q.difficulty)}</span>` : ''}
+      ${showSource ? sourceTag(q.source) : ''}
+      <div class="mcq-card-discuss-actions mr-auto flex items-center">
+        <button type="button"
+          class="mcq-discuss-summary inline-flex items-center gap-sm text-on-surface-variant hover:text-primary transition-colors bg-transparent border-0 p-0 shadow-none rounded-none cursor-pointer"
+          data-comment-term="${esc(cardId)}"
+          aria-label="نقاش وتصحيحات هذا السؤال"
+          title="نقاش السؤال">
+          <span class="inline-flex items-center gap-2xs" data-part="comments">
+            ${ms('chat_bubble', false, 'text-sm leading-none')}
+            <span class="mcq-discuss-comments tabular-nums leading-none opacity-80" style="font-size:0.7em">0</span>
+          </span>
+          <span class="mcq-discuss-corr-wrap hidden inline-flex items-center gap-2xs" data-part="corrections">
+            ${ms('build', false, 'text-sm leading-none')}
+            <span class="mcq-discuss-corr tabular-nums leading-none opacity-80" style="font-size:0.7em">0</span>
+          </span>
+          <span class="mcq-discuss-react-wrap hidden inline-flex items-center gap-2xs" data-part="react">
+            ${ms('thumb_up', false, 'text-sm leading-none')}
+            <span class="mcq-discuss-react tabular-nums leading-none opacity-80" style="font-size:0.7em">0</span>
+          </span>
+        </button>
+      </div>
+    </div>
+    ${renderQuestionStem(q.question)}
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-xs mcq-options">`;
+
+  q.options.forEach(opt => {
+    html += `<button type="button" class="mcq-opt w-full text-right py-xs px-sm border border-outline-variant/70 rounded-lg hover:bg-surface-variant hover:border-primary transition-all font-label-md flex items-center gap-sm" data-key="${opt.key}" data-correct="${q.correct}">
+      <span class="mcq-opt-key w-5 h-5 rounded-md bg-secondary-fixed text-secondary flex items-center justify-center text-xs font-bold shrink-0">${opt.key.toUpperCase()}</span>
+      <span class="opt-text flex-1">${inlineMd(opt.text)}</span>
+    </button>`;
+  });
+
+  html += `</div>
+    <div class="mcq-feedback mt-md font-label-md font-bold min-h-[1.4em]" aria-live="polite"></div>
+    <div class="mcq-explain hidden mt-md p-md bg-primary/10 rounded-lg border-r-4 border-primary font-body-md">
+      <strong class="text-primary">التعليل:</strong>
+      <div class="mt-sm">${renderMcqExplain(q.explain)}</div>
+    </div>
+    <button type="button" data-mcq-reset class="mcq-reset-btn hidden mt-md inline-flex items-center gap-xs px-md py-sm rounded-lg border border-outline-variant bg-surface-container-high text-on-surface font-label-md hover:bg-surface-variant transition-all" aria-label="إعادة تعيين الإجابة">
+      ${ms('restart_alt', false, 'text-sm')} إعادة تعيين الإجابة
+    </button>
+    <div class="mcq-comment-popup hidden fixed inset-0 z-50 items-center justify-center p-md" data-question-num="${esc(String(q.num))}" data-discussion-source="${esc(q.source || '')}" data-discussion-term="${esc(cardId)}">
+      <div class="mcq-comment-backdrop absolute inset-0 bg-black/50 backdrop-blur-sm"></div>
+      <div class="mcq-comment-dialog relative bg-surface dark:bg-[#161b30] rounded-2xl shadow-2xl max-w-2xl w-full max-h-[92vh] overflow-y-auto p-lg" role="dialog" aria-label="نقاش السؤال">
+        <div class="flex items-center justify-between mb-lg">
+          <h4 class="font-headline-sm text-headline-sm text-on-surface">نقاش السؤال س${esc(String(q.num))}${q.source ? ` <span class="font-label-md text-on-surface-variant">· ${esc(String(q.source).replace(/^\[|\]$/g, ''))}</span>` : ''}</h4>
+          <button type="button" class="mcq-comment-close p-xs rounded-full hover:bg-surface-variant transition-all" aria-label="إغلاق">
+            ${ms('close', false, 'text-on-surface-variant')}
+          </button>
+        </div>
+        <div class="mcq-comment-mode-picker flex gap-sm mb-md">
+          <button type="button" class="mcq-comment-mode-btn px-md py-sm rounded-lg border border-outline-variant hover:bg-surface-variant transition-all font-label-md" data-mode="general">${ms('chat_bubble', false, 'text-sm')} تعليق عام</button>
+          <button type="button" class="mcq-comment-mode-btn px-md py-sm rounded-lg border border-outline-variant hover:bg-surface-variant transition-all font-label-md" data-mode="correction">${ms('build', false, 'text-sm')} اقتراح تصحيح</button>
+        </div>
+        ${renderCorrectionPicker(q)}
+        <div class="mcq-comment-thread min-h-[24rem]"></div>
+      </div>
+    </div>
+  </article>`;
+  return html;
+}
+
+/** Renders a Case-2 group (shared stimulus + several sub-questions) as ONE
+ * wrapping block, so the stimulus and all its questions stay together and
+ * scroll/move as a unit instead of reading as unrelated separate cards. */
+function renderMcqGroup(q, partId) {
+  let html = `<section class="mcq-group bg-surface-container-low dark:bg-[#12162a] border-2 border-primary/30 dark:border-[#2b3a8f] rounded-2xl p-lg custom-shadow box-animate box-hover">
+    <div class="flex items-center gap-md mb-md flex-wrap">
+      <span class="px-sm py-xs bg-primary text-on-primary rounded-lg font-code-sm text-code-sm">${ms('link', true, 'text-sm')} س${q.num}${q.questions.length > 1 ? `–${q.questions[q.questions.length - 1].num}` : ''}</span>
+      ${q.difficulty ? `<span class="font-label-md px-sm py-xs rounded-full ${diffBadgeClass(q.difficulty)}">${esc(q.difficulty)}</span>` : ''}
+      ${sourceTag(q.source)}
+    </div>
+    ${renderQuestionStem(q.stimulus)}
+    <div class="space-y-md mt-lg">`;
+
+  q.questions.forEach(sub => {
+    const subQ = {
+      ...sub,
+      source: sub.source || q.source || '',
+      section: sub.section || q.section || '',
+    };
+    html += renderMcqCard(subQ, mcqCardDomId(partId, subQ), { showSource: false });
+  });
+
+  return html + '</div></section>';
+}
+
 export function renderMCQ(questions, partId) {
-  let html = `<div class="mcq-progress sticky top-16 z-10 bg-surface-container-lowest dark:bg-[#10121f]/90 border border-outline-variant dark:border-[#1e40af] rounded-xl p-md mb-lg custom-shadow box-animate box-hover backdrop-blur-sm" data-part="${partId}">
-    <div class="flex items-center gap-md mb-sm">
-      ${ms('quiz', false, 'text-primary')}
-      <span class="font-label-md text-on-surface-variant">تقدّم الاختبار: <strong class="text-primary mcq-score">0</strong> / ${questions.length}</span>
+  const totalCount = questions.reduce((n, q) => n + (q.type === 'group' ? q.questions.length : 1), 0);
+
+  let html = `<div class="mcq-progress sticky top-16 z-10 bg-surface-container-lowest dark:bg-[#10121f]/90 border border-outline-variant dark:border-[#1e40af] rounded-xl p-md mb-lg custom-shadow box-animate box-hover backdrop-blur-sm" data-part="${partId}" data-total="${totalCount}">
+    <div class="flex items-center justify-between gap-md mb-sm flex-wrap">
+      <div class="flex items-center gap-md">
+        ${ms('quiz', false, 'text-primary')}
+        <span class="font-label-md text-on-surface-variant">تقدّم الإجابة: <strong class="text-on-surface mcq-answered-count">0</strong> / ${totalCount}</span>
+      </div>
+      <div class="flex items-center gap-sm font-label-md flex-wrap">
+        <span class="text-primary">✓ <strong class="mcq-score">0</strong></span>
+        <span class="text-on-surface-variant">·</span>
+        <span class="text-error">✗ <strong class="mcq-wrong-count">0</strong></span>
+        <button type="button" data-mcq-reset-all class="mcq-reset-all-btn hidden inline-flex items-center gap-xs px-sm py-xs rounded-lg border border-outline-variant bg-surface-container-high text-on-surface font-label-md hover:bg-error-container hover:text-on-error-container hover:border-error/40 transition-all" aria-label="إعادة تعيين كل التقدّم">
+          ${ms('restart_alt', false, 'text-sm')} إعادة تعيين التقدّم
+        </button>
+      </div>
     </div>
-    <div class="h-1.5 bg-surface-container-high rounded-full overflow-hidden">
-      <div class="mcq-progress-fill h-full bg-primary rounded-full transition-all duration-300" style="width:0%"></div>
-    </div>
+    <div class="mcq-progress-track" role="img" aria-label="شريط تقدّم الإجابات">${Array.from({ length: totalCount }, () => '<span class="mcq-progress-seg mcq-progress-seg--pending"></span>').join('')}</div>
   </div>
   <div class="space-y-lg">`;
 
+  let lastSection = null;
   questions.forEach(q => {
-    const cardId = `${partId}-q${q.num}`;
-    html += `<article class="mcq-card bg-surface-container-lowest dark:bg-[#161b30] border border-outline-variant dark:border-[#1e40af] rounded-xl p-lg custom-shadow box-animate box-hover" id="${cardId}" data-correct="${q.correct}">
-      <div class="flex items-center gap-md mb-md">
-        <span class="px-sm py-xs bg-secondary-container text-on-secondary-container rounded-lg font-code-sm text-code-sm">س${q.num}</span>
-        <span class="font-label-md px-sm py-xs rounded-full ${diffBadgeClass(q.difficulty)}">${esc(q.difficulty)}</span>
-      </div>
-      <p class="font-headline-sm text-headline-sm mb-lg">${inlineMd(q.question)}</p>
-      <div class="grid grid-cols-1 md:grid-cols-2 gap-md mcq-options">`;
+    // "## <label>" dividers in the source (e.g. grouping a past-exam bank's
+    // questions by which lecture their answer came from) come through as a
+    // `section` string on every question — insert a heading whenever it
+    // changes so consecutive questions from the same section stay grouped
+    // visually without repeating the label on every card.
+    const sectionKey = normalizeMcqSection(q.section);
+    if (sectionKey && sectionKey !== lastSection) {
+      const secId = `${partId}-${mcqSectionAnchor(sectionKey)}`;
+      html += `<h3 id="${esc(secId)}" class="font-headline-md text-headline-md text-primary dark:text-inverse-primary flex items-center gap-sm pt-md first:pt-0 scroll-mt-16">
+        ${ms('menu_book', false, 'text-lg')} ${esc(sectionKey)}
+      </h3>`;
+    }
+    lastSection = sectionKey || lastSection;
 
-    q.options.forEach(opt => {
-      html += `<button type="button" class="mcq-opt w-full text-right p-md border border-outline-variant rounded-lg hover:bg-surface-variant hover:border-primary transition-all font-body-md flex items-center gap-md" data-key="${opt.key}" data-correct="${q.correct}">
-        <span class="w-8 h-8 rounded-lg bg-secondary-fixed text-secondary flex items-center justify-center font-bold shrink-0">${opt.key.toUpperCase()}</span>
-        <span class="opt-text flex-1">${inlineMd(opt.text)}</span>
-      </button>`;
-    });
-
-    html += `</div>
-      <div class="mcq-feedback mt-md font-label-md font-bold min-h-[1.4em]" aria-live="polite"></div>
-      <div class="mcq-explain hidden mt-md p-md bg-primary/10 rounded-lg border-r-4 border-primary font-body-md">
-        <strong class="text-primary">التعليل:</strong> ${inlineMd(q.explain)}
-      </div>
-    </article>`;
+    if (q.type === 'group') {
+      html += renderMcqGroup(q, partId);
+      return;
+    }
+    html += renderMcqCard(q, mcqCardDomId(partId, q));
   });
 
   return html + '</div>';

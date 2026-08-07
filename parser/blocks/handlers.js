@@ -1,5 +1,6 @@
 import {
   collectBlockquote,
+  collectDetailsBlock,
   collectDollarMath,
   collectFence,
   collectList,
@@ -10,7 +11,7 @@ import {
   parseTable,
 } from '../core/collectors.js';
 import { slugify } from '../core/slug.js';
-import { normalizeCodeLang, codeLangLabel, parseAlgorithmLines } from '../core/utils.js';
+import { normalizeCodeLang, codeLangLabel, parseAlgorithmLines, isSchemaMetadataCommentStart, collectSchemaMetadataComment } from '../core/utils.js';
 import { parseDiagramYaml } from '../diagram/parse-yaml.js';
 
 /** @typedef {import('../core/context.js').ParseContext} Ctx */
@@ -37,6 +38,16 @@ function parseLineExplainItem(text) {
 /** @returns {import('./registry.js').BlockRegistry['handlers']} */
 export function createDefaultBlockHandlers() {
   return [
+    {
+      id: 'schema-metadata-comment',
+      priority: 101,
+      test: (ctx) => isSchemaMetadataCommentStart(ctx.line),
+      parse: (ctx) => {
+        const collected = collectSchemaMetadataComment(ctx.lines, ctx.i);
+        return { nextIndex: collected.nextIndex };
+      },
+    },
+
     // ── Fences (highest priority) ──────────────────────────────────────────
     {
       id: 'fence',
@@ -50,6 +61,9 @@ export function createDefaultBlockHandlers() {
           } catch {
             return { block: { type: 'code', lang: 'diagram', code }, nextIndex };
           }
+        }
+        if (lang === 'mermaid') {
+          return { block: { type: 'mermaid', code: String(code || '').trim() }, nextIndex };
         }
         if (lang === 'algorithm') {
           return { block: { type: 'algorithm', steps: parseAlgorithmLines(code) }, nextIndex };
@@ -74,19 +88,160 @@ export function createDefaultBlockHandlers() {
 
     // ── H4 structured blocks ───────────────────────────────────────────────
     {
+      id: 'h4-original-text-collapsible',
+      priority: 91,
+      test: (ctx) => {
+        if (!/^#### /.test(ctx.line)) return false;
+        const heading = ctx.line.replace(/^#### /, '').trim();
+        if (!/النص الأصلي/.test(heading)) return false;
+        let j = ctx.i + 1;
+        while (j < ctx.lines.length && !ctx.lines[j].trim()) j++;
+        return j < ctx.lines.length && /^<details>/.test(ctx.lines[j].trim());
+      },
+      parse: (ctx) => {
+        const heading = ctx.line.replace(/^#### /, '').trim();
+        let i = ctx.i + 1;
+        while (i < ctx.lines.length && !ctx.lines[i].trim()) i++;
+        const details = collectDetailsBlock(ctx.lines, i);
+        return {
+          block: {
+            type: 'original-text-collapsible',
+            title: heading,
+            summary: details.summary,
+            innerText: details.innerText,
+          },
+          nextIndex: details.nextIndex,
+        };
+      },
+    },
+
+    {
+      id: 'details-block',
+      priority: 88,
+      test: (ctx) => /^<details>/.test(ctx.trimmed),
+      parse: (ctx) => {
+        const details = collectDetailsBlock(ctx.lines, ctx.i);
+        return {
+          block: {
+            type: 'original-text-collapsible',
+            title: 'النص الأصلي من المحاضرة',
+            summary: details.summary,
+            innerText: details.innerText,
+          },
+          nextIndex: details.nextIndex,
+        };
+      },
+    },
+
+    // Compact nested MCQ under a ### section (notes / summary). Not a ## MCQ part.
+    // See templates/block-mini-mcq.md.
+    {
+      id: 'mini-mcq',
+      priority: 93,
+      test: (ctx) => /^####\s*(?:تحقق سريع|سؤال سريع)\s*:?\s*$/i.test(ctx.trimmed),
+      parse: (ctx) => {
+        const arabicKey = ctx.config.arabicKey || {};
+        let i = ctx.i + 1;
+        const bodyLines = [];
+        while (i < ctx.lines.length) {
+          const L = ctx.lines[i];
+          if (/^#{1,4} /.test(L) || /^---+\s*$/.test(L)) break;
+          bodyLines.push(L);
+          i++;
+        }
+        const body = bodyLines.join('\n').trim();
+
+        let source = '';
+        const srcM = body.match(/^\*\*المصدر:\*\*\s*(.+)$/m);
+        if (srcM) source = srcM[1].trim().replace(/^\[|\]$/g, '');
+
+        const answerRe = /الإجابة(?:\s+الصحيحة)?[:\s*]*([أابجدهabcde])/i;
+        const answerM = body.match(answerRe);
+        let correct = answerM
+          ? (arabicKey[answerM[1].toLowerCase()] || answerM[1].toLowerCase())
+          : '';
+
+        let explain = '';
+        const whyM = body.match(/\*\*لماذا\?\*\*\s*([\s\S]+?)(?=\n#{1,4} |\n---|\Z)/);
+        if (whyM) {
+          explain = whyM[1].trim();
+        } else {
+          // Prefer the short > blockquote after the answer line
+          const afterAns = answerM
+            ? body.slice(body.indexOf(answerM[0]) + answerM[0].length)
+            : '';
+          const bqLines = [];
+          for (const line of afterAns.split('\n')) {
+            if (/^>\s?/.test(line)) bqLines.push(line.replace(/^>\s?/, ''));
+            else if (bqLines.length && !line.trim()) break;
+            else if (bqLines.length) break;
+          }
+          explain = bqLines.join('\n').trim();
+        }
+
+        const optStartRe = /^[-*]?\s*([أ-ي])[)\.]\s*(.*)$/;
+        const options = [];
+        const qLines = [];
+        let inOpts = false;
+        for (const raw of body.split('\n')) {
+          const t = raw.trim();
+          if (/^\*\*المصدر:\*\*/.test(t)) continue;
+          if (answerRe.test(t) || /^\*\*الإجابة/.test(t)) break;
+          if (/^\*\*لماذا\?/.test(t)) break;
+          const om = t.match(optStartRe);
+          if (om) {
+            inOpts = true;
+            const key = arabicKey[om[1].toLowerCase()] || om[1].toLowerCase();
+            options.push({ key, text: om[2].trim() });
+            continue;
+          }
+          if (inOpts) {
+            if (!t) continue;
+            if (options.length && !t.startsWith('**') && !/^>/.test(t)) {
+              options[options.length - 1].text += ` ${t}`;
+            }
+            continue;
+          }
+          if (t && !/^>/.test(t)) qLines.push(t);
+        }
+
+        const question = qLines.join(' ').replace(/\*\*السؤال:\*\*\s*/g, '').trim();
+        return {
+          block: {
+            type: 'mini-mcq',
+            question,
+            options,
+            correct,
+            explain,
+            source,
+          },
+          nextIndex: i,
+        };
+      },
+    },
+
+    {
       id: 'h4-callout',
       priority: 90,
       test: (ctx) => {
         if (!/^#### /.test(ctx.line)) return false;
         const heading = ctx.line.replace(/^#### /, '').trim();
-        return (ctx.config.callouts || []).some(c => c.re.test(heading));
+        if (!(ctx.config.callouts || []).some(c => c.re.test(heading))) return false;
+        // Title + table: keep as mini-heading + table, not a callout box with raw markdown.
+        let j = ctx.i + 1;
+        while (j < ctx.lines.length && !ctx.lines[j].trim()) j++;
+        if (j < ctx.lines.length && isTableStart(ctx.lines, j)) return false;
+        return true;
       },
       parse: (ctx) => {
         const heading = ctx.line.replace(/^#### /, '').trim();
         const callout = ctx.config.callouts.find(c => c.re.test(heading));
+        const inline = heading.replace(callout.re, '').replace(/^:\s*/, '').trim();
         const content = collectUntilHeading(ctx.lines, ctx.i + 1);
+        let text = content.text;
+        if (inline) text = inline + (text ? `\n\n${text}` : '');
         return {
-          block: { type: 'callout', cls: callout.cls, label: callout.label, content: content.text },
+          block: { type: 'callout', cls: callout.cls, label: callout.label, content: text },
           nextIndex: content.nextIndex,
         };
       },
@@ -141,6 +296,67 @@ export function createDefaultBlockHandlers() {
           block: { type: 'equation', title, latex, displayMode, explanation },
           nextIndex: i,
         };
+      },
+    },
+
+    {
+      id: 'h4-compare',
+      priority: 91,
+      test: (ctx) => {
+        if (!/^#### الفهم الخاطئ/.test(ctx.line)) return false;
+        let j = ctx.i + 1;
+        while (j < ctx.lines.length) {
+          const t = ctx.lines[j].trim();
+          if (/^#### الفهم الصحيح/.test(t)) return true;
+          if (/^### /.test(t) || /^## /.test(t)) return false;
+          j++;
+        }
+        return false;
+      },
+      parse: (ctx) => {
+        const wrongHeading = ctx.line.replace(/^#### /, '').trim();
+        const wrongInline = wrongHeading.match(/^الفهم الخاطئ[^:]*:\s*(.+)$/);
+        let wrong = '';
+        let i = ctx.i + 1;
+        if (wrongInline?.[1]) {
+          wrong = wrongInline[1].trim();
+        } else {
+          while (i < ctx.lines.length && !ctx.lines[i].trim()) i++;
+          const collected = collectUntilHeading(ctx.lines, i);
+          wrong = collected.text;
+          i = collected.nextIndex;
+        }
+        while (i < ctx.lines.length && !ctx.lines[i].trim()) i++;
+        const rightHeading = ctx.lines[i].replace(/^#### /, '').trim();
+        const rightInline = rightHeading.match(/^الفهم الصحيح[^:]*:\s*(.+)$/);
+        i++;
+        let right = '';
+        if (rightInline?.[1]) {
+          right = rightInline[1].trim();
+        } else {
+          while (i < ctx.lines.length && !ctx.lines[i].trim()) i++;
+          const collected = collectUntilHeading(ctx.lines, i);
+          right = collected.text;
+          i = collected.nextIndex;
+        }
+        return { block: { type: 'compare', wrong, right }, nextIndex: i };
+      },
+    },
+
+    {
+      id: 'h4-schema-core-idea',
+      priority: 90,
+      test: (ctx) => /^#### 💡 الفكرة (?:الأساسية|الرئيسية)/.test(ctx.line),
+      parse: (ctx) => {
+        const title = ctx.line.replace(/^#### /, '').trim();
+        let i = ctx.i + 1;
+        while (i < ctx.lines.length && !ctx.lines[i].trim()) i++;
+        if (i < ctx.lines.length && /^> /.test(ctx.lines[i])) {
+          const bq = collectBlockquote(ctx.lines, i);
+          return { block: { type: 'core-idea', title, content: bq.text }, nextIndex: bq.nextIndex };
+        }
+        const para = collectParagraph(ctx.lines, i);
+        return { block: { type: 'core-idea', title, content: para.text }, nextIndex: para.nextIndex };
       },
     },
 
@@ -315,6 +531,7 @@ export function createDefaultBlockHandlers() {
         if (!/^#### /.test(ctx.line)) return false;
         const h = ctx.line.replace(/^#### /, '').trim();
         return /^[💻🛠️🤔📊🖼️]/.test(h)
+          || /تفعيل الفهم/.test(h)
           || h === 'ما هذا الكود؟' || h === 'ما هذا الكود/الأمر؟' || h === 'ما هذا الملف؟'
           || h === 'ما هذا المخطط؟'
           || isLineExplainTitle(h);
@@ -334,9 +551,16 @@ export function createDefaultBlockHandlers() {
             nextIndex: ctx.i + 1,
           };
         }
-        if (heading.startsWith('🤔')) {
-          const bq = collectBlockquote(ctx.lines, ctx.i + 1);
-          return { block: { type: 'think-prompt', title: heading, content: bq.text }, nextIndex: bq.nextIndex };
+        if (heading.startsWith('🤔') || /تفعيل الفهم/.test(heading)) {
+          let i = ctx.i + 1;
+          while (i < ctx.lines.length && !ctx.lines[i].trim()) i++;
+          const bq = collectBlockquote(ctx.lines, i);
+          if (bq.text) {
+            return { block: { type: 'think-prompt', title: heading, content: bq.text }, nextIndex: bq.nextIndex };
+          }
+          // Modern lectures put the prompt as plain paragraphs (not `>` quotes).
+          const body = collectUntilHeading(ctx.lines, i);
+          return { block: { type: 'think-prompt', title: heading, content: body.text }, nextIndex: body.nextIndex };
         }
         if (heading.startsWith('📊')) {
           return { block: { type: 'diagram-title', text: heading }, nextIndex: ctx.i + 1 };
@@ -431,16 +655,22 @@ export function createDefaultBlockHandlers() {
     {
       id: 'qa-card',
       priority: 64,
-      test: (ctx) => /^\*\*Q\d+:/i.test(ctx.trimmed),
+      test: (ctx) => /^\*\*Q\d+:\*\*/i.test(ctx.trimmed),
       parse: (ctx) => {
-        const qNum = ctx.trimmed.match(/^\*\*Q(\d+):/i)[1];
-        const qText = ctx.trimmed.replace(/^\*\*Q\d+:\s*/i, '').replace(/\*\*\s*$/, '').trim();
+        const qMatch = ctx.trimmed.match(/^\*\*Q(\d+):\*\*\s*(.*)$/i);
+        if (!qMatch) return null;
+        const qNum = qMatch[1];
+        const qText = qMatch[2].trim();
         let i = ctx.i + 1;
         while (i < ctx.lines.length && !ctx.lines[i].trim()) i++;
         let aText = '';
-        if (i < ctx.lines.length && /^A:\s*/i.test(ctx.lines[i].trim())) {
-          aText = ctx.lines[i].trim().replace(/^A:\s*/i, '');
-          i++;
+        if (i < ctx.lines.length) {
+          const aLine = ctx.lines[i].trim();
+          const aMatch = aLine.match(/^(?:\*\*)?A:\*\*\s*(.*)$/i) || aLine.match(/^A:\s*(.*)$/i);
+          if (aMatch) {
+            aText = aMatch[1].trim();
+            i++;
+          }
         }
         return { block: { type: 'qa-card', num: qNum, question: qText, answer: aText }, nextIndex: i };
       },
@@ -458,6 +688,7 @@ export function createDefaultBlockHandlers() {
           || /^\*\*المكتبات المطلوبة/.test(t)
           || /^\*\*الناتج المتوقع/.test(t)
           || /^\*\*⚠️ ملاحظة هامة/.test(t)
+          || /^\*\*ملاحظة(?:\s+مهمة)?[^*]*\*\*:?\s*/.test(t)
           || /^\*\*الفهم الخاطئ/.test(t)
           || /^\*\*لماذا\?\*\*/.test(t);
       },
@@ -512,6 +743,22 @@ export function createDefaultBlockHandlers() {
             content = t.replace(/^\*\*⚠️ ملاحظة هامة[^*]*\*\*:?\s*/, '').trim();
           }
           return { block: { type: 'callout', cls: 'callout-important', label: '⚠️ ملاحظة هامة', content }, nextIndex: i };
+        }
+        if (/^\*\*ملاحظة(?:\s+مهمة)?[^*]*\*\*:?\s*/.test(t)) {
+          let content = t.replace(/^\*\*ملاحظة(?:\s+مهمة)?[^*]*\*\*:?\s*/, '').trim();
+          i = ctx.i + 1;
+          if (!content) {
+            while (i < ctx.lines.length && !ctx.lines[i].trim()) i++;
+            const body = [];
+            while (i < ctx.lines.length) {
+              const line = ctx.lines[i].trim();
+              if (!line || /^#{2,4} /.test(line) || /^---+$/.test(line) || isStructural(ctx.lines[i])) break;
+              body.push(line);
+              i++;
+            }
+            content = body.join('\n').trim();
+          }
+          return { block: { type: 'callout', cls: 'callout-note', label: 'ملاحظة', content }, nextIndex: i };
         }
         if (/^\*\*الفهم الخاطئ/.test(t)) {
           const wrong = t.replace(/^\*\*الفهم الخاطئ الشائع ❌:\*\*\s*/, '');

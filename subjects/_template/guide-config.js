@@ -32,11 +32,12 @@ export const GUIDE_CONFIG = {
 
   callouts: [
     { re: /^مهم للامتحان/, cls: 'callout-exam', label: 'مهم للامتحان ⚠️' },
+    { re: /^تذكرة/, cls: 'callout-exam', label: 'تذكرة 💡' },
     { re: /^⚠️ ملاحظة هامة/, cls: 'callout-important', label: '⚠️ ملاحظة هامة' },
     { re: /^نقطة مهمة/, cls: 'callout-important', label: 'نقطة مهمة ⚠️' },
     { re: /^ملاحظة:/, cls: 'callout-note', label: 'ملاحظة' },
     { re: /^الدرس المستفاد:/, cls: 'callout-lesson', label: 'الدرس المستفاد' },
   ],
 
-  arabicKey: { أ: 'a', ا: 'a', ب: 'b', ج: 'c', د: 'd', a: 'a', b: 'b', c: 'c', d: 'd' },
+  arabicKey: { أ: 'a', ا: 'a', ب: 'b', ج: 'c', د: 'd', ه: 'e', a: 'a', b: 'b', c: 'c', d: 'd', e: 'e' },
 };

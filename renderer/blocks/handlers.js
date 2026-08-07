@@ -57,7 +57,7 @@ export function calloutHtml(cls, label, content) {
     },
   };
   const m = map[cls] || map['callout-note'];
-  return `<div class="${m.wrap} p-lg rounded-xl flex items-start gap-lg mb-lg box-animate box-hover">
+  return `<div class="${cls} ${m.wrap} p-lg rounded-xl flex items-start gap-lg mb-lg box-animate box-hover">
     ${ms(m.icon, m.filled, 'text-3xl shrink-0')}
     <div class="flex-1">
       <h5 class="font-headline-sm text-headline-sm mb-xs">${esc(label)}</h5>
@@ -72,6 +72,21 @@ function diagramSpecNoteHtml() {
     'توصيف لكيفية رسم العُقد والروابط فقط (إضافة من AI)',
     'هذا الجدول **ليس للحفظ**. يشرح كيف رُسم المخطط وما علاقة كل عُقدة بكل رابط — استخدمه لفهم الرسم التفاعلي، ثم راجع المحاضرة الأصلية.',
   );
+}
+
+export function renderMermaid(block) {
+  const title = esc(block.title || 'مخطط');
+  const code = esc(block.code || '');
+  return `<div class="mermaid-container box-animate box-hover">
+    <div class="mermaid-header">
+      <span class="material-symbols-outlined mermaid-header__icon" aria-hidden="true">account_tree</span>
+      <div class="mermaid-header__text">
+        <span class="mermaid-header__type">Mermaid</span>
+        <span class="mermaid-header__title">${title}</span>
+      </div>
+    </div>
+    <pre class="mermaid">${code}</pre>
+  </div>`;
 }
 
 function stripBackticks(text) {
@@ -126,21 +141,42 @@ function splitOriginalText(content) {
   if ((text.startsWith('"') && text.endsWith('"')) || (text.startsWith('«') && text.endsWith('»'))) {
     text = text.slice(1, -1).trim();
   }
-  const paragraphs = text.split(/\n{2,}/).map(p => p.trim()).filter(Boolean);
+  // Each quoted source line is a deliberate readable unit. Rendering only
+  // blank-line splits caused wrapped English source text to collapse back
+  // into one dense browser paragraph.
+  const paragraphs = text.split(/\n+/).map(p => p.trim()).filter(Boolean);
   return paragraphs.length ? paragraphs : [text];
 }
 
 export function renderOriginalText(title, content) {
   const parts = splitOriginalText(content);
+  const isEnglish = /\bEnglish\b/i.test(String(title));
+  const directionAttrs = isEnglish ? ' dir="ltr" lang="en"' : '';
+  const directionClass = isEnglish ? ' text-left' : '';
   return `<div class="source-quote mb-lg">
     <div class="source-quote__head">
       ${ms('record_voice_over', false, 'source-quote__icon')}
       <span class="source-quote__label">${inlineMd(title)}</span>
     </div>
-    <div class="source-quote__body">
+    <div class="source-quote__body${directionClass}"${directionAttrs}>
       ${parts.map(part => `<p>${inlineMd(part)}</p>`).join('')}
     </div>
   </div>`;
+}
+
+export function renderOriginalTextCollapsible(block, ctx) {
+  const inner = block.blocks?.length && ctx.renderBlocks
+    ? ctx.renderBlocks(block.blocks, { ...ctx, nested: true, codeCounterRef: ctx.codeCounterRef || { n: 0 } })
+    : '';
+  const summary = block.summary || block.title || 'عرض النص الأصلي';
+  return `<details class="original-text-collapsible accordion-card group bg-surface-container-lowest dark:bg-[#161b30] border border-outline-variant dark:border-[#1e40af] rounded-xl mb-lg overflow-hidden custom-shadow box-animate box-hover">
+    <summary class="flex items-center gap-md p-lg cursor-pointer list-none hover:bg-surface-container-high dark:hover:bg-[#1c2440] transition-colors">
+      ${ms('record_voice_over', false, 'text-secondary shrink-0')}
+      <span class="acc-title flex-1 font-headline-sm text-headline-sm text-on-surface">${inlineMd(summary)}</span>
+      ${ms('expand_more', false, 'text-on-surface-variant acc-chevron transition-transform shrink-0')}
+    </summary>
+    <div class="acc-body p-lg pt-0 border-t border-outline-variant prose-content">${inner}</div>
+  </details>`;
 }
 
 function plainTableLabel(text) {
@@ -309,6 +345,17 @@ function renderAnalogy(block) {
       ${block.title ? `<h5 class="font-headline-sm text-headline-sm text-primary mb-sm">${inlineMd(block.title)}</h5>` : ''}
       <div class="font-body-md text-on-surface-variant leading-relaxed">${inlineMd(block.content).replace(/\n/g, '<br>')}</div>
     </div>
+  </div>`;
+}
+
+function renderCoreIdea(block) {
+  const label = String(block.title || '💡 الفكرة الأساسية').trim();
+  return `<div class="core-idea mb-md">
+    <div class="flex items-center gap-sm mb-xs mt-md">
+      ${ms('lightbulb', false, 'text-primary text-lg shrink-0')}
+      <h5 class="font-label-md text-label-md font-bold text-on-surface-variant">${inlineMd(label)}</h5>
+    </div>
+    <p class="core-idea__text">${inlineMd(block.content)}</p>
   </div>`;
 }
 
@@ -495,13 +542,14 @@ export function createDefaultBlockHandlers(extraHandlers = []) {
   { id: 'diagram-desc', match: b => b.type === 'diagram-desc', render: b =>
     `<blockquote class="border-r-4 border-secondary bg-secondary-fixed/30 dark:bg-secondary/10 p-md rounded-l-xl mb-md font-body-md">${inlineMd(b.content)}</blockquote>` },
   { id: 'diagram', match: b => b.type === 'diagram', render: b => diagramToHtml(b.data) },
+  { id: 'mermaid', match: b => b.type === 'mermaid', render: b => renderMermaid(b) },
   { id: 'line-explain', match: b => b.type === 'line-explain', render: b => renderLineExplain(b.items, b.title, b.groups) },
   { id: 'line-explain-table', match: b => b.type === 'line-explain-table', render: b => renderLineExplainTable(b.header, b.rows, b.title, b.items) },
   { id: 'ol', match: b => b.type === 'ol', render: b =>
-    '<ol class="list-decimal mr-lg mb-lg space-y-xs font-body-md text-on-surface-variant">' +
+    '<ol class="list-decimal mr-lg mb-md space-y-xs font-body-md text-on-surface-variant">' +
     b.items.map(it => `<li>${inlineMd(it)}</li>`).join('') + '</ol>' },
   { id: 'ul', match: b => b.type === 'ul', render: b =>
-    '<ul class="list-disc mr-lg mb-lg space-y-xs font-body-md text-on-surface-variant">' +
+    '<ul class="list-disc mr-lg mb-md space-y-xs font-body-md text-on-surface-variant">' +
     b.items.map(it => `<li>${inlineMd(it)}</li>`).join('') + '</ul>' },
   { id: 'table', match: b => b.type === 'table', render: b => renderTable(b.header, b.rows) },
   { id: 'callout', match: b => b.type === 'callout', render: b => calloutHtml(b.cls, b.label, b.content) },
@@ -569,6 +617,34 @@ export function createDefaultBlockHandlers(extraHandlers = []) {
         </div>
       </div>
     </article>` },
+  { id: 'mini-mcq', match: b => b.type === 'mini-mcq', render: b => {
+    const opts = (b.options || []).map(opt =>
+      `<button type="button" class="mcq-opt mini-mcq__opt" data-key="${esc(opt.key)}" data-correct="${esc(b.correct || '')}">
+        <span class="mini-mcq__key">${esc(String(opt.key || '').toUpperCase())}</span>
+        <span class="opt-text">${inlineMd(opt.text || '')}</span>
+      </button>`).join('');
+    const source = b.source
+      ? `<span class="mini-mcq__source">${esc(b.source)}</span>`
+      : '';
+    const explain = b.explain
+      ? `<div class="mcq-explain mini-mcq__explain hidden">
+          <div class="mini-mcq__explain-body">${inlineMd(b.explain)}</div>
+        </div>`
+      : `<div class="mcq-explain mini-mcq__explain hidden"></div>`;
+    return `<aside class="mini-mcq mcq-card" data-correct="${esc(b.correct || '')}" data-mini-mcq>
+      <div class="mini-mcq__label">
+        ${ms('quiz', false, 'text-sm')}
+        <span>تحقق سريع</span>
+        ${source}
+      </div>
+      <p class="mini-mcq__question">${inlineMd(b.question || '')}</p>
+      <div class="mini-mcq__options">${opts}</div>
+      <div class="mcq-feedback mini-mcq__feedback" aria-live="polite"></div>
+      ${explain}
+      <button type="button" data-mcq-reset class="mcq-reset-btn mini-mcq__reset hidden" aria-label="إعادة تعيين">إعادة</button>
+    </aside>`;
+  } },
+  { id: 'core-idea', match: b => b.type === 'core-idea', render: renderCoreIdea },
   { id: 'analogy', match: b => b.type === 'analogy', render: renderAnalogy },
   { id: 'equation', match: b => b.type === 'equation', render: renderEquation },
   { id: 'trade-off', match: b => b.type === 'trade-off', render: renderTradeOff },
@@ -602,7 +678,7 @@ export function renderH4(block, ctx, blocks, index) {
   if (isDiagramNodesHeading(block.text)) {
     html += diagramSpecNoteHtml();
   }
-  html += `<div class="flex items-center gap-sm mb-sm mt-md">
+  html += `<div class="mini-heading flex items-center gap-sm">
     ${ms(miniHeadIcon(block.text), false, 'text-primary text-lg')}
     <h5 class="font-label-md text-label-md font-bold text-on-surface-variant">${inlineMd(block.text)}</h5>
   </div>`;

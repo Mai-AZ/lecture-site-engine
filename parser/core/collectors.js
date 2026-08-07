@@ -81,6 +81,14 @@ export function collectParagraph(lines, start) {
     const t = lines[i].trim();
     if (!t) break;
     if (isStructural(lines[i])) break;
+    // A bullet/numbered line right after a plain text line (no blank line
+    // between, e.g. "**Title**\n- item\n- item") must NOT get swallowed into
+    // this paragraph — otherwise the whole list collapses into one run-on
+    // sentence joined by spaces instead of becoming its own <ul>/<ol> block.
+    // Only stop on this from the SECOND line onward — a paragraph is allowed
+    // to itself start with a list marker(that's what makes it a list, not a
+    // paragraph, and is handled by the ul/ol handlers before this one runs).
+    if (i > start && (/^[-*]\s+/.test(t) || /^\d+\.\s+/.test(t))) break;
     parts.push(t);
     i++;
   }
@@ -108,6 +116,45 @@ export function parseTable(lines, start) {
     i++;
   }
   return { header, rows, nextIndex: i };
+}
+
+/** @param {string[]} lines @param {number} start */
+export function collectDetailsBlock(lines, start) {
+  let i = start;
+  const openLine = lines[i].trim();
+  let summary = '';
+  const summaryInOpen = openLine.match(/<summary>([\s\S]*?)<\/summary>/i);
+  if (summaryInOpen) {
+    summary = summaryInOpen[1].trim();
+  }
+  i++;
+
+  if (!summary) {
+    while (i < lines.length && !lines[i].trim()) i++;
+    const sumLine = lines[i]?.trim() || '';
+    const sumMatch = sumLine.match(/^<summary>([\s\S]*?)<\/summary>$/i);
+    if (sumMatch) {
+      summary = sumMatch[1].trim();
+      i++;
+    }
+  }
+
+  const innerParts = [];
+  while (i < lines.length) {
+    const t = lines[i].trim();
+    if (/^<\/details>\s*$/.test(t)) {
+      i++;
+      break;
+    }
+    innerParts.push(lines[i]);
+    i++;
+  }
+
+  return {
+    summary,
+    innerText: innerParts.join('\n').trim(),
+    nextIndex: i,
+  };
 }
 
 export function collectFence(lines, start) {
