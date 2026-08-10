@@ -35,6 +35,9 @@ content_ordering:
     equation_subjects: []
     code_subjects: []
     diagram_subjects: [information-systems]
+    comparison_subjects: [information-systems]
+    command_subjects: []
+    scenario_subjects: []
 
   default_type: "diagram-first"
 
@@ -50,7 +53,7 @@ visualization_templates:
     - tree
     - flowchart
 
-  diagram_types: [flowchart, bpmn, decision-tree, dfd, usecase, class, activity, erd]
+  diagram_types: [flowchart, bpmn, decision-tree, dfd, usecase, class, activity, erd, state-transition]
 
 # ─── Coverage Tracking ──────────────────────────────────────────────────────────
 coverage_tracking:
